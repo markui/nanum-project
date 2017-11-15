@@ -7,10 +7,13 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+__all__ = [
+    'User'
+]
+
 
 # Create your models here.
 class User(AbstractBaseUser, PermissionsMixin):
-    # 상속받은 필드
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
     email = models.EmailField(_('email address'), blank=True)
@@ -29,22 +32,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
 
-    # 추가된 필드
-    profile_image = models.ImageField(
-        null=True,
-        blank=True,
-    )
-    description = models.TextField(
-        max_length=2000,
-        blank=True,
-    )
-    # education_credentials =
-    # employment_credentials =
-
     objects = UserManager()
 
     EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     class Meta:
