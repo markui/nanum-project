@@ -39,8 +39,13 @@ INSTALLED_APPS = [
 
     # 3rd-party
     'django_extensions',
+    'rest_framework',
+    'stream_django',
 
     # Custom
+    'users',
+    'posts',
+    'topics',
 
 ]
 
