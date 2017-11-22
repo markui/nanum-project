@@ -19,15 +19,11 @@ class Comment(models.Model):
     comment = models.TextField(
         max_length=2000,
     )
-    created = models.DateTimeField(
+    created_at = models.DateTimeField(
         auto_now_add=True,
     )
-    modified = models.DateTimeField(
+    modified_at = models.DateTimeField(
         auto_now=True,
-    )
-    nested_comment = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
     )
     # like = models.ManyToManyField(
     #     User,
@@ -40,7 +36,7 @@ class Comment(models.Model):
 
 class QuestionComment(Comment):
     """
-
+    질문에 대한 댓글
     """
     question = models.ForeignKey(
         Question,
@@ -50,10 +46,19 @@ class QuestionComment(Comment):
 
 class AnswerComment(Comment):
     """
-
+    답변에 대한 댓글
     """
     answer = models.ForeignKey(
         Answer,
         on_delete=models.CASCADE,
         related_name='comments'
+    )
+
+class NestedComment(Comment):
+    """
+    댓글에 대한 댓글
+    """
+    parent_comment = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
     )
