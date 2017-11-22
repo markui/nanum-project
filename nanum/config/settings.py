@@ -9,25 +9,44 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
+import json
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# Directories
+
+# nanum_project/nanum/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# nanum_project/
+ROOT_DIR = os.path.dirname(BASE_DIR)
+# nanum_project/.config_secret/
+CONFIG_SECRET_DIR = os.path.join(ROOT_DIR, '.config_secret')
+config_secret_common_str = open(os.path.join(CONFIG_SECRET_DIR, 'settings_common.json')).read()
+config_secret_common = json.loads(config_secret_common_str)
 
+# Secret Key
+SECRET_KEY = config_secret_common['django']['secret_key']
+
+# Facebook
+FACEBOOK_APP_ID = config_secret_common['facebook']['app_id']
+FACEBOOK_APP_SECRET_CODE = config_secret_common['facebook']['secret_code']
+FACEBOOK_SCOPE = ['user_friends', 'public_profile', 'email']
+
+# Static Files
+STATIC_URL = '/static/'
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    STATIC_DIR,
+]
+# Media Files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+# Template Files
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '!#@+=zhm)-dhe!7ron^#x)+m^**6!h77!&wl%(zsb=kpa(dxg1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
@@ -42,13 +61,21 @@ INSTALLED_APPS = [
     # 3rd-party
     'django_extensions',
     'rest_framework',
-    'stream_django',
+    # 'stream_django',
 
     # Custom
     'users',
     'posts',
     'topics',
+]
 
+# Custom User Model
+AUTH_USER_MODEL = 'users.User'
+
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    # 'member.backends.FacebookBackend',
 ]
 
 MIDDLEWARE = [
@@ -84,18 +111,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'nanum',
-        'USER': 'John',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+DATABASES = config_secret_common['django']['databases']
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -120,19 +137,4 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-STATIC_URL = '/static/'
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [
-    STATIC_DIR,
-]
+TIME_ZONE = 'Asia/Seoul'
