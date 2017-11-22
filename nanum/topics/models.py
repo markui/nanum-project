@@ -10,4 +10,3 @@ class Topic(models.Model):
     name = models.TextField(
         max_length=200,
     )
-
