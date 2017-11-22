@@ -1,5 +1,6 @@
-from django.conf import settings
 from django.db import models
+
+from users.models import User
 from . import Question
 
 __all__ = (
@@ -9,7 +10,7 @@ __all__ = (
 
 class Answer(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.SET_NULL,
     )
     question = models.ForeignKey(

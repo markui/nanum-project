@@ -1,5 +1,7 @@
 from django.db import models
-from django.conf import settings
+
+from topics.models import Topic
+from users.models import User
 
 __all__ = (
     'Question',
@@ -14,12 +16,16 @@ class QuestionManager(models.Manager):
 
 class Question(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.SET_NULL,
     )
     title = models.CharField(max_length=100)
-    content = models.TextField()
     created_at = models.DateField(auto_now_add=True)
+
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.SET_NULL,
+    )
 
     objects = QuestionManager()
 
