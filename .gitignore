@@ -223,4 +223,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+.config_secret/
+
 # End of https://www.gitignore.io/api/macos,linux,python,django,pycharm
