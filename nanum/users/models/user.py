@@ -86,16 +86,108 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 이름
     name = models.CharField(_('full name'), max_length=30)
 
+    # 다대다 관계
+
+    # 1. 유저 팔로우
+
+    # 내가 팔로우 하는 유저들
+    following = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        # admin에서 실험하기 위해서
+        blank=True,
+        # 나를 팔로우 하는 유저들
+        related_name='followers',
+        through='FollowUser',
+        # (source, target) 순서
+        through_fields=('user', 'target'),
+    )
+
+    # 2. 주제 팔로우
+
     # 전문분야 주제
     topic_expertise = models.ManyToManyField(
         'topics.Topic',
         related_name='users_with_expertise',
+        blank=True,
+        through='FollowTopic',
+        through_fields=('user', 'target'),
     )
 
     # 관심분야 주제
     topic_interests = models.ManyToManyField(
         'topics.Topic',
         related_name='users_with_interest',
+        blank=True,
+        through='FollowTopic',
+        through_fields=('user', 'target'),
+    )
+
+    # 3. 질문 팔로우
+    following_questions = models.ManyToManyField(
+        'posts.Question',
+        related_name='followers',
+        blank=True,
+        through='FollowQuestion',
+        through_fields=('user', 'target'),
+    )
+
+    # 4. 질문 북마크
+    bookmarked_questions = models.ManyToManyField(
+        'posts.Question',
+        related_name='who_bookmarked',
+        blank=True,
+        through='BookmarkQuestion',
+        through_fields=('user', 'target'),
+    )
+
+    # 5. 답변 추천/비추천
+
+    # 답변 추천
+    upvoted_questions = models.ManyToManyField(
+        'posts.Question',
+        related_name='upvoted_users',
+        blank=True,
+        through='UpVoteAnswer',
+        through_fields=('user', 'target'),
+    )
+
+    # 답변 비추천
+    downvoted_questions = models.ManyToManyField(
+        'posts.Question',
+        related_name='downvoted_users',
+        blank=True,
+        through='DownVoteAnswer',
+        through_fields=('user', 'target'),
+    )
+
+    # 6. 답변 북마크
+    bookmarked_answers = models.ManyToManyField(
+        'posts.Answer',
+        related_name='bookmarked_users',
+        blank=True,
+        through='BookmarkAnswer',
+        through_fields=('user', 'target'),
+    )
+
+    # 7. 댓글 추천/비추천
+
+    # 댓글 추천
+    upvoted_comments = models.ManyToManyField(
+        'posts.Comment',
+        related_name='upvoted_users',
+        blank=True,
+        through='UpVoteComment',
+        through_fields=('user', 'target'),
+    )
+
+    # 댓글 비추천
+    downvoted_comments = models.ManyToManyField(
+        'posts.Comment',
+        related_name='downvoted_users',
+        blank=True,
+        through='DownVoteComment',
+        through_fields=('user', 'target'),
     )
 
     # 유저 활동
