@@ -5,7 +5,6 @@ config_secret = json.loads(open(CONFIG_SECRET_DEPLOY_FILE).read())
 
 
 INSTALLED_APPS += [
-    'django_extensions',
 ]
 
 

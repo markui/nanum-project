@@ -35,11 +35,11 @@ STATICFILES_DIRS = [
     STATIC_DIR,
 ]
 
+AUTH_USER_MODEL = 'users.User'
+
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 3rd-party
-    'django_extensions',
     'rest_framework',
     # 'stream_django',
 
@@ -60,6 +59,7 @@ INSTALLED_APPS = [
     'posts',
     'topics',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
