@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import answer, question
 
-# Register your models here.
+admin.site.register(answer)
+admin.site.register(question)
