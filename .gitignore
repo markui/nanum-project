@@ -1,7 +1,3 @@
-# Custom
-.idea/
-.config_secret/
-
 # Created by https://www.gitignore.io/api/macos,linux,python,django,pycharm
 
 ### Django ###
@@ -224,5 +220,9 @@ venv.bak/
 .mypy_cache/
 
 .config_secret/
-
+.config/
+.media/
+.idea/
+.static_root/
+secrets.tar
 # End of https://www.gitignore.io/api/macos,linux,python,django,pycharm
