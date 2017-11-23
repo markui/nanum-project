@@ -9,7 +9,7 @@ __all__ = (
 )
 
 
-class QuestionCommentSerializer(serializers.Modelserializer):
+class QuestionCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionComment
         fields = (
