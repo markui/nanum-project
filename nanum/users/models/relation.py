@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
-class FollowUser(models.Model):
+class UserFollow(models.Model):
     """
     유저 팔로우
     """
@@ -10,23 +10,22 @@ class FollowUser(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='follow_user_relations',
+        related_name='following_relations',
     )
     # 팔로우 받는 유저(to)
     target = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='follow_user_relations',
+        related_name='follower_relations',
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'target')
 
 
-class FollowTopic(models.Model):
+class TopicFollow(models.Model):
     """
     주제 팔로우
     """
@@ -34,23 +33,30 @@ class FollowTopic(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='follow_topic_relations',
     )
     # 팔로우 받는 주제(to)
-    target = models.ForeignKey(
+    topic = models.ForeignKey(
         'topics.Topic',
         on_delete=models.CASCADE,
-        related_name='follow_topic_relations',
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'target')
+        abstract = True
 
 
-class FollowQuestion(models.Model):
+class TopicExpertiseFollow(TopicFollow):
+    class Meta:
+        unique_together = ('user', 'topic')
+
+
+class TopicInterestFollow(TopicFollow):
+    class Meta:
+        unique_together = ('user', 'topic')
+
+
+class QuestionFollow(models.Model):
     """
     질문 팔로우
     """
@@ -59,23 +65,20 @@ class FollowQuestion(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='follow_question_relations',
     )
     # 팔로우 받는 질문(to)
-    target = models.ForeignKey(
+    question = models.ForeignKey(
         'posts.Question',
         on_delete=models.CASCADE,
-        related_name='follow_question_relations',
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'target')
+        unique_together = ('user', 'question')
 
 
-class BookmarkQuestion(models.Model):
+class QuestionBookmark(models.Model):
     """
     질문 북마크
     """
@@ -83,24 +86,21 @@ class BookmarkQuestion(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='bookmark_question_relations',
     )
     # 북마크 받은 질문(to)
-    target = models.ForeignKey(
+    question = models.ForeignKey(
         'posts.Question',
         on_delete=models.CASCADE,
-        related_name='bookmark_question_relations',
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'target')
+        unique_together = ('user', 'question')
 
 
 # 답변 추천/비추천
-class BaseVoteAnswer(models.Model):
+class BaseAnswerVote(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -110,34 +110,37 @@ class BaseVoteAnswer(models.Model):
         on_delete=models.CASCADE,
     )
     # 투표 받은 답변(to)
-    target = models.ForeignKey(
+    answer = models.ForeignKey(
         'posts.Answer',
         on_delete=models.CASCADE,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'target')
+        abstract = True
 
 
-class UpVoteAnswer(BaseVoteAnswer):
+class AnswerUpVote(BaseAnswerVote):
     """
     답변 추천
     """
-    pass
+
+    class Meta:
+        unique_together = ('user', 'answer')
 
 
-class DownVoteAnswer(BaseVoteAnswer):
+class AnswerDownVote(BaseAnswerVote):
     """
     답변 비추천
     """
-    pass
+
+    class Meta:
+        unique_together = ('user', 'answer')
 
 
 # 답변 북마크
-class BookmarkAnswer(models.Model):
+class AnswerBookmark(models.Model):
     """
     답변 북마크
     """
@@ -145,24 +148,22 @@ class BookmarkAnswer(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='bookmark_answer_relations',
     )
     # 북마크 받은 답변(to)
-    target = models.ForeignKey(
-        'posts.Answers',
+    answer = models.ForeignKey(
+        'posts.Answer',
         on_delete=models.CASCADE,
-        related_name='bookmark_answer_relations',
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'target')
+        unique_together = ('user', 'answer')
 
 
 # 댓글 추천/비추천
-class BaseVoteComment(models.Model):
+# 기본 댓글 관계
+class BaseCommentVote(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -171,28 +172,86 @@ class BaseVoteComment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
+# 댓글 종류별(질문-댓글/답변-댓글/댓글-댓글) 댓글 관계
+class BaseQuestionCommentVote(BaseCommentVote):
     # 투표 받은 댓글(to)
-    target = models.ForeignKey(
-        'posts.Comment',
+    comment = models.ForeignKey(
+        'posts.QuestionComment',
         on_delete=models.CASCADE,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ('user', 'comment')
+
+
+class BaseAnswerCommentVote(BaseCommentVote):
+    # 투표 받은 댓글(to)
+    comment = models.ForeignKey(
+        'posts.AnswerComment',
+        on_delete=models.CASCADE,
+    )
 
     class Meta:
-        unique_together = ('user', 'target')
+        unique_together = ('user', 'comment')
 
 
-class UpVoteComment(BaseVoteComment):
+class BaseNestedCommentVote(BaseCommentVote):
+    # 투표 받은 댓글(to)
+    comment = models.ForeignKey(
+        'posts.NestedComment',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        unique_together = ('user', 'comment')
+
+
+# 댓글 종류별 추천/비추천
+
+class QuestionCommentUpVote(BaseQuestionCommentVote):
     """
-    댓글 추천
+    질문-댓글 추천
     """
     pass
 
 
-class DownVoteComment(BaseVoteComment):
+class QuestionCommentDownVote(BaseQuestionCommentVote):
     """
-    댓글 비추천
+    질문-댓글 비추천
+    """
+    pass
+
+
+class AnswerCommentUpVote(BaseAnswerCommentVote):
+    """
+    답변-댓글 추천
+    """
+    pass
+
+
+class AnswerCommentDownVote(BaseAnswerCommentVote):
+    """
+    답변-댓글 비추천
+    """
+    pass
+
+
+class NestedCommentUpVote(BaseNestedCommentVote):
+    """
+    댓글-댓글 추천
+    """
+    pass
+
+
+class NestedCommentDownVote(BaseNestedCommentVote):
+    """
+    댓글-댓글 비추천
     """
     pass
