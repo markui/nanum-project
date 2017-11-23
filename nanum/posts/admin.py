@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import answer, question, images
+from .models import Images, Question, Answer
 
-admin.site.register(answer)
-admin.site.register(question)
-admin.site.register(images)
+admin.site.register(Answer)
+admin.site.register(Question)
+admin.site.register(Images)
