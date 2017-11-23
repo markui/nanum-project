@@ -8,6 +8,7 @@ __all__ =(
     'NestedComment',
 )
 
+
 class Comment(models.Model):
     """
     Question과 Answer Comment를 위한 Abstract Model
