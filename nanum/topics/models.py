@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -9,6 +10,11 @@ class Topic(models.Model):
     Question과 Answer에 ManyToMany로 연결
     
     """
+    creator = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
     name = models.TextField(
         max_length=200,
     )
@@ -19,3 +25,6 @@ class Topic(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+
+    def __str__(self):
+        return f'{self.name}\ncreator:{self.creator}'

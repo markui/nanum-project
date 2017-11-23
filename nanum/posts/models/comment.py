@@ -5,16 +5,14 @@ from django.db import models
 from posts.models.answer import Answer
 from posts.models.question import Question
 
-User = settings.AUTH_USER_MODEL
 
 class Comment(models.Model):
     """
     Question과 Answer Comment를 위한 Abstract Model
     """
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='comments'
     )
     comment = models.TextField(
         max_length=2000,
@@ -31,6 +29,9 @@ class Comment(models.Model):
     #     related_name='comments'
     # )
 
+    def __str__(self):
+        return f'{self.user} - {self.comment[:50]}'
+
     class Meta:
         abstract = True
 
@@ -39,7 +40,7 @@ class QuestionComment(Comment):
     질문에 대한 댓글
     """
     question = models.ForeignKey(
-        Question,
+        'Question',
         on_delete=models.CASCADE,
         related_name='comments'
     )
@@ -49,7 +50,7 @@ class AnswerComment(Comment):
     답변에 대한 댓글
     """
     answer = models.ForeignKey(
-        Answer,
+        'Answer',
         on_delete=models.CASCADE,
         related_name='comments'
     )
