@@ -16,6 +16,7 @@ class Question(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
+        null=True,
     )
     title = models.CharField(max_length=100)
     content = models.TextField()
