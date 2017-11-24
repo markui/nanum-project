@@ -4,16 +4,30 @@ from django.utils import timezone
 
 __all__ = (
     'Profile',
+    'EducationCredentials',
+    'EmploymentCredentials',
 )
 
 User = settings.AUTH_USER_MODEL
 
+HIGHSCHOOL = 'HS'
+BACHELOR = 'BA'
+MASTERS = 'MA'
+DOCTORATE = 'PHD'
 
-# DEGREES = (
-#     ('', ''),
-#     ('', ''),
-#     ('', '')
-# )
+DEGREES = (
+    (HIGHSCHOOL, '고등학교'),
+    (BACHELOR, '대학교'),
+    (MASTERS, '석사과정'),
+    (DOCTORATE, '박사과정')
+)
+
+# 1900 ~ 현재 연도
+YEAR_CHOICES = [
+    (year, year)
+    for year
+    in range(1900, timezone.now().year + 1)
+]
 
 
 class Profile(models.Model):
@@ -87,11 +101,17 @@ class EducationCredentials(models.Model):
         related_name="concentration_credentials",
     )
 
-    # degree_type = models.CharField(
-    #     choices=DEGREES,
-    # )
+    degree_type = models.CharField(
+        choices=DEGREES,
+        max_length=3,
+        blank=True,
+    )
 
-    # graduation_year = models.DateField()
+    graduation_year = models.IntegerField(
+        choices=YEAR_CHOICES,
+        blank=True,
+        null=True,
+    )
 
 
 class EmploymentCredentials(models.Model):
@@ -112,12 +132,6 @@ class EmploymentCredentials(models.Model):
         related_name="company_credentials",
     )
 
-    # 1900 ~ 현재 연도
-    YEAR_CHOICES = [
-        (year, year)
-        for year
-        in range(1900, timezone.now().year + 1)
-    ]
     start_year = models.IntegerField(
         choices=YEAR_CHOICES,
         blank=True,
