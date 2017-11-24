@@ -28,7 +28,7 @@ class UserManager(BaseUserManager):
             raise ValueError('The given email or facebook_user_id must be set')
 
         # email, facebook_user_id 둘 중 하나의 값이 None이 아닌 경우
-        # 만일 None인 값이 있으면 이를 ''로 바꿔준다 (필드 null=False이기 때문)
+        # 만일 None인 값이 있으면 이를 ''로 바꿔준다 (필드 null=False이기 때문이다)
         facebook_user_id = facebook_user_id or ''
         email = self.normalize_email(email)
 

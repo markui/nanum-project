@@ -10,7 +10,7 @@ class Topic(models.Model):
     Question과 Answer에 ManyToMany로 연결
     
     """
-    creator = models.OneToOneField(
+    creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
