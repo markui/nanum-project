@@ -20,17 +20,15 @@ class UserManager(BaseUserManager):
     def _create_user(self, email, facebook_user_id, password, **extra_fields):
         """
         Creates and saves a User with the given
-        email OR facebook_user_id
+        email AND facebook_user_id(if it exists)
         and password.
         """
-        # 반드시 email, facebook_user_id 둘 중 하나의 값은 있어야 한다
-        if not email and not facebook_user_id:
-            raise ValueError('The given email or facebook_user_id must be set')
-
-        # email, facebook_user_id 둘 중 하나의 값이 None이 아닌 경우
+        # 반드시 email 값이 있어야 한다
+        if not email:
+            raise ValueError('The email field is mandatory.')
+        email = self.normalize_email(email)
         # 만일 None인 값이 있으면 이를 ''로 바꿔준다 (필드 null=False이기 때문이다)
         facebook_user_id = facebook_user_id or ''
-        email = self.normalize_email(email)
 
         user = self.model(email=email, facebook_user_id=facebook_user_id, **extra_fields)
         user.set_password(password)
@@ -55,8 +53,11 @@ class UserManager(BaseUserManager):
 # Custom User Model
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    하나의 유저는 반드시 email 혹은 facebook_user_id 둘 중
-    적어도 하나의 필드에는 값이 들어가 있어야 한다.
+    하나의 유저는 반드시 email이 있어야 한다.
+    facebook_user_id는 유저의 페이스북 로그인에 따라, 존재할 수도 안할수도 있다.
+
+    유저가 페이스북 로그인을 했는데, 이메일을 받아오지 못한 경우,
+    이메일을 무조건 수집해야 한다.
 
     email, facebook_user_id 모두 unique 하다.
     따라서, 같은 이메일 혹은 같은 페이스북 유저 ID를 가진 유저는 존재할 수 없다.
@@ -75,10 +76,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(_('email address'), unique=True, blank=True)
-    facebook_user_id = models.PositiveIntegerField(_('facebook user id'), unique=True, blank=True)
+    facebook_user_id = models.CharField(
+        _('facebook user id'),
+        max_length=200,
+        unique=True,
+        blank=True,
+    )
 
     user_type = models.CharField(
-        max_length=1,
+        max_length=2,
         choices=USER_TYPE_CHOICES,
         default=EMAIL,
     )
