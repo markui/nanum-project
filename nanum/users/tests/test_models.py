@@ -11,18 +11,18 @@ __all__ = (
 
 
 class UserModelTest(TestCase):
-    # @classmethod
-    # def setUpTestData(cls):
-    #     superuser = User.objects.create_superuser(
-    #         email="abc@abc.com",
-    #         password="12345678",
-    #         name="슈퍼유저",
-    #         is_superuser=True,
-    #     )
+    @classmethod
+    def setUpTestData(cls):
+        superuser = User.objects.create_superuser(
+            email="abc@abc.com",
+            password="12345678",
+            is_superuser=True,
+        )
 
     def test_user_create_user_method_non_superuser_facebook(self):
         user = User.objects.create_user(
             name="유저",
+            email="abc@abc.org",
             facebook_user_id=1234567,
             password="abc123",
         )
