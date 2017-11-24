@@ -22,3 +22,7 @@ class TopicModelTest(TestCase):
         topic = Topic.objects.get(id=1)
         field_label = topic._meta.get_field('name').verbose_name
         self.assertEquals(field_label, 'name')
+
+    def test_topic_string_representation(self):
+        topic = Topic.objects.get(id=1)
+        self.assertEqual(str(topic), 'Computer Science\ncreator:None')

@@ -1,103 +1,24 @@
 from django.conf import settings
 from django.db import models
 
+__all__=(
+    # 답변
+    'BaseAnswerVote',
+    'AnswerUpVote',
+    'AnswerDownVote',
 
-class UserFollow(models.Model):
-    """
-    유저 팔로우
-    """
-    # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='following_relations',
-    )
-    # 팔로우 받는 유저(to)
-    target = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='follower_relations',
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'target')
-
-
-class TopicFollow(models.Model):
-    """
-    주제 팔로우
-    """
-    # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    # 팔로우 받는 주제(to)
-    topic = models.ForeignKey(
-        'topics.Topic',
-        on_delete=models.CASCADE,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        abstract = True
-
-
-class TopicExpertiseFollow(TopicFollow):
-    class Meta:
-        unique_together = ('user', 'topic')
-
-
-class TopicInterestFollow(TopicFollow):
-    class Meta:
-        unique_together = ('user', 'topic')
-
-
-class QuestionFollow(models.Model):
-    """
-    질문 팔로우
-    """
-
-    # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    # 팔로우 받는 질문(to)
-    question = models.ForeignKey(
-        'posts.Question',
-        on_delete=models.CASCADE,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'question')
-
-
-class QuestionBookmark(models.Model):
-    """
-    질문 북마크
-    """
-    # 북마크 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    # 북마크 받은 질문(to)
-    question = models.ForeignKey(
-        'posts.Question',
-        on_delete=models.CASCADE,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'question')
-
+    # 코멘트
+    'BaseCommentVote',
+    'BaseQuestionCommentVote',
+    'BaseAnswerCommentVote',
+    'BaseNestedCommentVote',
+    'QuestionCommentUpVote',
+    'QuestionCommentDownVote',
+    'AnswerCommentUpVote',
+    'AnswerCommentDownVote',
+    'NestedCommentUpVote',
+    'NestedCommentDownVote',
+)
 
 # 답변 추천/비추천
 class BaseAnswerVote(models.Model):
@@ -137,29 +58,6 @@ class AnswerDownVote(BaseAnswerVote):
 
     class Meta:
         unique_together = ('user', 'answer')
-
-
-# 답변 북마크
-class AnswerBookmark(models.Model):
-    """
-    답변 북마크
-    """
-    # 북마크 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    # 북마크 받은 답변(to)
-    answer = models.ForeignKey(
-        'posts.Answer',
-        on_delete=models.CASCADE,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'answer')
-
 
 # 댓글 추천/비추천
 # 기본 댓글 관계
