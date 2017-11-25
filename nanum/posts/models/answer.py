@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
-from . import Question
+
+from . import PostType
 
 __all__ = (
     'Answer',
@@ -20,5 +21,6 @@ class Answer(models.Model):
     content = models.TextField()
     created_at = models.DateField(auto_now_add=True)
 
-
-
+    def save(self, *args, **kwargs):
+        super().save()
+        PostType.objects.create(answer=self)

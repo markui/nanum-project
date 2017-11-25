@@ -1,5 +1,7 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
+from . import PostType
 
 __all__ = (
     'Question',
@@ -24,4 +26,6 @@ class Question(models.Model):
 
     objects = QuestionManager()
 
-
+    def save(self, *args, **kwargs):
+        super().save()
+        PostType.objects.create(question=self)

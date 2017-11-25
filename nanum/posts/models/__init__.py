@@ -1,4 +1,4 @@
+from .comment import *
 from .question import *
 from .answer import *
-from .comment import *
 from .images import *
