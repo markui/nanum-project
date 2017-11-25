@@ -17,7 +17,7 @@ from django.contrib.auth.base_user import BaseUserManager
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, email, facebook_user_id, password, **extra_fields):
+    def _create_user(self, email, password, facebook_user_id=None, **extra_fields):
         """
         Creates and saves a User with the given
         email AND facebook_user_id(if it exists)
@@ -38,7 +38,7 @@ class UserManager(BaseUserManager):
     def create_user(self, email=None, facebook_user_id=None, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, facebook_user_id, password, **extra_fields)
+        return self._create_user(email, password, facebook_user_id, **extra_fields)
 
     def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
@@ -79,7 +79,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     facebook_user_id = models.CharField(
         _('facebook user id'),
         max_length=200,
-        unique=True,
         blank=True,
     )
 
@@ -263,7 +262,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email or self.facebook_user_id
+        return self.email
 
     class Meta:
         verbose_name = _('user')

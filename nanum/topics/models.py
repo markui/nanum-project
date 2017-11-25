@@ -18,6 +18,10 @@ class Topic(models.Model):
     name = models.TextField(
         max_length=200,
     )
+    description = models.TextField(
+        max_length=300,
+        blank=True,
+    )
     image = models.ImageField(
         upload_to='topic',
         blank=True,
