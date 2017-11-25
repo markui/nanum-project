@@ -262,7 +262,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.facebook_user_id or self.email
+        return self.email
 
     class Meta:
         verbose_name = _('user')
