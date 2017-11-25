@@ -63,7 +63,7 @@ class UserModelTest(TestCase):
         user_facebook = User.objects.get(pk=2)
         user_email = User.objects.get(pk=3)
         self.assertEqual(str(super_user), "abc@abc.com")
-        self.assertEqual(str(user_facebook), "12345677")
+        self.assertEqual(str(user_facebook), "abc1@abc.com")
         self.assertEqual(str(user_email), "abc2@abc.com")
 
     def test_user_verbose_name_singular(self):
