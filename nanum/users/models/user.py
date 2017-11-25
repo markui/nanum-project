@@ -79,7 +79,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     facebook_user_id = models.CharField(
         _('facebook user id'),
         max_length=200,
-        unique=True,
         blank=True,
     )
 
@@ -263,7 +262,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email or self.facebook_user_id
+        return self.facebook_user_id or self.email
 
     class Meta:
         verbose_name = _('user')
