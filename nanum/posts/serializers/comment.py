@@ -1,45 +1,21 @@
 from rest_framework import serializers
 
-from ..models import QuestionComment, AnswerComment, NestedComment
+from ..models import Comment, PostType
 
 __all__ = (
-    'QuestionCommentSerializer',
-    'AnswerCommentSerializer',
-    'NestedCommentSerializer',
+    'CommentSerializer',
 )
 
 
-class QuestionCommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = QuestionComment
+        model = Comment
         fields = (
-            'question',
+            'pk',
             'user',
-            'comment',
+            'content',
             'created_at',
             'modified_at',
-        )
-
-
-class AnswerCommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AnswerComment
-        fields = (
-            'answer',
-            'user',
-            'comment',
-            'created_at',
-            'modified_at',
-        )
-
-
-class NestedCommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NestedComment
-        fields = (
-            'parent_comment',
-            'user',
-            'comment',
-            'created_at',
-            'modified_at',
+            'parent',
+            'post_type',
         )

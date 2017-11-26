@@ -28,6 +28,18 @@ class PostType(models.Model):
         on_delete=models.CASCADE,
     )
 
+    @property
+    def post(self):
+        if self.question.pk is not None:
+            return self.question
+        if self.answer.pk is not None:
+            return self.answer
+        raise AssertionError("Neither 'question' or 'answer' set")
+
+    @property
+    def comments(self):
+        return Comment.objects.filter(post_type=self.pk)
+
 
 class Comment(MPTTModel):
     """
@@ -55,7 +67,7 @@ class Comment(MPTTModel):
         'self',
         null=True,
         blank=True,
-        related_name='children',
+        related_name='children_comments',
         db_index=True
     )
 
