@@ -21,7 +21,6 @@ class PostModelTest(TestCase):
         )
         q1 = Question.objects.create(
             user=u1,
-            title="질문1",
             content="질문 내용",
         )
         a1 = Answer.objects.create(
@@ -44,6 +43,12 @@ class PostModelTest(TestCase):
             user=u1,
             content="질문1 답변1 코멘트 내용",
             post_manager=PostManager.objects.get(answer=a1),
+        )
+        ac1_nested_1 = Comment.objects.create(
+            user=u2,
+            content="질문1 답변1 nested 코멘트",
+            post_manager=PostManager.objects.get(answer=a1),
+            parent=ac1,
         )
         ac1_nested_1 = Comment.objects.create(
             user=u2,
