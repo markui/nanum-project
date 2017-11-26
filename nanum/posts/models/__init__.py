@@ -1,4 +1,3 @@
 from .comment import *
-from .question import *
-from .answer import *
+from .post import *
 from .images import *

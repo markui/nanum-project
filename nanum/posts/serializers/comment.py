@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..models import Comment, PostType
+from ..models import Comment
 
 __all__ = (
     'CommentSerializer',
@@ -17,5 +17,5 @@ class CommentSerializer(serializers.ModelSerializer):
             'created_at',
             'modified_at',
             'parent',
-            'post_type',
+            'post_manager',
         )
