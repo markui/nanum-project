@@ -24,7 +24,10 @@ class Question(models.Model):
     content = models.CharField(
         max_length=150,
     )
-
+    topics = models.ManyToManyField(
+        'topics.Topic',
+        related_name='questions',
+    )
     created_at = models.DateField(
         auto_now_add=True,
     )
