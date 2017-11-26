@@ -19,4 +19,4 @@ stream-django==1.3.3
 stream-python==2.5.0
 urllib3==1.21.1
 wcwidth==0.1.7
-
+django-mptt==0.8.7

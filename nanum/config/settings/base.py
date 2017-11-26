@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd-party
     'rest_framework',
+    'mptt',
+
     # 'stream_django',
 
     # Custom
@@ -117,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-LANGUAGE_CODE = 'ko-kr'
+LANGUAGE_CODE = 'en'
 TIME_ZONE = 'Asia/Seoul'
 USE_I18N = True
 USE_L10N = True

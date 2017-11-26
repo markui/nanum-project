@@ -18,7 +18,7 @@ class UserModelTest(TestCase):
             is_superuser=True,
         )
         User.objects.create_user(
-            name="김 경훈",
+            name="김경훈",
             email="abc1@abc.com",
             facebook_user_id=12345677,
             password="12345678",
@@ -59,11 +59,11 @@ class UserModelTest(TestCase):
         User __str__ 함수 테스트
         :return:
         """
-        super_user = User.objects.get(pk=1)
-        user_facebook = User.objects.get(pk=2)
-        user_email = User.objects.get(pk=3)
+        super_user = User.objects.get(email="abc@abc.com", )
+        user_facebook = User.objects.get(email="abc1@abc.com",)
+        user_email = User.objects.get(email="abc2@abc.com",)
         self.assertEqual(str(super_user), "abc@abc.com")
-        self.assertEqual(str(user_facebook), "12345677")
+        self.assertEqual(str(user_facebook), "abc1@abc.com")
         self.assertEqual(str(user_email), "abc2@abc.com")
 
     def test_user_verbose_name_singular(self):
@@ -71,7 +71,7 @@ class UserModelTest(TestCase):
         User Meta verbose_name 테스트
         :return:
         """
-        super_user = User.objects.get(pk=1)
+        super_user = User.objects.get(email="abc@abc.com", )
         field_label = super_user._meta.verbose_name
         self.assertEquals(field_label, _('user'))
 
@@ -80,7 +80,7 @@ class UserModelTest(TestCase):
         User Meta verbose_name_plural 테스트
         :return:
         """
-        super_user = User.objects.get(pk=1)
+        super_user = User.objects.get(email="abc@abc.com", )
         field_label = super_user._meta.verbose_name_plural
         self.assertEquals(field_label, _('users'))
 

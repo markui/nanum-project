@@ -176,63 +176,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     # 7. 댓글 추천/비추천
-
-    # 7-1) 질문에 댓글
     # 댓글 추천
-    upvoted_question_comments = models.ManyToManyField(
-        'posts.QuestionComment',
+    upvoted_comments = models.ManyToManyField(
+        'posts.Comment',
         related_name='upvoted_users',
         blank=True,
-        through='QuestionCommentUpVote',
+        through='CommentUpVote',
         through_fields=('user', 'comment'),
     )
 
     # 댓글 비추천
-    downvoted_question_comments = models.ManyToManyField(
-        'posts.QuestionComment',
+    downvoted_comments = models.ManyToManyField(
+        'posts.Comment',
         related_name='downvoted_users',
         blank=True,
-        through='QuestionCommentDownVote',
+        through='CommentDownVote',
         through_fields=('user', 'comment'),
     )
 
-    # 7-2) 답변에 댓글
-    # 댓글 추천
-    upvoted_answer_comments = models.ManyToManyField(
-        'posts.AnswerComment',
-        related_name='upvoted_users',
-        blank=True,
-        through='AnswerCommentUpVote',
-        through_fields=('user', 'comment'),
-    )
-
-    # 댓글 비추천
-    downvoted_answer_comments = models.ManyToManyField(
-        'posts.AnswerComment',
-        related_name='downvoted_users',
-        blank=True,
-        through='AnswerCommentDownVote',
-        through_fields=('user', 'comment'),
-    )
-
-    # 7-3) 댓글에 댓글
-    # 댓글 추천
-    upvoted_nested_comments = models.ManyToManyField(
-        'posts.NestedComment',
-        related_name='upvoted_users',
-        blank=True,
-        through='NestedCommentUpVote',
-        through_fields=('user', 'comment'),
-    )
-
-    # 댓글 비추천
-    downvoted_nested_comments = models.ManyToManyField(
-        'posts.NestedComment',
-        related_name='downvoted_users',
-        blank=True,
-        through='NestedCommentDownVote',
-        through_fields=('user', 'comment'),
-    )
 
     # 유저 활동
     is_staff = models.BooleanField(
