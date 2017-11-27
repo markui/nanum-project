@@ -15,20 +15,10 @@ class PostManager(models.Model):
     Comment에 어떤 종류의 포스트와 연결이 되어있는지, Question/Answer에 어떤 Comment가 연결되어있는지를 위한 중간모델
     Reference: https://lukeplant.me.uk/blog/posts/avoid-django-genericforeignkey/
     """
-    question = models.OneToOneField(
-        'Question',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='post_manager',
-    )
-    answer = models.OneToOneField(
-        'Answer',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='post_manager',
-    )
+    question = models.OneToOneField('Question', null=True, blank=True, on_delete=models.CASCADE,
+                                    related_name='post_manager')
+    answer = models.OneToOneField('Answer', null=True, blank=True, on_delete=models.CASCADE,
+                                  related_name='post_manager')
 
     @property
     def post(self):
@@ -59,35 +49,16 @@ class Comment(MPTTModel):
     Modified Preorder Tree Traversal 적용 모델 - Nested Comment 적용
     Generic Foreign Key를 통해 answer/question에 연결될 수 있음
     """
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-    )
-    content = models.CharField(
-        max_length=2000,
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-    modified_at = models.DateTimeField(
-        auto_now=True,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    content = models.CharField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
     # Nested Comment
-    parent = TreeForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        related_name='children_comments',
-        db_index=True
-    )
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children_comments', db_index=True)
 
     # Question / Answer Foreign Key
-    post_manager = models.ForeignKey(
-        PostManager,
-        on_delete=models.CASCADE,
-    )
+    post_manager = models.ForeignKey(PostManager, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.user} - {self.content[:50]}'
