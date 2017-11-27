@@ -9,23 +9,15 @@ __all__ = (
     'QuestionFollow',
 )
 
+
 class UserFollow(models.Model):
     """
     유저 팔로우
     """
     # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='following_relations',
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='following_relations')
     # 팔로우 받는 유저(to)
-    target = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='follower_relations',
-    )
-
+    target = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='follower_relations')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -37,16 +29,9 @@ class TopicFollow(models.Model):
     주제 팔로우
     """
     # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     # 팔로우 받는 주제(to)
-    topic = models.ForeignKey(
-        'topics.Topic',
-        on_delete=models.CASCADE,
-    )
-
+    topic = models.ForeignKey('topics.Topic', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -69,16 +54,9 @@ class QuestionFollow(models.Model):
     """
 
     # 팔로우 하는 유저(from)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     # 팔로우 받는 질문(to)
-    question = models.ForeignKey(
-        'posts.Question',
-        on_delete=models.CASCADE,
-    )
-
+    question = models.ForeignKey('posts.Question', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

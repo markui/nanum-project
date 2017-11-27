@@ -16,24 +16,11 @@ class QuestionManager(models.Manager):
 
 
 class Question(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-    )
-    content = models.CharField(
-        max_length=150,
-    )
-    topics = models.ManyToManyField(
-        'topics.Topic',
-        related_name='questions',
-    )
-    created_at = models.DateField(
-        auto_now_add=True,
-    )
-    modified_at = models.DateTimeField(
-        auto_now=True,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    content = models.CharField(max_length=150)
+    topics = models.ManyToManyField('topics.Topic', related_name='questions')
+    created_at = models.DateField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
@@ -42,22 +29,11 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-    )
-    question = models.ForeignKey(
-        'Question',
-        on_delete=models.CASCADE,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    question = models.ForeignKey('Question', on_delete=models.CASCADE)
     content = models.TextField()
-    created_at = models.DateField(
-        auto_now_add=True
-    )
-    modified_at = models.DateTimeField(
-        auto_now=True,
-    )
+    created_at = models.DateField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         super().save()
