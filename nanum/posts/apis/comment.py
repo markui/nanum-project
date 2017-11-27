@@ -1,22 +1,58 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 
-from posts.serializers import CommentSerializer
+from ..serializers import CommentSerializer
 from ..models import Comment, PostManager
 
 __all__ = (
-    'CommentAPI',
+    'CommentListCreateView',
 )
 
 
-class CommentAPI(generics.CreateAPIView):
+class CommentListCreateView(generics.ListCreateAPIView):
     queryset = Comment
     serializer_class = CommentSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )
+
+    def get_queryset(self):
+        """
+        generics의 get_queryset 함수 override
+        Comment 중 User가 단 comment queryset 역참조하여 반환
+        :return:
+        """
+        user = self.request.user
+        return user.comment_set.all()
+
+    def list(self, request, *args, **kwargs):
+        """
+        ListModelMixin의 list 함수 override
+        User가 단 Comment 반환
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        if not request.data:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return self.create(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         """
         CreateModelMixin의 create 함수 override
-        request.data의 question혹은 answer를 get_post_type을 통해 변형하여
+        request.data의 question혹은 answer를 get_post_manager를 통해 연결된 post_manager과 연동
+
         :param data:
         :return:
         """
@@ -36,6 +72,7 @@ class CommentAPI(generics.CreateAPIView):
 
     def get_post_manager(self, data):
         """
+        Create helper method
         Data에 Question pk가 왔으면 해당 Question과 매핑되어있는 PostType pk를 반환
         Answer pk 가 왔으면 해당 Answer과 매핑되어있는 PostType pk를 반환
         :param post_type:
