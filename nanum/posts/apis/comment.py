@@ -1,8 +1,8 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 
-from posts.serializers import CommentSerializer
 from ..models import Comment, PostManager
+from ..serializers import CommentSerializer
 
 __all__ = (
     'CommentListCreateView',
@@ -42,6 +42,11 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        if not request.data:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return self.create(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         """

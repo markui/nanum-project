@@ -219,6 +219,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Custom
 .config_secret/
 .config/
 .media/
@@ -226,3 +227,8 @@ venv.bak/
 .static_root/
 secrets.tar
 # End of https://www.gitignore.io/api/macos,linux,python,django,pycharm
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
