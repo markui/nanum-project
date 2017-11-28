@@ -1,0 +1,20 @@
+branch-defaults:
+  dev-siwon:
+    environment: EB-Docker-Deploy-Master
+environment-defaults:
+  EB-Docker-Deploy-Master:
+    branch: null
+    repository: null
+global:
+  application_name: siwon
+  default_ec2_keyname: EB-Docker-Deploy-Keypair
+  default_platform: arn:aws:elasticbeanstalk:ap-northeast-2::platform/Docker running
+    on 64bit Amazon Linux/2.8.0
+  default_region: ap-northeast-2
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: eb-user
+  sc: git
+  workspace_type: Application
