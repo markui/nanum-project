@@ -1,4 +1,12 @@
-# Created by https://www.gitignore.io/api/macos,linux,python,django,pycharm
+# Custom
+.idea/
+.static_root/
+.media/
+
+# .ebignore
+!.config_secret
+
+# Created by https://www.gitignore.io/api/linux,macos,python,django,pycharm
 
 ### Django ###
 *.log
@@ -99,9 +107,6 @@ atlassian-ide-plugin.xml
 
 # Cursive Clojure plugin
 .idea/replstate.xml
-
-# Ruby plugin and RubyMine
-/.rakeTasks
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
@@ -219,14 +224,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Custom
-.config_secret/
-.config/
-.media/
-.idea/
-.static_root/
-secrets.tar
-# End of https://www.gitignore.io/api/macos,linux,python,django,pycharm
+# End of https://www.gitignore.io/api/linux,macos,python,django,pycharm
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

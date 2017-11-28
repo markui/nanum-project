@@ -1,6 +1,6 @@
 from .base import *
 
-config_secret = json.loads(open(CONFIG_SECRET_DEPLOY_FILE).read())
+config_secret = json.loads(open(CONFIG_SECRET_DEV_FILE).read())
 
 # Installed Apps
 INSTALLED_APPS += [
@@ -27,6 +27,7 @@ DATABASES = config_secret['django']['databases']
 
 # Allowed hosts
 ALLOWED_HOSTS = [
+    'localhost',
     '.elasticbeanstalk.com',
     '.siwon.me',
 ]

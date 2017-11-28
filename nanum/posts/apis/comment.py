@@ -1,8 +1,8 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 
-from ..serializers import CommentSerializer
 from ..models import Comment, PostManager
+from ..serializers import CommentSerializer
 
 __all__ = (
     'CommentListCreateView',
