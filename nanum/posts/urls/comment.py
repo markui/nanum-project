@@ -7,5 +7,5 @@ __all__ = (
 )
 
 urlpatterns = [
-    url(r'^$', apis.CommentAPI.as_view(), name='comment'),
+    url(r'^$', apis.CommentListCreateView.as_view(), name='comment'),
 ]

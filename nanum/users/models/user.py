@@ -76,25 +76,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(_('email address'), unique=True, blank=True)
-    facebook_user_id = models.CharField(
-        _('facebook user id'),
-        max_length=200,
-        blank=True,
-    )
-
-    user_type = models.CharField(
-        max_length=2,
-        choices=USER_TYPE_CHOICES,
-        default=EMAIL,
-    )
+    facebook_user_id = models.CharField(_('facebook user id'), max_length=200, blank=True)
+    user_type = models.CharField(max_length=2, choices=USER_TYPE_CHOICES, default=EMAIL)
 
     # 이름
     name = models.CharField(_('full name'), max_length=30)
 
     # 다대다 관계
-
     # 1. 유저 팔로우
-
     # 내가 팔로우 하는 유저들
     following = models.ManyToManyField(
         'self',
@@ -109,7 +98,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     # 2. 주제 팔로우
-
     # 전문분야 주제
     topic_expertise = models.ManyToManyField(
         'topics.Topic',
@@ -194,7 +182,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         through_fields=('user', 'comment'),
     )
 
-
     # 유저 활동
     is_staff = models.BooleanField(
         _('staff status'),
@@ -239,10 +226,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         full_name = '%s' % (self.name)
         return full_name.strip()
-
-    # def get_short_name(self):
-    #     "Returns the short name for the user."
-    #     return self.first_name
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """

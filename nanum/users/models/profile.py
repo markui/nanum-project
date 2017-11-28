@@ -48,26 +48,12 @@ class Profile(models.Model):
                           'width': 50}} => (Profile: profile_image)
     }
     """
-    user = models.OneToOneField(
-        User,
-        primary_key=True,
-        on_delete=models.CASCADE,
-    )
-
-    profile_image = models.ImageField(
-        blank=True,
-        null=True,
-    )
+    user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
+    profile_image = models.ImageField(blank=True, null=True)
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
-    main_credential = models.CharField(
-        max_length=100,
-        blank=True,
-    )
-    description = models.TextField(
-        max_length=2000,
-        blank=True
-    )
+    main_credential = models.CharField(max_length=100, blank=True)
+    description = models.TextField(max_length=2000, blank=True)
 
     # facebook 그래프 API로 가져온 정보
     gender = models.CharField(max_length=30, blank=True)
@@ -80,66 +66,26 @@ class EducationCredentials(models.Model):
     """
     유저 프로필에 들어가는 학력
     """
-    user = models.ForeignKey(
-        'Profile',
-        on_delete=models.CASCADE,
-        related_name="education_credentials",
-    )
-    school = models.ForeignKey(
-        'topics.Topic',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="school_credentials",
-    )
+    user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="education_credentials")
+    school = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
+                               related_name="school_credentials")
     # 전공
-    concentration = models.ForeignKey(
-        'topics.Topic',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="concentration_credentials",
-    )
-
-    degree_type = models.CharField(
-        choices=DEGREES,
-        max_length=3,
-        blank=True,
-    )
-
-    graduation_year = models.IntegerField(
-        choices=YEAR_CHOICES,
-        blank=True,
-        null=True,
-    )
+    concentration = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
+                                      related_name="concentration_credentials")
+    # 학위
+    degree_type = models.CharField(choices=DEGREES, max_length=3, blank=True)
+    graduation_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
 
 
 class EmploymentCredentials(models.Model):
     """
     유저 프로필에 들어가는 이력
     """
-    user = models.ForeignKey(
-        'Profile',
-        on_delete=models.CASCADE,
-        related_name="employment_credentials",
-    )
+    user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="employment_credentials")
     position = models.CharField(max_length=50, blank=True)
-    company = models.ForeignKey(
-        'topics.Topic',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="company_credentials",
-    )
+    company = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
+                                related_name="company_credentials")
 
-    start_year = models.IntegerField(
-        choices=YEAR_CHOICES,
-        blank=True,
-        null=True,
-    )
-    end_year = models.IntegerField(
-        choices=YEAR_CHOICES,
-        blank=True,
-        null=True,
-    )
+    start_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
+    end_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
     working_status = models.BooleanField(default=False)
