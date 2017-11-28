@@ -5,6 +5,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.core.mail import send_mail
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from rest_framework.authtoken.models import Token
 
 __all__ = (
     'User',
@@ -33,6 +34,9 @@ class UserManager(BaseUserManager):
         user = self.model(email=email, facebook_user_id=facebook_user_id, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+
+        # 유저가 생성된 후, 토큰 생성하기
+        Token.objects.create(user=user)
         return user
 
     def create_user(self, email=None, facebook_user_id=None, password=None, **extra_fields):
@@ -75,7 +79,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         (EMAIL, 'Email'),
     )
 
-    email = models.EmailField(_('email address'), unique=True, blank=True)
+    # 이메일은 필수
+    email = models.EmailField(_('email address'), unique=True)
     facebook_user_id = models.CharField(_('facebook user id'), max_length=200, blank=True)
     user_type = models.CharField(max_length=2, choices=USER_TYPE_CHOICES, default=EMAIL)
 
@@ -215,6 +220,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
+
+    # 생성된 User의 토큰(User와 OneToOneField)을 가져온다
+    @property
+    def token(self):
+        return self.auth_token.key
 
     def clean(self):
         super().clean()
