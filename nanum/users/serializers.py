@@ -39,7 +39,6 @@ class SignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        print(validated_data)
         return User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
@@ -64,16 +63,11 @@ class LoginSerializer(serializers.ModelSerializer):
     """
     이메일 로그인을 위한 Serializer
     """
+    email = serializers.EmailField(max_length=254)
 
     class Meta:
         model = User
-
-
-
-
-
-
-
-
-
-
+        fields = (
+            'email',
+            'password',
+        )
