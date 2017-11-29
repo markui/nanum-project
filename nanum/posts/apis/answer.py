@@ -38,6 +38,15 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         """
         return super().create(request, *args, **kwargs)
 
+class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+
+    """
+    queryset = Answer
+    serializer_class = AnswerSerializer
+    permission_classes = (
+        permissions.IsAuthenticated,
+    )
 
 class AnswerMainFeedListView(generics.ListAPIView):
     """
