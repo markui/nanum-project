@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from . import PostManager
@@ -25,16 +26,21 @@ class Question(models.Model):
 
     def save(self, *args, **kwargs):
         super().save()
-        PostManager.objects.create(question=self)
+        PostManager.objects.get_or_create(question=self)
 
 
 class Answer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     question = models.ForeignKey('Question', on_delete=models.CASCADE)
-    content = models.TextField()
+    content = JSONField(blank=True, null=True)
+    published = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         super().save()
-        PostManager.objects.create(answer=self)
+        post_manager = PostManager.objects.get_or_create(answer=self)
+
+class AnswerImage(models.Model):
+    image = models.ImageField(null=False)
+    answer = models.ForeignKey('Answer', on_delete=models.CASCADE, related_name='answer_image_set')

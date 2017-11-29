@@ -1,6 +1,10 @@
-from django_filters.rest_framework import DjangoFilterBackend, filters
-from rest_framework import generics, permissions
+import json
 
+from django_filters.rest_framework import DjangoFilterBackend, filters
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+
+from .. import utils
 from ..models import Answer
 from ..serializers.answer import AnswerSerializer, AnswerFeedSerializer
 
@@ -29,6 +33,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         """
         Request에서 quill.js json 파일을 content로 받음
+        content 형식 = {"ops" : [{"insert":...},{"attributes":...},]}
         사진 관련 파일에 대해 bytecode parsing -> save as jpg to S3 -> convert bytecode to S3 link
         변환된 데이터를 가지고 Answer 객체 생성
         :param request:
@@ -36,7 +41,56 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         :param kwargs:
         :return:
         """
-        return super().create(request, *args, **kwargs)
+        data = request.data.copy()
+        content = data.pop('content')[0]
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        answer = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        content_data = self.create_answer_images(content, answer, *args, **kwargs)
+        self.add_content_on_answer(pk=answer.pk, content_data=content_data)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def add_content_on_answer(self, pk, content_data):
+        answer = Answer.objects.get(pk=pk)
+        answer.content = content_data
+        answer.save()
+
+    def create_answer_images(self, content, answer, *args, **kwargs):
+        # Initializer processor
+        img_processor = utils.QuillJSImageProcessor()
+
+        # get content string from request and convert to json
+        json_data = img_processor.quill_content_string_to_json(content=content)
+
+        # json 에 None 값이 반환되었을 경우 answer_instance의 content에 blank가 저장되고 answer_image는 생성되지 않는다.
+        if not json_data:
+            pass
+
+        # get iterator from json
+        quill_content = iter(img_processor.get_quill_content(json_data=json_data))
+        new_quill_content = []
+        # iterate through
+        for item in quill_content:
+            image_data_string = img_processor.get_quill_image_data_string(item=item)
+            if image_data_string:
+                image_type, decoded_data = img_processor.image_data_string_split(image_data_string=image_data_string)
+                url = img_processor.save_image_file(image_type=image_type, decoded_data=decoded_data, answer=answer)
+                item['insert']['image'] = url
+            new_quill_content.append(item)
+
+        content_data = img_processor.update_quill_content(json_data, new_quill_content)
+        dump = json.dumps(content_data)
+
+        return content_data
+
+    def perform_create(self, serializer):
+        return serializer.save(user=self.request.user)
+
+
 
 class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -47,6 +101,7 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         permissions.IsAuthenticated,
     )
+
 
 class AnswerMainFeedListView(generics.ListAPIView):
     """
