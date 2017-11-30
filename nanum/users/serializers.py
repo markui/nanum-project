@@ -9,8 +9,8 @@ class SignupSerializer(serializers.ModelSerializer):
     이메일 회원가입을 위한 Serializer
     """
     email = serializers.EmailField(max_length=254)
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+    password1 = serializers.CharField(write_only=True, max_length=128)
+    password2 = serializers.CharField(write_only=True, max_length=128)
 
     class Meta:
         model = User
@@ -71,3 +71,11 @@ class LoginSerializer(serializers.ModelSerializer):
             'email',
             'password',
         )
+
+
+class FacebookLoginSerializer(serializers.Serializer):
+    """
+    페이스북 로그인을 위한 Serializer
+    """
+    access_token = serializers.CharField()
+    facebook_user_id = serializers.CharField()

@@ -7,6 +7,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.authtoken.models import Token
 
+from .profile import Profile
+from ..fields import EmailNullField, CharNullField
+
 __all__ = (
     'User',
 )
@@ -21,12 +24,11 @@ class UserManager(BaseUserManager):
     def _create_user(self, email, password, facebook_user_id=None, **extra_fields):
         """
         Creates and saves a User with the given
-        email AND facebook_user_id(if it exists)
-        and password.
+        email OR facebook_user_id OR password.
         """
         # 반드시 email 값이 있어야 한다
-        if not email:
-            raise ValueError('The email field is mandatory.')
+        if not email and not facebook_user_id:
+            raise ValueError('At least one of the email or facebook_user_id field is mandatory.')
         email = self.normalize_email(email)
         # 만일 None인 값이 있으면 이를 ''로 바꿔준다 (필드 null=False이기 때문이다)
         facebook_user_id = facebook_user_id or ''
@@ -37,6 +39,8 @@ class UserManager(BaseUserManager):
 
         # 유저가 생성된 후, 토큰 생성하기
         Token.objects.create(user=user)
+        # 유저가 생성된 후, 프로필 생성하기
+        Profile.objects.create(user=user)
         return user
 
     def create_user(self, email=None, facebook_user_id=None, password=None, **extra_fields):
@@ -57,11 +61,7 @@ class UserManager(BaseUserManager):
 # Custom User Model
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    하나의 유저는 반드시 email이 있어야 한다.
-    facebook_user_id는 유저의 페이스북 로그인에 따라, 존재할 수도 안할수도 있다.
-
-    유저가 페이스북 로그인을 했는데, 이메일을 받아오지 못한 경우,
-    이메일을 무조건 수집해야 한다.
+    하나의 유저는 반드시 email 또는 facebook_user_id가 있어야 한다.
 
     email, facebook_user_id 모두 unique 하다.
     따라서, 같은 이메일 혹은 같은 페이스북 유저 ID를 가진 유저는 존재할 수 없다.
@@ -80,8 +80,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     # 이메일은 필수
-    email = models.EmailField(_('email address'), unique=True)
-    facebook_user_id = models.CharField(_('facebook user id'), max_length=200, blank=True)
+    email = EmailNullField(_('email address'), blank=True, null=True, default=None, unique=True)
+    facebook_user_id = CharNullField(_('facebook user id'), max_length=300, blank=True, null=True, default=None,
+                                     unique=True)
     user_type = models.CharField(max_length=2, choices=USER_TYPE_CHOICES, default=EMAIL)
 
     # 이름
@@ -215,7 +216,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email
+        return self.email or f'fb_{self.facebook_user_id}'
 
     class Meta:
         verbose_name = _('user')
@@ -229,6 +230,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
+
+    def get_short_name(self):
+        """
+        Returns the first_name plus the last_name, with a space in between.
+        """
+        full_name = '%s' % (self.name)
+        return full_name.strip()
 
     def get_full_name(self):
         """

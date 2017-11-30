@@ -41,13 +41,13 @@ MEDIA_ROOT = os.path.join(ROOT_DIR, '.media')
 MEDIA_URL = '/media/'
 
 # Facebook
-# FACEBOOK_APP_ID = config_secret_common['facebook']['app_id']
-# FACEBOOK_APP_SECRET_CODE = config_secret_common['facebook']['secret_code']
-# FACEBOOK_SCOPE = [
-#     'user_friends',
-#     'public_profile',
-#     'email',
-# ]
+FACEBOOK_APP_ID = config_secret_common['facebook']['app_id']
+FACEBOOK_APP_SECRET_CODE = config_secret_common['facebook']['secret_code']
+FACEBOOK_SCOPE = [
+    'user_friends',
+    'public_profile',
+    'email',
+]
 
 # Auth
 AUTH_USER_MODEL = 'users.User'
@@ -64,6 +64,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'users.backends.FacebookBackend',
 ]
 
 # Allowed hosts
