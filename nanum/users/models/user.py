@@ -106,7 +106,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         through='TopicExpertiseFollow',
         through_fields=('user', 'topic'),
     )
-
+    
     # 관심분야 주제
     topic_interests = models.ManyToManyField(
         'topics.Topic',

@@ -16,3 +16,9 @@ class QuestionSerializer(serializers.ModelSerializer):
             'content',
             'created_at',
         )
+
+        read_only_fields = (
+            'user',
+            'content',
+            'created_at',
+        )

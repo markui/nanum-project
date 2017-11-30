@@ -12,7 +12,7 @@ urlpatterns = [
 
     url(r'^admin/', admin.site.urls),
     url(r'^user/', include('users.urls', namespace='user')),
-    url(r'^post/', include('posts.urls', namespace='post')),
+    url(r'^posts/', include('posts.urls', namespace='posts')),
     url(r'^topic/', include('topics.urls', namespace='topic')),
 ]
 
