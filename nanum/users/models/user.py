@@ -79,7 +79,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         (EMAIL, 'Email'),
     )
 
-    # 이메일은 필수
+    # 이메일 또는 페이스북 ID 적어도 하나는 필수
+    # blank = True, unqiue = True를 만족하기 위해서 Custom Field 정의
     email = EmailNullField(_('email address'), blank=True, null=True, default=None, unique=True)
     facebook_user_id = CharNullField(_('facebook user id'), max_length=300, blank=True, null=True, default=None,
                                      unique=True)
@@ -98,7 +99,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         # 나를 팔로우 하는 유저들
         related_name='followers',
-        through='UserFollow',
+        through='UserFollowRelation',
         # (source, target) 순서
         through_fields=('user', 'target'),
     )
@@ -109,7 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'topics.Topic',
         related_name='users_with_expertise',
         blank=True,
-        through='TopicExpertiseFollow',
+        through='TopicExpertiseFollowRelation',
         through_fields=('user', 'topic'),
     )
 
@@ -118,7 +119,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'topics.Topic',
         related_name='users_with_interest',
         blank=True,
-        through='TopicInterestFollow',
+        through='TopicInterestFollowRelation',
         through_fields=('user', 'topic'),
     )
 
@@ -127,7 +128,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Question',
         related_name='followers',
         blank=True,
-        through='QuestionFollow',
+        through='QuestionFollowRelation',
         through_fields=('user', 'question'),
     )
 
@@ -136,7 +137,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Question',
         related_name='who_bookmarked',
         blank=True,
-        through='QuestionBookmark',
+        through='QuestionBookmarkRelation',
         through_fields=('user', 'question'),
     )
 
@@ -147,7 +148,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Answer',
         related_name='upvoted_users',
         blank=True,
-        through='AnswerUpVote',
+        through='AnswerUpVoteRelation',
         through_fields=('user', 'answer'),
     )
 
@@ -156,7 +157,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Answer',
         related_name='downvoted_users',
         blank=True,
-        through='AnswerDownVote',
+        through='AnswerDownVoteRelation',
         through_fields=('user', 'answer'),
     )
 
@@ -165,7 +166,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Answer',
         related_name='bookmarked_users',
         blank=True,
-        through='AnswerBookmark',
+        through='AnswerBookmarkRelation',
         through_fields=('user', 'answer'),
     )
 
@@ -175,7 +176,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Comment',
         related_name='upvoted_users',
         blank=True,
-        through='CommentUpVote',
+        through='CommentUpVoteRelation',
         through_fields=('user', 'comment'),
     )
 
@@ -184,7 +185,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'posts.Comment',
         related_name='downvoted_users',
         blank=True,
-        through='CommentDownVote',
+        through='CommentDownVoteRelation',
         through_fields=('user', 'comment'),
     )
 

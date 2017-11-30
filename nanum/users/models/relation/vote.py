@@ -3,19 +3,19 @@ from django.db import models
 
 __all__ = (
     # 답변
-    'BaseAnswerVote',
-    'AnswerUpVote',
-    'AnswerDownVote',
+    'BaseAnswerVoteRelation',
+    'AnswerUpVoteRelation',
+    'AnswerDownVoteRelation',
 
     # 코멘트
-    'BaseCommentVote',
-    'CommentUpVote',
-    'CommentDownVote',
+    'BaseCommentVoteRelation',
+    'CommentUpVoteRelation',
+    'CommentDownVoteRelation',
 )
 
 
 # 답변 추천/비추천
-class BaseAnswerVote(models.Model):
+class BaseAnswerVoteRelation(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -29,7 +29,7 @@ class BaseAnswerVote(models.Model):
         abstract = True
 
 
-class AnswerUpVote(BaseAnswerVote):
+class AnswerUpVoteRelation(BaseAnswerVoteRelation):
     """
     답변 추천
     """
@@ -38,7 +38,7 @@ class AnswerUpVote(BaseAnswerVote):
         unique_together = ('user', 'answer')
 
 
-class AnswerDownVote(BaseAnswerVote):
+class AnswerDownVoteRelation(BaseAnswerVoteRelation):
     """
     답변 비추천
     """
@@ -49,7 +49,7 @@ class AnswerDownVote(BaseAnswerVote):
 
 # 댓글 추천/비추천
 # 기본 댓글 관계
-class BaseCommentVote(models.Model):
+class BaseCommentVoteRelation(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -62,11 +62,11 @@ class BaseCommentVote(models.Model):
         abstract = True
 
 
-class CommentUpVote(BaseCommentVote):
+class CommentUpVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
 
 
-class CommentDownVote(BaseCommentVote):
+class CommentDownVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
