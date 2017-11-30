@@ -41,13 +41,13 @@ MEDIA_ROOT = os.path.join(ROOT_DIR, '.media')
 MEDIA_URL = '/media/'
 
 # Facebook
-# FACEBOOK_APP_ID = config_secret_common['facebook']['app_id']
-# FACEBOOK_APP_SECRET_CODE = config_secret_common['facebook']['secret_code']
-# FACEBOOK_SCOPE = [
-#     'user_friends',
-#     'public_profile',
-#     'email',
-# ]
+FACEBOOK_APP_ID = config_secret_common['facebook']['app_id']
+FACEBOOK_APP_SECRET_CODE = config_secret_common['facebook']['secret_code']
+FACEBOOK_SCOPE = [
+    'user_friends',
+    'public_profile',
+    'email',
+]
 
 # Auth
 AUTH_USER_MODEL = 'users.User'
@@ -66,6 +66,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'users.backends.FacebookBackend',
+]
+
+REST_FRAMEWORK = {
+    # DRF Authentication
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
+
 # Allowed hosts
 ALLOWED_HOSTS = []
 
@@ -82,6 +95,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd-party
     'rest_framework',
+    'rest_framework.authtoken',
     'mptt',
 
     # 'stream_django',
