@@ -18,7 +18,7 @@ class QuestionManager(models.Manager):
 class Question(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=150)
-    topics = models.ManyToManyField('topics.Topic', related_name='questions')
+    topic = models.ForeignKey('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     objects = QuestionManager()
@@ -26,6 +26,9 @@ class Question(models.Model):
     def save(self, *args, **kwargs):
         super().save()
         PostManager.objects.create(question=self)
+
+    def __str__(self):
+        return f'user: {self.user}, content: {self.content}'
 
 
 class Answer(models.Model):
