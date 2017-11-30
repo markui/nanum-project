@@ -41,51 +41,37 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         :param kwargs:
         :return:
         """
-        data = request.data.copy()
-        content = data.pop('content')[0]
+        self.modify_request_data(request)
+        return super().create(request, *args, **kwargs)
 
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        answer = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+    def modify_request_data(self, request):
+        """
+        request를 parameter로 받아 content내용을 변화시킴
+        :param request: Django Request 객체
+        :return:
+        """
+        request.data._mutable = True
+        content = request.data.get('content')
+        question = request.data.get('question')
+        request.data['content'] = self.create_answer_images(content=content, question=question)
+        request.data._mutable = False
 
-        content_data = self.create_answer_images(content, answer, *args, **kwargs)
-        self.add_content_on_answer(pk=answer.pk, content_data=content_data)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def add_content_on_answer(self, pk, content_data):
-        answer = Answer.objects.get(pk=pk)
-        answer.content = content_data
-        answer.save()
-
-    def create_answer_images(self, content, answer, *args, **kwargs):
+    def create_answer_images(self, content, question, *args, **kwargs):
         # Initializer processor
         img_processor = utils.QuillJSImageProcessor()
+        delta = img_processor.get_delta(content=content)
+        delta_list = img_processor.get_delta_list(delta=delta)
 
-        # get content string from request and convert to json
-        json_data = img_processor.quill_content_string_to_json(content=content)
-
-        # json 에 None 값이 반환되었을 경우 answer_instance의 content에 blank가 저장되고 answer_image는 생성되지 않는다.
-        if not json_data:
-            pass
-
-        # get iterator from json
-        quill_content = iter(img_processor.get_quill_content(json_data=json_data))
-        new_quill_content = []
-        # iterate through
-        for item in quill_content:
-            image_data_string = img_processor.get_quill_image_data_string(item=item)
+        # iterate through delta list to modify the image string
+        for item in delta_list:
+            image_data_string = img_processor.get_image_base64(item=item)
             if image_data_string:
-                image_type, decoded_data = img_processor.image_data_string_split(image_data_string=image_data_string)
-                url = img_processor.save_image_file(image_type=image_type, decoded_data=decoded_data, answer=answer)
+                image_type, decoded_data = img_processor.split_image_base64(image_data_string=image_data_string)
+                url = img_processor.save_image_file(image_type=image_type, decoded_data=decoded_data, question=question)
                 item['insert']['image'] = url
-            new_quill_content.append(item)
 
-        content_data = img_processor.update_quill_content(json_data, new_quill_content)
-        dump = json.dumps(content_data)
-
-        return content_data
+        dump = json.dumps(delta)
+        return dump
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)

@@ -21,6 +21,7 @@ class AnswerSerializer(serializers.ModelSerializer):
             'modified_at',
         )
 
+
 class AnswerFeedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer

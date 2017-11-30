@@ -1,13 +1,15 @@
 import base64
 import json
-import os
+import random
 import re
+import string
 
-from posts.models.post import AnswerImage
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 
 class QuillJSImageProcessor:
-    def quill_content_string_to_json(self, content):
+    def get_delta(self, content):
         """
         Request에서 content부분을 뽑아내 json을 만듬
         {'content':{"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}}
@@ -15,35 +17,23 @@ class QuillJSImageProcessor:
         {"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}
         :return:
         """
-        # try:
-        #     content = request.data['content']
-        # except KeyError:
-        #     return ""
         return json.loads(content)
 
-    def get_quill_content(self, json_data):
+    def get_delta_list(self, delta):
         """
         {"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}
         ->
-        iter([{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}])
+        ([{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}])
         :param json_data: QuillJS의 json 형태의 data
         :return:
         """
-        return json_data['ops']
+        return delta['ops']
 
-    def update_quill_content(self, json_data, new_content_data):
+    def get_image_base64(self, item):
         """
-        "ops"의 Value를 전달받은 new_content_Data로
-        :param json_data:
-        :param new_content_data:
-        :return:
-        """
-        json_data['ops'] = new_content_data
-        return json_data
-
-    def get_quill_image_data_string(self, item):
-        """
-
+        {"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}}
+        ->
+        "data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="
         :param item: json item
         :return:
         """
@@ -52,7 +42,7 @@ class QuillJSImageProcessor:
         except:
             return None
 
-    def image_data_string_split(self, image_data_string):
+    def split_image_base64(self, image_data_string):
         """
 
         :param image_data_string:
@@ -65,7 +55,7 @@ class QuillJSImageProcessor:
         decoded_data = base64.b64decode(byte_data_base64)
         return image_type, decoded_data
 
-    def save_image_file(self, image_type, decoded_data, answer):
+    def save_image_file(self, image_type, decoded_data, question):
         """
 
         :param image_type:
@@ -73,20 +63,9 @@ class QuillJSImageProcessor:
         :param answer_pk:
         :return:
         """
-        # set variables for filename
-        answer_pk = answer.pk
-        image_pk = answer.answer_image_set.count() + 1
-        filename = f'a-{answer_pk}__i-{image_pk}.{image_type}'
+        rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        filename = f'q-{question}__{rand_str}.{image_type}'
+        file = default_storage.save(filename, ContentFile(decoded_data))
+        url = default_storage.url(filename)
 
-        with open(filename, 'wb') as f:
-            f.write(decoded_data)
-            f.close()
-
-        answer_image = self.save_answer_image_instance(image=filename, answer=answer)
-
-        # 이미지가 저장된 후 이미지를 삭제
-        os.remove(filename)
-        return answer_image.image.url  # boto3에 저장된 이미지의 url 반환
-
-    def save_answer_image_instance(self, image, answer):
-        return AnswerImage.objects.create(image=image, answer=answer)
+        return url  # boto3에 저장된 이미지의 url 반환
