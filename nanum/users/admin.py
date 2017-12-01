@@ -3,8 +3,7 @@ from django.contrib import admin
 from .models import *
 
 # Register your models here.
-
-admin.site.register(
+user_models = [
     # user.py
     User,
     # profile.py
@@ -22,4 +21,6 @@ admin.site.register(
     ExpertiseFollowRelation,
     InterestFollowRelation,
     QuestionFollowRelation,
-)
+]
+
+admin.site.register(user_models)

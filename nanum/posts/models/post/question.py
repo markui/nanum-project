@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from ...models import PostManager
@@ -18,7 +17,7 @@ class QuestionManager(models.Manager):
 class Question(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=150)
-    topic = models.ManyToManyField('topics.Topic', related_name='questions')
+    topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     objects = QuestionManager()
@@ -29,3 +28,6 @@ class Question(models.Model):
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
+
+    def topic_list(self):
+        return 3
