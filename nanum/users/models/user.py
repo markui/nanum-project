@@ -110,7 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'topics.Topic',
         related_name='users_with_expertise',
         blank=True,
-        through='TopicExpertiseFollowRelation',
+        through='ExpertiseFollowRelation',
         through_fields=('user', 'topic'),
     )
     
@@ -119,7 +119,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         'topics.Topic',
         related_name='users_with_interest',
         blank=True,
-        through='TopicInterestFollowRelation',
+        through='InterestFollowRelation',
         through_fields=('user', 'topic'),
     )
 
