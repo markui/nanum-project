@@ -9,15 +9,15 @@ User = get_user_model()
 
 
 class AnswerListCreateAPIsTest(APITestCase):
-    URL_API_ANSWER_LIST_CREATE_NAME = 'post:answer:user'
-    URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'post:answer:main_feed'
-    URL_API_ANSWER_BOOKMARK_FEED_LIST_NAME = 'post:answer:bookmark'
-    URL_API_ANSWER_FILTER_FEED_LIST_NAME = 'post:answer:filter'
+    URL_API_ANSWER_LIST_CREATE_NAME = 'posts:answer:user'
+    URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'posts:answer:main_feed'
+    URL_API_ANSWER_BOOKMARK_FEED_LIST_NAME = 'posts:answer:bookmark'
+    URL_API_ANSWER_FILTER_FEED_LIST_NAME = 'posts:answer:filter'
 
-    URL_API_ANSWER_LIST_CREATE = '/post/answer/user/'
-    URL_API_ANSWER_MAIN_FEED_LIST = '/post/answer/main_feed/'
-    URL_API_ANSWER_BOOKMARK_FEED_LIST = '/post/answer/bookmark/'
-    URL_API_ANSWER_FILTER_FEED_LIST = '/post/answer/filter/'
+    URL_API_ANSWER_LIST_CREATE = '/posts/answer/user/'
+    URL_API_ANSWER_MAIN_FEED_LIST = '/posts/answer/main_feed/'
+    URL_API_ANSWER_BOOKMARK_FEED_LIST = '/posts/answer/bookmark/'
+    URL_API_ANSWER_FILTER_FEED_LIST = '/posts/answer/filter/'
 
     ANSWER_COUNT_FOR_USER_ONE = 5
     ANSWER_COUNT_FOR_USER_TWO = 10

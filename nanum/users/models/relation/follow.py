@@ -2,15 +2,15 @@ from django.conf import settings
 from django.db import models
 
 __all__ = (
-    'UserFollow',
-    'TopicFollow',
-    'TopicExpertiseFollow',
-    'TopicInterestFollow',
-    'QuestionFollow',
+    'UserFollowRelation',
+    'TopicFollowRelation',
+    'TopicExpertiseFollowRelation',
+    'TopicInterestFollowRelation',
+    'QuestionFollowRelation',
 )
 
 
-class UserFollow(models.Model):
+class UserFollowRelation(models.Model):
     """
     유저 팔로우
     """
@@ -24,7 +24,7 @@ class UserFollow(models.Model):
         unique_together = ('user', 'target')
 
 
-class TopicFollow(models.Model):
+class TopicFollowRelation(models.Model):
     """
     주제 팔로우
     """
@@ -38,17 +38,17 @@ class TopicFollow(models.Model):
         abstract = True
 
 
-class TopicExpertiseFollow(TopicFollow):
+class TopicExpertiseFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
 
-class TopicInterestFollow(TopicFollow):
+class TopicInterestFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
 
-class QuestionFollow(models.Model):
+class QuestionFollowRelation(models.Model):
     """
     질문 팔로우
     """

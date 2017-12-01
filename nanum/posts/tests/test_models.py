@@ -5,6 +5,7 @@ from ..models import *
 
 User = get_user_model()
 
+
 class PostModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):

@@ -2,12 +2,12 @@ from django.conf import settings
 from django.db import models
 
 __all__ = (
-    'QuestionBookmark',
-    'AnswerBookmark',
+    'QuestionBookmarkRelation',
+    'AnswerBookmarkRelation',
 )
 
 
-class QuestionBookmark(models.Model):
+class QuestionBookmarkRelation(models.Model):
     """
     질문 북마크
     """
@@ -22,7 +22,7 @@ class QuestionBookmark(models.Model):
 
 
 # 답변 북마크
-class AnswerBookmark(models.Model):
+class AnswerBookmarkRelation(models.Model):
     """
     답변 북마크
     """
