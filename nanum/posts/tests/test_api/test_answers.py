@@ -80,7 +80,6 @@ class AnswerListCreateAPIsTest(APITestCase):
         }
         response = self.client.post(self.URL_API_ANSWER_LIST_CREATE, data=data)
 
-        print(response.data)
         # Status 확인
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -97,6 +96,14 @@ class AnswerListCreateAPIsTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 개수 유저 1이 생성한 개수가 맞는지 확인
         self.assertEqual(len(response.data), self.ANSWER_COUNT_FOR_USER_ONE)
+
+    def test_get_answer_list_when_not_authenticated(self):
+        """
+        유저가 로그인 되지 않았을 시 403에러를 올리는지 확인
+        :return:
+        """
+        response = self.client.get(self.URL_API_ANSWER_LIST_CREATE)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_answer_main_feed_list_view(self):
         pass
