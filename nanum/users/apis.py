@@ -1,21 +1,19 @@
-from pprint import pprint
-
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
-from rest_framework import status
+from rest_framework import status, mixins, generics
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import APIException
-from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import SignupSerializer, LoginSerializer, FacebookLoginSerializer
+from .serializers import SignupSerializer, LoginSerializer, FacebookLoginSerializer, TopicFollowRelationSerializer
 
 User = get_user_model()
 
 
-class SignupView(CreateAPIView):
+class SignupView(generics.CreateAPIView):
     """
     유저 이메일 회원가입
     """
@@ -171,3 +169,29 @@ class FacebookLoginView(APIView):
             'token': Token.objects.get_or_create(user=user)[0].key
         }
         return Response(ret, status=status.HTTP_200_OK)
+
+
+class InterestFollowRelationCreateView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = TopicFollowRelationSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        # 유저 - 관심주제 팔로우 성공했을 경우
+        return Response(status=status.HTTP_201_CREATED)
+
+
+class InterestFollowRelationDetailView(mixins.DestroyModelMixin,
+                                       generics.GenericAPIView):
+    pass
+
+
+class ExpertiseFollowRelationCreateView(APIView):
+    pass
+
+
+class ExpertiseFollowRelationDetailView(mixins.CreateModelMixin,
+                                        mixins.DestroyModelMixin,
+                                        generics.GenericAPIView):
+    pass
