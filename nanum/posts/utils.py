@@ -19,7 +19,7 @@ class QuillJSImageProcessor:
         """
         return json.loads(content)
 
-    def get_delta_list(self, delta):
+    def get_delta_list(self, delta, iterator=False):
         """
         {"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}
         ->
@@ -27,20 +27,32 @@ class QuillJSImageProcessor:
         :param json_data: QuillJS의 json 형태의 data
         :return:
         """
+        if iterator:
+            return iter(delta['ops'])
         return delta['ops']
 
-    def get_image_base64(self, item):
+    def get_image_url(self, item, question):
         """
         {"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}}
         ->
         "data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="
+        except not image, return None
+        else already url, return url
+        ->
+        "<image_url>"
         :param item: json item
-        :return:
+        :return: 저장된 이미지의 url
         """
         try:
-            return item['insert']['image']
-        except:
+            image_data_string = item['insert']['image']
+            if image_data_string[:4] != "data": # 만약 image_data_string이 이미 url일 경우
+                return image_data_string
+        except TypeError:
             return None
+
+        image_type, decoded_data = self.split_image_base64(image_data_string=image_data_string)
+        url = self.save_image_file(image_type=image_type, decoded_data=decoded_data, question=question)
+        return url
 
     def split_image_base64(self, image_data_string):
         """
@@ -69,3 +81,12 @@ class QuillJSImageProcessor:
         url = default_storage.url(filename)
 
         return url  # boto3에 저장된 이미지의 url 반환
+
+    def delete_image_file(self, *args):
+        """
+        Takes a single string of the name of the image or list of strings as args.
+        If List, iterate through to delete the files in the list.
+        If String, delete the single file.
+        :param args:
+        :return:
+        """

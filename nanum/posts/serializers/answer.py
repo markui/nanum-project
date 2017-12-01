@@ -4,10 +4,13 @@ from ..models import Answer
 
 __all__ = (
     'AnswerSerializer',
+    'AnswerUpdateSerializer',
+    'AnswerFeedSerializer',
 )
 
 
 class AnswerSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Answer
         fields = (
@@ -15,12 +18,29 @@ class AnswerSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content',
-        )
-        read_only_fields = (
+            'published',
             'created_at',
             'modified_at',
         )
 
+    def validate_content(self):
+        
+        pass
+
+class AnswerUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        fields = (
+            'question',
+            'content',
+            'published',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'created_at',
+            'modified_at',
+        )
 
 class AnswerFeedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +48,7 @@ class AnswerFeedSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'pk',
             'user',
+            'questoin',
             'content',
             'created_at',
             'modified_at',
