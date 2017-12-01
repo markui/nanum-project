@@ -7,5 +7,6 @@ __all__ = (
 )
 
 urlpatterns = [
-    url(r'^$', apis.QuestionAPI.as_view(), name='question'),
+    # posts:question:create
+    url(r'^$', apis.QuestionListCreateView.as_view(), name='question-create'),
 ]
