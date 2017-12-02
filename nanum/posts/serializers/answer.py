@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from ..models import Answer
+from ..models import Answer, QuillDeltaOperation
+from ..utils import QuillJSImageProcessor
 
 __all__ = (
     'AnswerSerializer',
@@ -8,8 +9,11 @@ __all__ = (
     'AnswerFeedSerializer',
 )
 
+img_processor = QuillJSImageProcessor()
+
 
 class AnswerSerializer(serializers.ModelSerializer):
+    content = serializers.JSONField()
 
     class Meta:
         model = Answer
@@ -23,9 +27,18 @@ class AnswerSerializer(serializers.ModelSerializer):
             'modified_at',
         )
 
-    def validate_content(self):
-        
-        pass
+    def save(self, **kwargs):
+        """
+        Answer 객체를 만들고 content를 AnswerContent로 변환하여 저장
+        :param kwargs:
+        :return:
+        """
+        content = self.validated_data.pop('content')
+        instance = super().save(**kwargs)
+        delta_list = img_processor.get_delta_operation_list(content, iterator=True)
+        # Answer에 대한 content를 Save해주는 함수
+        img_processor.save_delta_operation_list(delta_list=delta_list, model=QuillDeltaOperation, post=instance)
+
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,6 +54,7 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
             'created_at',
             'modified_at',
         )
+
 
 class AnswerFeedSerializer(serializers.ModelSerializer):
     class Meta:

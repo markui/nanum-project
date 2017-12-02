@@ -4,9 +4,9 @@ from django_filters.rest_framework import DjangoFilterBackend, filters
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
-from .. import utils
 from ..models import Answer
 from ..serializers.answer import AnswerSerializer, AnswerFeedSerializer, AnswerUpdateSerializer
+from ..utils import QuillJSImageProcessor
 
 __all__ = (
     'AnswerListCreateView',
@@ -15,6 +15,8 @@ __all__ = (
     'AnswerBookmarkFeedListView',
     'AnswerFilterFeedListView',
 )
+
+img_processor = QuillJSImageProcessor()
 
 
 class AnswerListCreateView(generics.ListCreateAPIView):
@@ -30,65 +32,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return user.answer_set.all()
-
-    def create(self, request, *args, **kwargs):
-        """
-        Request에서 quill.js json 파일을 content로 받음
-        content 형식 = {"ops" : [{"insert":...},{"attributes":...},]}
-        사진 관련 파일에 대해 bytecode parsing -> save as jpg to S3 -> convert bytecode to S3 link
-        변환된 데이터를 가지고 Answer 객체 생성
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        self.modify_request_data(request)
-        return super().create(request, *args, **kwargs)
-
-    def modify_request_data(self, request):
-        """
-        request를 parameter로 받아 content내용을 변화시킴
-
-        :param request: Django Request 객체
-        :return:
-        """
-        request.data._mutable = True
-        content, question = request.data.get('content'), request.data.get('question')
-        print('ORIGINAL CONTENT')
-        print(content)
-        if content:
-            request.data['content'] = self.modify_content_image_value(content=content, question=question)
-            print('MODIFIED CONTENT')
-            print(request.data['content'])
-        request.data._mutable = False
-
-    def modify_content_image_value(self, content, question, *args, **kwargs):
-        """
-        Content의 image key의 value들을 base64형태의 전체 파일에서
-        storage의 url(local일 경우 default storage, deploy일 경우 S3)로 변환하여 새 content 반환
-
-        :param content: request객체에서 꺼낸 content dictionary
-        :param question: 해당 답변이 쓰이는 question 객체
-        :param args:
-        :param kwargs:
-        :return: modified_content: "image" key 의 value가 url로 바뀐 content
-        """
-        # Initializer quillJSImageProcessor
-        img_processor = utils.QuillJSImageProcessor()
-        delta = img_processor.get_delta(content=content)
-        delta_list = img_processor.get_delta_list(delta=delta)
-
-        # iterate through delta list to modify the image string
-        for item in delta_list:
-            url = img_processor.get_image_url(item=item, question=question)
-            if url:  # 반환된 값이 url일 경우
-                item['insert']['image'] = url
-
-        modified_content = json.dumps(delta)
-        return modified_content
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
 
 
 class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -138,8 +81,6 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         :param request:
         :return:
         """
-        img_processor = utils.QuillJSImageProcessor()
-
         instance_delta = instance.content
         instance_image_list = self.get_image_list(instance_delta)
         instance_image_set = set(instance_image_list)
@@ -151,16 +92,12 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         to_be_deleted = list(instance_image_set - request_image_set)
 
-
-
-
     def get_image_list(self, delta):
         """
         Dict형태의 quillJS delta 값을 받아 delta안에 image의 url들을 추출해 List형태로 반환
         :param content: dict 형태의 quillJS content
         :return:
         """
-        img_processor = utils.QuillJSImageProcessor()
         delta_list = img_processor.get_delta_list(delta=delta, iterator=True)
         image_url_list = list()
         for item in delta_list:
