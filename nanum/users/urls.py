@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-from .apis import SignupView, LoginView, FacebookLoginView
+from .apis import SignupView, LoginView, FacebookLoginView, InterestFollowRelationCreateView, \
+    ExpertiseFollowRelationCreateView
 
 urlpatterns = [
     # /user/signup/
@@ -11,4 +12,9 @@ urlpatterns = [
     # /user/facebook-login/
     url(r'^facebook-login/$', FacebookLoginView.as_view(), name='facebook-login'),
 
+    # /user/topic-interest-follow-relation/
+    url(r'^topic-interest-follow-relation/$', InterestFollowRelationCreateView.as_view(),
+        name='topic-interest-follow-relation'),
+    url(r'^topic-expertise-follow-relation/$', ExpertiseFollowRelationCreateView.as_view(),
+        name='topic-expertise-follow-relation')
 ]

@@ -4,8 +4,8 @@ from django.db import models
 __all__ = (
     'UserFollowRelation',
     'TopicFollowRelation',
-    'TopicExpertiseFollowRelation',
-    'TopicInterestFollowRelation',
+    'ExpertiseFollowRelation',
+    'InterestFollowRelation',
     'QuestionFollowRelation',
 )
 
@@ -38,12 +38,12 @@ class TopicFollowRelation(models.Model):
         abstract = True
 
 
-class TopicExpertiseFollowRelation(TopicFollowRelation):
+class ExpertiseFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
 
-class TopicInterestFollowRelation(TopicFollowRelation):
+class InterestFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
