@@ -12,7 +12,6 @@ __all__ = (
 
 img_processor = QuillJSImageProcessor()
 
-
 class Answer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     question = models.ForeignKey('Question', on_delete=models.CASCADE)
@@ -27,9 +26,11 @@ class Answer(models.Model):
         :return:
         """
         quill_delta_operation_querydict = self.quill_delta_operation_set.all().order_by('pk')
+        if not quill_delta_operation_querydict:
+            return ""
         delta_operation_list = list()
-        for content in quill_delta_operation_querydict:
-            delta_operation_list.append(content.quill_delta_operation)
+        for quill_delta_operation in quill_delta_operation_querydict:
+            delta_operation_list.append(quill_delta_operation.delta_operation)
         content = img_processor.create_quill_content(delta_operation_list=delta_operation_list)
         return content
 
@@ -49,7 +50,7 @@ class QuillDeltaOperation(models.Model):
     )
 
     @property
-    def quill_delta_operation(self):
+    def delta_operation(self):
         """
         quill의 operation 하나를 반환
         text 일 경우
