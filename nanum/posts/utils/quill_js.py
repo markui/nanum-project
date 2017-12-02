@@ -6,6 +6,9 @@ import re
 import string
 from collections import OrderedDict
 
+__all__ = (
+    'QuillJSImageProcessor',
+)
 
 
 class QuillJSImageProcessor:
@@ -20,7 +23,7 @@ class QuillJSImageProcessor:
         """
         return json.loads(content)
 
-    def get_delta_operation_list(self, delta: dict, iterator: bool=False):
+    def get_delta_operation_list(self, delta: dict, iterator: bool = False):
         """
         Delta 내부에 있는 Opertaion의 list를 반환
         {"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}
@@ -35,7 +38,7 @@ class QuillJSImageProcessor:
             return iter(delta['ops'])
         return delta['ops']
 
-    def create_quill_content(self, delta_operation_list: list, json: bool=False):
+    def create_quill_content(self, delta_operation_list: list, json: bool = False):
         """
         [{'insert':{'image':'data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=='}},{'insert":'\n'}]
         ->
