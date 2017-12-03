@@ -28,7 +28,6 @@ class BaseAnswerVoteRelation(models.Model):
     class Meta:
         abstract = True
 
-
 class AnswerUpVoteRelation(BaseAnswerVoteRelation):
     """
     답변 추천

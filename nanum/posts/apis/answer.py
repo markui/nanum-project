@@ -1,101 +1,140 @@
 import json
 
-from django_filters.rest_framework import DjangoFilterBackend, filters
+from django.http import Http404
+from django_filters import rest_framework as filters
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
-from .. import utils
+import topics
+from topics.models import Topic
 from ..models import Answer
 from ..serializers.answer import AnswerSerializer, AnswerFeedSerializer, AnswerUpdateSerializer
+from ..utils import QuillJSImageProcessor
 
 __all__ = (
     'AnswerListCreateView',
     'AnswerRetrieveUpdateDestroyView',
     'AnswerMainFeedListView',
-    'AnswerBookmarkFeedListView',
-    'AnswerFilterFeedListView',
 )
+
+img_processor = QuillJSImageProcessor()
+
+
+class AnswerFilter(filters.FilterSet):
+    """
+    답변 query_params를 통한 각종 필드 filter를 만들어주는 class
+    """
+    topic = filters.CharFilter(method='filter_topic')
+    bookmarked = filters.CharFilter(method='filter_bookmarked')
+    ordering = filters.CharFilter(method='filter_ordering')
+
+    def filter_topic(self, queryset, name, value):
+        try:
+            value = int(value)
+            if not Topic.objects.filter(pk=value).exists():
+                return {"message": "해당 value에 대한 Topic이 존재하지 않습니다."}
+            return queryset.filter(question__topic=value)
+        except ValueError:
+            return {"message": "int형태의 값이 아닙니다."}
+
+    def filter_bookmarked(self, queryset, name, value):
+        if value == "True":
+            filtered_queryset = queryset.filter(answerbookmarkrelation__user=self.request.user)
+            return filtered_queryset
+        else:
+            return {"message": "True만 value로 올 수 있습니다."}
+
+    def filter_ordering(self, queryset, name, value):
+        fields = [field.name for field in queryset.model._meta.get_fields()]
+        if value in fields:
+            return queryset.order_by(value)
+        else:
+            return {"message": f"value로 전달된 값이 queryset의 필드에 존재하지 않습니다."
+                               f"queryset {queryset.model} 은 다음과 같은 필드를 갖고 있습니다: {fields}"}
+
+    class Meta:
+        model = Answer
+        fields = ['user', 'topic', 'bookmarked', 'ordering']
 
 
 class AnswerListCreateView(generics.ListCreateAPIView):
     """
     유저가 작성한 Answer들을 갖고와주는 ListCreate API
     """
-    queryset = Answer
-    serializer_class = AnswerSerializer
+    queryset = Answer.objects.all()
     permission_classes = (
         permissions.IsAuthenticated,
     )
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_class = AnswerFilter
 
-    def get_queryset(self):
-        user = self.request.user
-        return user.answer_set.all()
-
-    def create(self, request, *args, **kwargs):
+    def filter_queryset(self, queryset):
         """
-        Request에서 quill.js json 파일을 content로 받음
-        content 형식 = {"ops" : [{"insert":...},{"attributes":...},]}
-        사진 관련 파일에 대해 bytecode parsing -> save as jpg to S3 -> convert bytecode to S3 link
-        변환된 데이터를 가지고 Answer 객체 생성
+        generics의 filter_queryset override
+
+        필터가 가능한 queryset이면 필터를 실시, 그 외의 경우에는 에러 메세지를 반환
+        :param queryset: View의 queryset
+        """
+        query_params = self.request.query_params.keys()
+        filter_fields = self.filter_class.get_fields().keys()
+
+        # query_params가 존재하며 filter_fields의 subset 이 아닐 경우
+        if query_params and not query_params <= filter_fields:
+            result = {"message":"존재하지 않는 query_parameter입니다. 필터가 가능한 query_parameter는 다음과 같습니다:"
+                              f"{filter_fields}"}
+        else:
+            for backend in list(self.filter_backends):
+                result = backend().filter_queryset(self.request, queryset, self)
+
+        return result
+
+    def list(self, request, *args, **kwargs):
+        """
+        ListModelMixin의 list override
+
+        변경점
+        1. queryset -> result
+        2. Response 에 대한 try except문 추가
         :param request:
         :param args:
         :param kwargs:
         :return:
         """
-        self.modify_request_data(request)
-        return super().create(request, *args, **kwargs)
+        result = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(result)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-    def modify_request_data(self, request):
+        serializer = self.get_serializer(result, many=True)
+        try:
+            return Response(serializer.data)
+        except:
+            return Response(result, status.HTTP_400_BAD_REQUEST)
+
+    def get_serializer(self, *args, **kwargs):
         """
-        request를 parameter로 받아 content내용을 변화시킴
-
-        :param request: Django Request 객체
-        :return:
-        """
-        request.data._mutable = True
-        content, question = request.data.get('content'), request.data.get('question')
-        print('ORIGINAL CONTENT')
-        print(content)
-        if content:
-            request.data['content'] = self.modify_content_image_value(content=content, question=question)
-            print('MODIFIED CONTENT')
-            print(request.data['content'])
-        request.data._mutable = False
-
-    def modify_content_image_value(self, content, question, *args, **kwargs):
-        """
-        Content의 image key의 value들을 base64형태의 전체 파일에서
-        storage의 url(local일 경우 default storage, deploy일 경우 S3)로 변환하여 새 content 반환
-
-        :param content: request객체에서 꺼낸 content dictionary
-        :param question: 해당 답변이 쓰이는 question 객체
+        Override get_serializer 함수 - POST요청과 GET요청을 나누어 Serializer 종류를 변경
         :param args:
         :param kwargs:
-        :return: modified_content: "image" key 의 value가 url로 바뀐 content
+        :return:
         """
-        # Initializer quillJSImageProcessor
-        img_processor = utils.QuillJSImageProcessor()
-        delta = img_processor.get_delta(content=content)
-        delta_list = img_processor.get_delta_list(delta=delta)
-
-        # iterate through delta list to modify the image string
-        for item in delta_list:
-            url = img_processor.get_image_url(item=item, question=question)
-            if url:  # 반환된 값이 url일 경우
-                item['insert']['image'] = url
-
-        modified_content = json.dumps(delta)
-        return modified_content
+        if self.request.method == 'POST':
+            serializer_class = AnswerSerializer
+        else:
+            serializer_class = AnswerFeedSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user)
 
 
 class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     Answer 객체 하나를 Retrieve, Update혹은 Destroy 해주는 API
     """
-    queryset = Answer
+    queryset = Answer.objects.all()
     permission_classes = (
         permissions.IsAuthenticated,
     )
@@ -138,8 +177,6 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         :param request:
         :return:
         """
-        img_processor = utils.QuillJSImageProcessor()
-
         instance_delta = instance.content
         instance_image_list = self.get_image_list(instance_delta)
         instance_image_set = set(instance_image_list)
@@ -151,16 +188,12 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         to_be_deleted = list(instance_image_set - request_image_set)
 
-
-
-
     def get_image_list(self, delta):
         """
         Dict형태의 quillJS delta 값을 받아 delta안에 image의 url들을 추출해 List형태로 반환
         :param content: dict 형태의 quillJS content
         :return:
         """
-        img_processor = utils.QuillJSImageProcessor()
         delta_list = img_processor.get_delta_list(delta=delta, iterator=True)
         image_url_list = list()
         for item in delta_list:
@@ -196,7 +229,6 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         :return: modified_content: "image" key 의 value가 url로 바뀐 content
         """
         # Initializer quillJSImageProcessor
-        img_processor = utils.QuillJSImageProcessor()
         delta = img_processor.get_delta(content=content)
         delta_list = img_processor.get_delta_list(delta=delta)
 
@@ -250,26 +282,3 @@ class AnswerMainFeedListView(generics.ListAPIView):
             .order_by('modified_at')
 
         return queryset
-
-
-class AnswerBookmarkFeedListView(generics.ListAPIView):
-    """
-    유저가 북마크한 답변 필터 목록
-    """
-    queryset = Answer
-    serializer_class = AnswerFeedSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        return user.bookmarked_questions.all()
-
-
-class AnswerFilterFeedListView(generics.ListAPIView):
-    """
-    최신 + Topic Filter
-    """
-    queryset = Answer
-    serializer_class = AnswerFeedSerializer
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
-    filter_fields = ('topic')
-    ordering_fields = ('modified_at')
