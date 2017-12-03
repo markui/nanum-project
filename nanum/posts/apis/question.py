@@ -5,6 +5,7 @@ from ..serializers.question import QuestionSerializer
 
 __all__ = (
     'QuestionListCreateView',
+    'QuestionRetrieveUpdateDestroyView',
 )
 
 
@@ -19,20 +20,30 @@ __all__ = (
 # 전문분야 질문리스트
 class QuestionListCreateView(generics.ListCreateAPIView):
     serializer_class = QuestionSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )
 
     def get_queryset(self):
-        topic_list = list()
+        exclude_user = Question.objects.exclude(user=self.request.user)
+        query_set = Question.objects.none()
+
         # 사용자가 선택한 전문분야 토픽
         topics = self.request.user.topic_expertise.all()
-        # query-set
+        # query-set(자기가 쓴 글 제외, 선택한 전문분야의 글 모두 취합)
         for index, topic in enumerate(topics):
-            topic_list.append(topic.id)
-        return Question.objects.exclude(user=self.request.user) & \
-               Question.objects.filter(topics=topic_list[0]) | \
-               Question.objects.exclude(user=self.request.user) & \
-               Question.objects.filter(topics=topic_list[1]) | \
-               Question.objects.exclude(user=self.request.user) & \
-               Question.objects.filter(topics=topic_list[2])
+            query_set = exclude_user & Question.objects.filter(topics=topic.id) | query_set
+
+        return query_set
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+# detail
+class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )

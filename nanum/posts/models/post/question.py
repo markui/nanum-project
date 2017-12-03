@@ -5,6 +5,7 @@ from ...models import PostManager
 
 __all__ = (
     'Question',
+
 )
 
 
@@ -29,5 +30,5 @@ class Question(models.Model):
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
 
-    def topic_list(self):
-        return 3
+    class Meta:
+        ordering = ['-created_at']
