@@ -16,13 +16,13 @@ class TopicModelTest(TestCase):
         name = "Computer Science"
         image = ""
         created_at = datetime.datetime.today()
-        Topic.objects.create(name=name, image=image, created_at=created_at)
-
-    def test_name_label(self):
-        topic = Topic.objects.get(id=1)
-        field_label = topic._meta.get_field('name').verbose_name
-        self.assertEquals(field_label, 'name')
-
-    def test_topic_string_representation(self):
-        topic = Topic.objects.get(id=1)
-        self.assertEqual(str(topic), 'Computer Science\ncreator:None')
+    #     Topic.objects.create(name=name, image=image, created_at=created_at)
+    #
+    # def test_name_label(self):
+    #     topic = Topic.objects.get(id=1)
+    #     field_label = topic._meta.get_field('name').verbose_name
+    #     self.assertEquals(field_label, 'name')
+    #
+    # def test_topic_string_representation(self):
+    #     topic = Topic.objects.get(id=1)
+    #     self.assertEqual(str(topic), 'Computer Science\ncreator:None')

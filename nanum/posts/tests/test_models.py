@@ -1,34 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from posts.tests.test_api.custom_base import AnswerBaseTest
 from ..models import *
 
 User = get_user_model()
 
 
-class PostModelTest(TestCase):
+class AnswerModelTest(AnswerBaseTest):
     @classmethod
     def setUpTestData(cls):
-        u1 = User.objects.create_user(
-            name="김 경훈",
-            email="abc1@abc.com",
-            facebook_user_id=12345677,
-            password="12345678",
-        )
-        u2 = User.objects.create_user(
-            name="서상원",
-            email="abc2@abc.com",
-            password="12345678",
-        )
-        q1 = Question.objects.create(
-            user=u1,
-            content="질문 내용",
-        )
-        a1 = Answer.objects.create(
-            user=u2,
-            question=q1,
-            content="답변1 내용"
-        )
+        super().setUpTestData()
+        u1 = User.objects.get(pk=1)
+        u2 = User.objects.get(pk=2)
+        q1 = Question.objects.get(pk=1)
+        a1 = Answer.objects.get(pk=1)
+
         qc1 = Comment.objects.create(
             user=u2,
             content="질문1 코멘트 내용",

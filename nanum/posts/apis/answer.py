@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from ..models import Answer
 from ..serializers.answer import AnswerUpdateSerializer, AnswerPostSerializer, AnswerGetSerializer
 from ..utils.filters import AnswerFilter
+from ..utils.permissions import IsAuthorOrAuthenticated
 from ..utils.quill_js import QuillJSImageProcessor as img_processor
 
 __all__ = (
@@ -116,7 +117,7 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Answer.objects.all()
     permission_classes = (
-        permissions.IsAuthenticated,
+        IsAuthorOrAuthenticated,
     )
 
     def get_serializer(self, *args, **kwargs):
@@ -265,6 +266,7 @@ class AnswerMainFeedListView(generics.ListAPIView):
         user = self.request.user
 
         # Get all Topics that user is following
+        related_topics = user.topic_interests
         answer_topic_interest = list(user.topic_interests.values_list(flat=True))
         answer_topic_expertise = list(user.topic_expertise.values_list(flat=True))
 

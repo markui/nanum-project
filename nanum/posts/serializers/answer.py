@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from users.models import AnswerUpVoteRelation, AnswerDownVoteRelation, AnswerBookmarkRelation
+from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
 from ..utils.quill_js import QuillJSImageProcessor as img_processor
 
@@ -80,7 +80,6 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
 
 class AnswerGetSerializer(serializers.ModelSerializer):
     user_upvote_relation = serializers.SerializerMethodField()
-    user_downvote_relation = serializers.SerializerMethodField()
     user_bookmark_relation = serializers.SerializerMethodField()
 
     class Meta:
@@ -90,8 +89,8 @@ class AnswerGetSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content',
+            'upvote_count',
             'user_upvote_relation',
-            'user_downvote_relation',
             'user_bookmark_relation',
             'created_at',
             'modified_at',
@@ -105,12 +104,6 @@ class AnswerGetSerializer(serializers.ModelSerializer):
     def get_user_upvote_relation(self, obj):
         try:
             return AnswerUpVoteRelation.objects.get(user=self.request_user, answer=obj).pk
-        except:
-            return None
-
-    def get_user_downvote_relation(self, obj):
-        try:
-            return AnswerDownVoteRelation.objects.get(user=self.request_user, answer=obj).pk
         except:
             return None
 
