@@ -28,6 +28,7 @@ class BaseAnswerVoteRelation(models.Model):
     class Meta:
         abstract = True
 
+
 class AnswerUpVoteRelation(BaseAnswerVoteRelation):
     """
     답변 추천
@@ -35,6 +36,22 @@ class AnswerUpVoteRelation(BaseAnswerVoteRelation):
 
     class Meta:
         unique_together = ('user', 'answer')
+
+    def save(self, *args, **kwargs):
+        super().save()
+        if self.answer.upvote_count < 0:
+            self.answer.upvote_count = 1
+        else:
+            self.answer.upvote_count += 1
+        self.answer.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete()
+        if self.answer.upvote_count > 0:
+            self.answer.upvote_count -= 1
+        else:
+            self.answer.upvote_count = 0
+        self.answer.save()
 
 
 class AnswerDownVoteRelation(BaseAnswerVoteRelation):
@@ -44,6 +61,25 @@ class AnswerDownVoteRelation(BaseAnswerVoteRelation):
 
     class Meta:
         unique_together = ('user', 'answer')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        if self.answer.downvote_count < 0:
+            self.answer.downvote_count = 1
+        else:
+            self.answer.downvote_count += 1
+
+        if self.answer.upvote_count > 0:
+            self.answer.upvote_count -= 1
+        self.answer.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        if self.answer.downvote_count > 0:
+            self.answer.downvote_count -= 1
+        else:
+            self.answer.downvote_count = 0
+        self.answer.save()
 
 
 # 댓글 추천/비추천
@@ -65,7 +101,42 @@ class CommentUpVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
 
+    def save(self, *args, **kwargs):
+        super().save()
+        if self.comment.upvote_count < 0:
+            self.comment.upvote_count = 1
+        else:
+            self.comment.upvote_count += 1
+        self.comment.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete()
+        if self.comment.upvote_count > 0:
+            self.comment.upvote_count -= 1
+        else:
+            self.comment.upvote_count = 0
+        self.comment.save()
+
 
 class CommentDownVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        if self.comment.downvote_count < 0:
+            self.comment.downvote_count = 1
+        else:
+            self.comment.downvote_count += 1
+
+        if self.comment.upvote_count > 0:
+            self.comment.upvote_count -= 1
+        self.comment.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        if self.comment.downvote_count > 0:
+            self.comment.downvote_count -= 1
+        else:
+            self.comment.downvote_count = 0
+        self.comment.save()

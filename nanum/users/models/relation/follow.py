@@ -61,3 +61,19 @@ class QuestionFollowRelation(models.Model):
 
     class Meta:
         unique_together = ('user', 'question')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.question.follow_count < 0:
+            self.question.follow_count = 1
+        else:
+            self.question.follow_count += 1
+        self.question.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.question.follow_count > 0:
+            self.question.follow_count -= 1
+        else:
+            self.question.follow_count = 0
+        self.question.save()

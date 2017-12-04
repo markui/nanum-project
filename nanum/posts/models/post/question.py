@@ -27,7 +27,7 @@ class Question(models.Model):
 
     def save(self, *args, **kwargs):
         super().save()
-        PostManager.objects.create(question=self)
+        PostManager.objects.get_or_create(question=self)
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
