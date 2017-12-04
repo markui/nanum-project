@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions
 
 from posts.models import Question
@@ -6,7 +7,11 @@ from ..serializers.question import QuestionSerializer
 __all__ = (
     'QuestionListCreateView',
     'QuestionRetrieveUpdateDestroyView',
+    'BookMarkedQuestionListView',
+    'QuestionListView',
 )
+
+User = get_user_model()
 
 
 #########################################
@@ -15,6 +20,8 @@ __all__ = (
 # 3. 최신 질문 리스트 [X]
 # 4. 나에게 요청된 질문 리스트 []
 # 5. 답변 중인 질문 리스트 []
+
+# 내가 한 질문
 #########################################
 
 # 전문분야 질문리스트
@@ -49,6 +56,9 @@ class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     )
 
 
+serializer_class = QuestionSerializer
+
+
 # 내가 북마크 한 질문리스트
 class BookMarkedQuestionListView(generics.ListAPIView):
     serializer_class = QuestionSerializer
@@ -57,10 +67,13 @@ class BookMarkedQuestionListView(generics.ListAPIView):
     )
 
     def get_queryset(self):
-        query_set = Question.objects.none()
-        bookmarked_questions = self.request.user.bookmarked_questions.all()
+        return self.request.user.bookmarked_questions.all()
 
-        for question in bookmarked_questions:
-            query_set = Question.objects.get(id=question.id) | query_set
 
+# 최신 질문 리스트
+class QuestionListView(generics.ListAPIView):
+    serializer_class = QuestionSerializer
+
+    def get_queryset(self):
+        query_set = Question.objects.exclude(self.request.user)
         return query_set
