@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from ...models import PostManager
 
 __all__ = (
     'Question',
+
 )
 
 
@@ -18,9 +18,12 @@ class QuestionManager(models.Manager):
 class Question(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=150)
-    topic = models.ManyToManyField('topics.Topic', related_name='questions')
+    topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    upvote_count = models.IntegerField(null=False, default=0)
+    downvote_count = models.IntegerField(null=False, default=0)
+    bookmark_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
@@ -29,3 +32,6 @@ class Question(models.Model):
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
+
+    class Meta:
+        ordering = ['-created_at']

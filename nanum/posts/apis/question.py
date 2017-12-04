@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions
 
 from posts.models import Question
@@ -5,16 +6,23 @@ from ..serializers.question import QuestionSerializer
 
 __all__ = (
     'QuestionListCreateView',
+    'QuestionRetrieveUpdateDestroyView',
+    'BookMarkedQuestionListView',
+    'QuestionListView',
 )
 
+User = get_user_model()
 
-#####################################
-# 1. 전문분야 질문 리스트(질문 읽기 페이지 메인)
-# 2. 북마크한 질문 리스트
-# 3. 최신 질문 리스트
-# 4. 나에게 요청된 질문 리스트
-# 5. 답변 중인 질문 리스트
-######################################
+
+#########################################
+# 1. 전문분야 질문 리스트(질문 읽기 페이지 메인) [X]
+# 2. 북마크한 질문 리스트 [X]
+# 3. 최신 질문 리스트 [X]
+# 4. 나에게 요청된 질문 리스트 []
+# 5. 답변 중인 질문 리스트 []
+
+# 내가 한 질문
+#########################################
 
 # 전문분야 질문리스트
 class QuestionListCreateView(generics.ListCreateAPIView):
@@ -24,16 +32,48 @@ class QuestionListCreateView(generics.ListCreateAPIView):
     )
 
     def get_queryset(self):
-        topic_list = list()
+        exclude_user = Question.objects.exclude(user=self.request.user)
+        query_set = Question.objects.none()
+
         # 사용자가 선택한 전문분야 토픽
         topics = self.request.user.topic_expertise.all()
-        # query-set
+        # query-set(자기가 쓴 글 제외, 선택한 전문분야의 글 모두 취합)
         for topic in topics:
-            topic_list.append(topic.id)
-        return Question.objects.exclude(user=self.request.user) & \
-               Question.objects.filter(topic_id=topic_list[0]) | \
-               Question.objects.filter(topic_id=topic_list[1]) | \
-               Question.objects.filter(topic_id=topic_list[2])
+            query_set = exclude_user & Question.objects.filter(topics=topic.id) | query_set
+
+        return query_set
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+# detail
+class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )
+
+
+serializer_class = QuestionSerializer
+
+
+# 내가 북마크 한 질문리스트
+class BookMarkedQuestionListView(generics.ListAPIView):
+    serializer_class = QuestionSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )
+
+    def get_queryset(self):
+        return self.request.user.bookmarked_questions.all()
+
+
+# 최신 질문 리스트
+class QuestionListView(generics.ListAPIView):
+    serializer_class = QuestionSerializer
+
+    def get_queryset(self):
+        query_set = Question.objects.exclude(self.request.user)
+        return query_set

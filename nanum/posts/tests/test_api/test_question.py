@@ -11,6 +11,7 @@ from posts.models import Question
 
 User = get_user_model()
 
+
 class QuestionListCreateViewTest(APILiveServerTestCase):
     URL_API_QUESTION_CREATE_NAME = 'posts:question:question-create'
     URL_API_QUESTION_CREATE = '/posts/question/'
