@@ -60,5 +60,32 @@ class Comment(MPTTModel):
     # Question / Answer Foreign Key
     post_manager = models.ForeignKey(PostManager, on_delete=models.CASCADE)
 
+    upvote_count = models.IntegerField(null=False, default=0)
+    downvote_count = models.IntegerField(null=False, default=0)
+
+    @property
+    def immediate_children(self):
+        """
+
+        :return:
+        """
+        return self.get_children()
+
+    @property
+    def all_children(self):
+        """
+
+        :return:
+        """
+        return self.get_descendants(include_self=False)
+
+    @property
+    def all_children_count(self):
+        """
+
+        :return:
+        """
+        return self.get_descendant_count()
+
     def __str__(self):
         return f'{self.user} - {self.content[:50]}'

@@ -20,6 +20,16 @@ class QuestionBookmarkRelation(models.Model):
     class Meta:
         unique_together = ('user', 'question')
 
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        self.question.bookmark_count += 1
+        self.question.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        self.question.bookmark_count -= 1
+        self.question.save()
+
 
 # 답변 북마크
 class AnswerBookmarkRelation(models.Model):
@@ -34,3 +44,13 @@ class AnswerBookmarkRelation(models.Model):
 
     class Meta:
         unique_together = ('user', 'answer')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        self.answer.bookmark_count += 1
+        self.answer.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        self.answer.bookmark_count -= 1
+        self.answer.save()
