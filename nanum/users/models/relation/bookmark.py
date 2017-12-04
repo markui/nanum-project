@@ -34,3 +34,13 @@ class AnswerBookmarkRelation(models.Model):
 
     class Meta:
         unique_together = ('user', 'answer')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        self.answer.bookmark_count += 1
+        self.answer.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        self.answer.bookmark_count -= 1
+        self.answer.save()

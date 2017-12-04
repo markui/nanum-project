@@ -17,6 +17,9 @@ class Answer(models.Model):
     published = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    upvote_count = models.IntegerField(null=False, default=0)
+    downvote_count = models.IntegerField(null=False, default=0)
+    bookmark_count = models.IntegerField(null=False, default=0)
 
     @property
     def content(self):
@@ -76,4 +79,4 @@ class QuillDeltaOperation(models.Model):
         else:
             raise AssertionError(
                 "Neither 'text' or 'image' in answer_content. This is an empty instance and should be deleted.")
-            return quill_delta_operation
+        return quill_delta_operation
