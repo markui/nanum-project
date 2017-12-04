@@ -38,13 +38,19 @@ class AnswerUpVoteRelation(BaseAnswerVoteRelation):
         unique_together = ('user', 'answer')
 
     def save(self, *args, **kwargs):
-        super().save(self, *args, **kwargs)
-        self.answer.upvote_count += 1
+        super().save()
+        if self.answer.upvote_count < 0:
+            self.answer.upvote_count = 1
+        else:
+            self.answer.upvote_count += 1
         self.answer.save()
 
     def delete(self, *args, **kwargs):
-        super().delete(self, *args, **kwargs)
-        self.answer.upvote_count -= 1
+        super().delete()
+        if self.answer.upvote_count > 0:
+            self.answer.upvote_count -= 1
+        else:
+            self.answer.upvote_count = 0
         self.answer.save()
 
 
@@ -58,14 +64,21 @@ class AnswerDownVoteRelation(BaseAnswerVoteRelation):
 
     def save(self, *args, **kwargs):
         super().save(self, *args, **kwargs)
-        self.answer.downvote_count += 1
+        if self.answer.downvote_count < 0:
+            self.answer.downvote_count = 1
+        else:
+            self.answer.downvote_count += 1
+
         if self.answer.upvote_count > 0:
             self.answer.upvote_count -= 1
         self.answer.save()
 
     def delete(self, *args, **kwargs):
         super().delete(self, *args, **kwargs)
-        self.answer.downvote_count -= 1
+        if self.answer.downvote_count > 0:
+            self.answer.downvote_count -= 1
+        else:
+            self.answer.downvote_count = 0
         self.answer.save()
 
 
@@ -89,13 +102,19 @@ class CommentUpVoteRelation(BaseCommentVoteRelation):
         unique_together = ('user', 'comment')
 
     def save(self, *args, **kwargs):
-        super().save(self, *args, **kwargs)
-        self.comment.upvote_count += 1
+        super().save()
+        if self.comment.upvote_count < 0:
+            self.comment.upvote_count = 1
+        else:
+            self.comment.upvote_count += 1
         self.comment.save()
 
     def delete(self, *args, **kwargs):
-        super().delete(self, *args, **kwargs)
-        self.comment.upvote_count -= 1
+        super().delete()
+        if self.comment.upvote_count > 0:
+            self.comment.upvote_count -= 1
+        else:
+            self.comment.upvote_count = 0
         self.comment.save()
 
 
@@ -105,12 +124,19 @@ class CommentDownVoteRelation(BaseCommentVoteRelation):
 
     def save(self, *args, **kwargs):
         super().save(self, *args, **kwargs)
-        self.comment.downvote_count += 1
+        if self.comment.downvote_count < 0:
+            self.comment.downvote_count = 1
+        else:
+            self.comment.downvote_count += 1
+
         if self.comment.upvote_count > 0:
             self.comment.upvote_count -= 1
         self.comment.save()
 
     def delete(self, *args, **kwargs):
         super().delete(self, *args, **kwargs)
-        self.comment.downvote_count -= 1
+        if self.comment.downvote_count > 0:
+            self.comment.downvote_count -= 1
+        else:
+            self.comment.downvote_count = 0
         self.comment.save()

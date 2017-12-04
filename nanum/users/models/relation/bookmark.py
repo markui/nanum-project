@@ -21,13 +21,19 @@ class QuestionBookmarkRelation(models.Model):
         unique_together = ('user', 'question')
 
     def save(self, *args, **kwargs):
-        super().save(self, *args, **kwargs)
-        self.question.bookmark_count += 1
+        super().save()
+        if self.question.bookmark_count < 0:
+            self.question.bookmark_count = 1
+        else:
+            self.question.bookmark_count += 1
         self.question.save()
 
     def delete(self, *args, **kwargs):
-        super().delete(self, *args, **kwargs)
-        self.question.bookmark_count -= 1
+        super().delete()
+        if self.question.bookmark_count > 0:
+            self.question.bookmark_count -= 1
+        else:
+            self.question.bookmark_count = 0
         self.question.save()
 
 
@@ -47,10 +53,16 @@ class AnswerBookmarkRelation(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(self, *args, **kwargs)
-        self.answer.bookmark_count += 1
+        if self.answer.bookmark_count < 0:
+            self.answer.bookmark_count = 1
+        else:
+            self.answer.bookmark_count += 1
         self.answer.save()
 
     def delete(self, *args, **kwargs):
         super().delete(self, *args, **kwargs)
-        self.answer.bookmark_count -= 1
+        if self.answer.bookmark_count > 0:
+            self.answer.bookmark_count -= 1
+        else:
+            self.answer.bookmark_count = 0
         self.answer.save()
