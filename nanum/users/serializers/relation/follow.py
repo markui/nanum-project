@@ -100,12 +100,10 @@ class UserFollowParticipantSerializer(serializers.ModelSerializer):
         )
 
     def get_profile_image(self, obj):
-        # 이미지가 없는 경우
-        # if not obj.profile.profile_image:
-        #     return ''
-
-
-        return 'a'
+        # 이미지가 없는 경우, url 속성 접근시 에러가 남
+        if not obj.profile.profile_image:
+            return None
+        return obj.profile.profile_image.url
 
     def get_main_credential(self, obj):
         return obj.profile.main_credential
@@ -118,10 +116,9 @@ class UserFollowParticipantSerializer(serializers.ModelSerializer):
         try:
             follower_relation = obj.follower_relations.get(user=self.context.get('request').user)
         except UserFollowRelation.DoesNotExist:
-            print('hoo')
+            return None
         else:
-            print('hi')
-
+            return follower_relation.pk
 
 
 class QuestionFollowRelationSerializer(serializers.ModelSerializer):
@@ -129,6 +126,7 @@ class QuestionFollowRelationSerializer(serializers.ModelSerializer):
     질문 팔로우를 위한 Serializer
     """
     follow_relation_pk = serializers.IntegerField(source='pk', read_only=True)
+
     class Meta:
         model = QuestionFollowRelation
         fields = (

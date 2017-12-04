@@ -30,6 +30,15 @@ YEAR_CHOICES = [
 ]
 
 
+def user_profile_img_path(instance, filename):
+    # 프로필 이미지 file 저장 경로
+    return f'profile/{instance.user.__str__()}/profile_img_{filename}'
+
+def user_thumb_img_path(instance, filename):
+    # 썸네일 이미지 file 저장 경로
+    return f'profile/{instance.user.__str__()}/thumb_img_{filename}'
+
+
 class Profile(models.Model):
     """
     유저 프로필 정보
@@ -49,7 +58,8 @@ class Profile(models.Model):
     }
     """
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to='profile/', blank=True, null=True)
+    profile_image = models.ImageField(upload_to=user_profile_img_path, blank=True, null=True)
+    thumbnail_image = models.ImageField(upload_to=user_thumb_img_path, blank=True, null=True)
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
     main_credential = models.CharField(max_length=100, blank=True)
@@ -57,6 +67,10 @@ class Profile(models.Model):
 
     # facebook 그래프 API로 가져온 정보
     gender = models.CharField(max_length=30, blank=True)
+
+    # relation 에서 가져온 정보 - 누적되는 팔로워/팔로잉 수
+    follower_count = models.IntegerField(default=0)
+    following_count = models.IntegerField(default=0)
 
     def __str__(self):
         return f'Profile of {self.user}'
