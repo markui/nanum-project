@@ -61,3 +61,8 @@ class QuestionFollowRelation(models.Model):
 
     class Meta:
         unique_together = ('user', 'question')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        self.question.follow_count += 1
+        self.question.save()
