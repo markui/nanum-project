@@ -49,7 +49,7 @@ class Profile(models.Model):
     }
     """
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
-    profile_image = models.ImageField(blank=True, null=True)
+    profile_image = models.ImageField(upload_to='profile/', blank=True, null=True)
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
     main_credential = models.CharField(max_length=100, blank=True)

@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
-    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView
+    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerView, UserFollowingView
 from .apis import SignupView, LoginView, FacebookLoginView, InterestFollowRelationCreateView, \
     ExpertiseFollowRelationCreateView, InterestFollowRelationDetailView, ExpertiseFollowRelationDetailView
 
@@ -42,9 +42,15 @@ urlpatterns = [
     # /user/user-follow-relation/
     url(r'^user-follow-relation/$', UserFollowRelationCreateView.as_view(),
         name='user-follow-relation'),
-    # # /user/user-follow-relation/1/
+    # /user/user-follow-relation/1/
     url(r'^user-follow-relation/(?P<pk>\d+)/$', UserFollowRelationDetailView.as_view(),
         name='user-follow-relation-detail'),
+    # /user/1/follower/
+    url(r'^(?P<pk>\d+)/follower/$', UserFollowerView.as_view(),
+        name='user-follower'),
+    # /user/1/following/
+    url(r'^(?P<pk>\d+)/following-user/$', UserFollowingView.as_view(),
+        name='user-following'),
 
     # 1-3. FOLLOW-QUESTION
 
@@ -54,4 +60,6 @@ urlpatterns = [
     # /user/question-follow-relation/1/
     url(r'^question-follow-relation/(?P<pk>\d+)/$', QuestionFollowRelationDetailView.as_view(),
         name='question-follow-relation-detail'),
+
+
 ]

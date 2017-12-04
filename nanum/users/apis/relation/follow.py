@@ -1,11 +1,13 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status, generics
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import InterestFollowRelation, ExpertiseFollowRelation, UserFollowRelation, QuestionFollowRelation
-from users.serializers.relation.follow import UserFollowRelationSerializer, QuestionFollowRelationSerializer
+from users.serializers.relation.follow import UserFollowRelationSerializer, QuestionFollowRelationSerializer, \
+    UserFollowParticipantSerializer
 from users.utils.permissions import IsFollower
 from ...serializers import TopicFollowRelationSerializer
 
@@ -20,6 +22,8 @@ __all__ = (
     # User Follow
     'UserFollowRelationCreateView',
     'UserFollowRelationDetailView',
+    'UserFollowerView',
+    'UserFollowingView',
     # Question Follow
     'QuestionFollowRelationCreateView',
     'QuestionFollowRelationDetailView',
@@ -38,7 +42,7 @@ class InterestFollowRelationCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         # 유저 - 관심주제 팔로우 성공했을 경우
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class InterestFollowRelationDetailView(generics.RetrieveDestroyAPIView):
@@ -65,7 +69,7 @@ class ExpertiseFollowRelationCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         # 유저 - 관심주제 팔로우 성공했을 경우
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ExpertiseFollowRelationDetailView(generics.RetrieveDestroyAPIView):
@@ -93,7 +97,7 @@ class UserFollowRelationCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         # 유저 - 다른 유저 팔로우 성공했을 경우
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserFollowRelationDetailView(generics.RetrieveDestroyAPIView):
@@ -109,6 +113,20 @@ class UserFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = UserFollowRelationSerializer
 
 
+class UserFollowerView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserFollowParticipantSerializer
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs.get('pk'))
+        return user.followers.all()
+
+class UserFollowingView(generics.ListAPIView):
+    # def get_queryset(self):
+    #     user = get_object_or_404(User, pk=self.kwargs.get('pk'))
+    #     return user.following.all()
+    pass
+
+
 # Question Follow
 class QuestionFollowRelationCreateView(APIView):
     """
@@ -121,7 +139,7 @@ class QuestionFollowRelationCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         # 유저 - 다른 유저 팔로우 성공했을 경우
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class QuestionFollowRelationDetailView(generics.RetrieveDestroyAPIView):
