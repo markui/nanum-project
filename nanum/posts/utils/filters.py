@@ -49,3 +49,7 @@ class AnswerFilter(filters.FilterSet):
     class Meta:
         model = Answer
         fields = ['user', 'topic', 'bookmarked_by', ]
+
+
+class QuestionFilter(filters.FilterSet):
+    pass

@@ -21,9 +21,8 @@ class Question(models.Model):
     topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
-    upvote_count = models.IntegerField(null=False, default=0)
-    downvote_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
+    follow_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
