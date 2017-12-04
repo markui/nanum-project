@@ -38,7 +38,7 @@ class Answer(models.Model):
 
     def save(self, *args, **kwargs):
         super().save()
-        post_manager = PostManager.objects.get_or_create(answer=self)
+        PostManager.objects.get_or_create(answer=self)
 
 
 class QuillDeltaOperation(models.Model):
