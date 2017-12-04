@@ -1,9 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from topics.models import Topic
-from users.models import InterestFollowRelation
-
 User = get_user_model()
 
 
@@ -74,42 +71,3 @@ class LoginSerializer(serializers.ModelSerializer):
             'email',
             'password',
         )
-
-
-class FacebookLoginSerializer(serializers.Serializer):
-    """
-    페이스북 로그인을 위한 Serializer
-    """
-    access_token = serializers.CharField(write_only=True)
-    facebook_user_id = serializers.CharField(write_only=True)
-
-
-class TopicFollowRelationSerializer(serializers.Serializer):
-    """
-    주제(관심분야/전문분야) 팔로우를 위한 Serializer
-    """
-
-    class Meta:
-        model = InterestFollowRelation
-        fields = (
-            'user'
-            'topic'
-        )
-        read_only_fields = (
-            'user'
-        )
-
-    def validate_topic(self, value):
-        """
-        실제 존재하는 topic pk인지 확인
-        """
-        if not Topic.objects.filter(pk=value).exists():
-            raise serializers.ValidationError('존재하지 않는 주제입니다.')
-        elif self.Meta.model.objects.filter(user=self.context['request'].user, topic=value):
-            raise serializers.ValidationError('이미 팔로우하고 있는 주제입니다.')
-        else:
-            return value
-
-
-class TopicFollowRelationDetailSerializer(serializers.Serializer):
-    pass
