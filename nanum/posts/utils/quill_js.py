@@ -12,7 +12,8 @@ __all__ = (
 
 
 class QuillJSImageProcessor:
-    def get_quill_content(self, content: json):
+    @classmethod
+    def get_quill_content(cls, content: json):
         """
         Request에서 content부분(type = JSON)을 뽑아내 dict을 만듬
         {'content':{"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}}
@@ -23,7 +24,8 @@ class QuillJSImageProcessor:
         """
         return json.loads(content)
 
-    def get_delta_operation_list(self, delta: dict, iterator: bool = False):
+    @classmethod
+    def get_delta_operation_list(cls, delta: dict, iterator: bool = False):
         """
         Delta 내부에 있는 Opertaion의 list를 반환
         {"ops":[{"insert":{"image":"data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=="}},{"insert":"\n"}]}
@@ -38,7 +40,8 @@ class QuillJSImageProcessor:
             return iter(delta['ops'])
         return delta['ops']
 
-    def create_quill_content(self, delta_operation_list: list, json: bool = False):
+    @classmethod
+    def create_quill_content(cls, delta_operation_list: list, json: bool = False):
         """
         [{'insert':{'image':'data:image/jpeg;base64,/9j/4AAQSkvI/cv2T+9n//2Q=='}},{'insert":'\n'}]
         ->
@@ -53,7 +56,8 @@ class QuillJSImageProcessor:
             return json.dumps(content)
         return content
 
-    def save_delta_operation_list(self, delta_list, model, **kwargs):
+    @classmethod
+    def save_delta_operation_list(cls, delta_list, model, **kwargs):
         """
         전달받은 model변수에 해당하는 Django 모델명에 대해 bulk_create를 통해 content를 저장
 
@@ -70,7 +74,7 @@ class QuillJSImageProcessor:
             insert_value, attributes = quill_delta_operation['insert'], \
                                        quill_delta_operation.get('attributes', None)
 
-            object = self._instantiate_model(
+            object = cls._instantiate_model(
                 insert_value=insert_value,
                 model=model,
                 attributes=attributes,
@@ -84,9 +88,10 @@ class QuillJSImageProcessor:
         model.objects.bulk_create(instances_to_bulk_create)
 
         # 생성된 이미지 파일들을 삭제
-        self._delete_temporary_images(list=images_to_delete)
+        cls._delete_temporary_images(list=images_to_delete)
 
-    def _instantiate_model(self, insert_value, model, **kwargs):
+    @classmethod
+    def _instantiate_model(cls, insert_value, model, **kwargs):
         """
         model 을 text 혹은 image로 나누어 instance를 만듬
 
@@ -101,10 +106,10 @@ class QuillJSImageProcessor:
         object = model(**kwargs)  # creates class instance with attribute and answer first
         try:  # extract image from insert if exists
             image_data_string = insert_value['image']
-            image_type, decoded_data = self._split_image_base64(
+            image_type, decoded_data = cls._split_image_base64(
                 image_data_string=image_data_string
             )
-            filename = self._save_image(
+            filename = cls._save_image(
                 image_type=image_type,
                 decoded_data=decoded_data,
                 **kwargs
@@ -117,7 +122,8 @@ class QuillJSImageProcessor:
 
         return object
 
-    def _split_image_base64(self, image_data_string):
+    @classmethod
+    def _split_image_base64(cls, image_data_string):
         """
         Base64 형태의 image를 받아서 image_type과 decoded_data를 분리해서 반환
         :param image_data_string:
@@ -130,7 +136,8 @@ class QuillJSImageProcessor:
         decoded_data = base64.b64decode(byte_data_base64)
         return image_type, decoded_data
 
-    def _save_image(self, image_type, decoded_data, post, **kwargs) -> string:
+    @classmethod
+    def _save_image(cls, image_type, decoded_data, post, **kwargs) -> string:
         """
         Saves os
         :param image_type:
@@ -142,10 +149,11 @@ class QuillJSImageProcessor:
         # Create filename
         rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         filename = f'a-{post.pk}__{rand_str}.{image_type}'
-        self._save_temporary_image(filename, decoded_data)
+        cls._save_temporary_image(filename, decoded_data)
         return filename
 
-    def _save_temporary_image(self, filename, decoded_data):
+    @classmethod
+    def _save_temporary_image(cls, filename, decoded_data):
         """
         추후 Async로 변경
 
@@ -157,7 +165,8 @@ class QuillJSImageProcessor:
             f.write(decoded_data)
             f.close()
 
-    def _delete_temporary_images(self, list):
+    @classmethod
+    def _delete_temporary_images(cls, list):
         """
         추후 Async로 변경
 
@@ -168,7 +177,8 @@ class QuillJSImageProcessor:
         for imagefile in list:
             os.remove(imagefile)
 
-    def delete_image_file(self, *args):
+    @classmethod
+    def delete_image_file(cls, *args):
         """
         Takes a single string of the name of the image or list of strings as args.
         If List, iterate through to delete the files in the list.
