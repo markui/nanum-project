@@ -1,15 +1,17 @@
+from __future__ import unicode_literals
+
 import json
 
-from django.http import Http404
+from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions, status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-import topics
-from topics.models import Topic
 from ..models import Answer
-from ..serializers.answer import AnswerSerializer, AnswerFeedSerializer, AnswerUpdateSerializer
-from ..utils import QuillJSImageProcessor
+from ..serializers.answer import AnswerUpdateSerializer, AnswerPostSerializer, AnswerGetSerializer
+from ..utils.filters import AnswerFilter
+from ..utils.quill_js import QuillJSImageProcessor as img_processor
 
 __all__ = (
     'AnswerListCreateView',
@@ -17,117 +19,95 @@ __all__ = (
     'AnswerMainFeedListView',
 )
 
-img_processor = QuillJSImageProcessor()
+User = get_user_model()
 
 
-class AnswerFilter(filters.FilterSet):
+class FeedPagination(PageNumberPagination):
     """
-    답변 query_params를 통한 각종 필드 filter를 만들어주는 class
+    Answer List에 대한 Pagination Class
     """
-    topic = filters.CharFilter(method='filter_topic')
-    bookmarked = filters.CharFilter(method='filter_bookmarked')
-    ordering = filters.CharFilter(method='filter_ordering')
-
-    def filter_topic(self, queryset, name, value):
-        try:
-            value = int(value)
-            if not Topic.objects.filter(pk=value).exists():
-                return {"message": "해당 value에 대한 Topic이 존재하지 않습니다."}
-            return queryset.filter(question__topic=value)
-        except ValueError:
-            return {"message": "int형태의 값이 아닙니다."}
-
-    def filter_bookmarked(self, queryset, name, value):
-        if value == "True":
-            filtered_queryset = queryset.filter(answerbookmarkrelation__user=self.request.user)
-            return filtered_queryset
-        else:
-            return {"message": "True만 value로 올 수 있습니다."}
-
-    def filter_ordering(self, queryset, name, value):
-        fields = [field.name for field in queryset.model._meta.get_fields()]
-        if value in fields:
-            return queryset.order_by(value)
-        else:
-            return {"message": f"value로 전달된 값이 queryset의 필드에 존재하지 않습니다."
-                               f"queryset {queryset.model} 은 다음과 같은 필드를 갖고 있습니다: {fields}"}
-
-    class Meta:
-        model = Answer
-        fields = ['user', 'topic', 'bookmarked', 'ordering']
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100000
 
 
 class AnswerListCreateView(generics.ListCreateAPIView):
     """
-    유저가 작성한 Answer들을 갖고와주는 ListCreate API
+    유저가 작성한 Answer들을 갖고와주는 ListAPIView 와
+    QuillJS Content를 저장해주는 CreateAPIView
+
+    Filter Class를 적용하여 Topic, Bookmarked, User에 대한 필터링과
+    created_at, modified_at을 이용하여 ordering을 결정할 수 있음
     """
     queryset = Answer.objects.all()
     permission_classes = (
         permissions.IsAuthenticated,
     )
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_class = AnswerFilter
+    filter_class = AnswerFilter  # utils.filter
+    pagination_class = FeedPagination
 
     def filter_queryset(self, queryset):
         """
-        generics의 filter_queryset override
-
+        GenericAPIView의 filter_queryset override
         필터가 가능한 queryset이면 필터를 실시, 그 외의 경우에는 에러 메세지를 반환
+
         :param queryset: View의 queryset
         """
         query_params = self.request.query_params.keys()
-        filter_fields = self.filter_class.get_fields().keys()
+        values = self.request.query_params.values()
+        filter_fields = self.filter_class.get_fields().keys() | {'ordering', 'page'}
+        error = None
 
-        # query_params가 존재하며 filter_fields의 subset 이 아닐 경우
-        if query_params and not query_params <= filter_fields:
-            result = {"message":"존재하지 않는 query_parameter입니다. 필터가 가능한 query_parameter는 다음과 같습니다:"
-                              f"{filter_fields}"}
+        # 만약 query parameter가 왔는데 value가 오지 않았을 경우
+        if "" in list(values):
+            error = {"message": "query parameter가 존재하나 value가 존재하지 않습니다."}
+
+        elif query_params and not query_params <= filter_fields:
+            error = {"message": "존재하지 않는 query_parameter입니다. "
+                                "필터가 가능한 query_parameter는 다음과 같습니다:"
+                                f"{filter_fields}"}
         else:
             for backend in list(self.filter_backends):
-                result = backend().filter_queryset(self.request, queryset, self)
-
-        return result
+                queryset = backend().filter_queryset(self.request, queryset, self)
+        # error가 존재할 경우 list에 error를 전달, 아닐 경우 필터된 queryset이 들어감
+        return error, queryset
 
     def list(self, request, *args, **kwargs):
         """
         ListModelMixin의 list override
+        filter_queryset 실행 시 error가 반환되었으면 error를 담은 400 BAD REQUEST를 반환
 
-        변경점
-        1. queryset -> result
-        2. Response 에 대한 try except문 추가
         :param request:
         :param args:
         :param kwargs:
         :return:
         """
-        result = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(result)
+        error, queryset = self.filter_queryset(self.get_queryset())
+        if error:
+            return Response(error, status.HTTP_400_BAD_REQUEST)
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(result, many=True)
-        try:
-            return Response(serializer.data)
-        except:
-            return Response(result, status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_serializer(self, *args, **kwargs):
         """
-        Override get_serializer 함수 - POST요청과 GET요청을 나누어 Serializer 종류를 변경
+        GenericAPIView의 get_serializer override
+        POST요청과 GET요청을 나누어 Serializer 종류를 변경
+
         :param args:
         :param kwargs:
         :return:
         """
         if self.request.method == 'POST':
-            serializer_class = AnswerSerializer
+            serializer_class = AnswerPostSerializer
         else:
-            serializer_class = AnswerFeedSerializer
+            serializer_class = AnswerGetSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 
 class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -141,7 +121,9 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_serializer(self, *args, **kwargs):
         """
-        Override get_serializer 함수 - POST요청과 GET요청을 나누어 Serializer 종류를 변경
+        GenericAPIView get_serializer override
+        POST요청과 GET요청을 나누어 Serializer 종류를 변경
+
         :param args:
         :param kwargs:
         :return:
@@ -149,11 +131,19 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == 'POST':
             serializer_class = AnswerUpdateSerializer
         else:
-            serializer_class = AnswerSerializer
+            serializer_class = AnswerGetSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
     def update(self, request, *args, **kwargs):
+        """
+
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
         partial = kwargs.pop('partial', False)
 
         instance = self.get_object()
@@ -173,6 +163,7 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def remove_images(self, instance, request):
         """
         instance_delta에는 있는데 request_delta에는 없는 image들을 storage에서 삭제하는 함수를 호출
+
         :param instance:
         :param request:
         :return:
@@ -256,12 +247,19 @@ class AnswerMainFeedListView(generics.ListAPIView):
     1. Topic, Follower를 기반으로 개인화된 피드 생성
     2. +추후 Like 정보 추가
     3. +추후 CF Filtering / Content-based Filtering 적용
+
     """
-    serializer_class = AnswerFeedSerializer
+    serializer_class = AnswerGetSerializer
+    authentication_classes = (
+        permissions.IsAuthenticated,
+    )
+    pagination_class = FeedPagination
 
     def get_queryset(self):
         """
-        Topic, Follower 기반 filter된 queryset 반환
+        GenericAPIView의 get_queryset override
+        Queryset을 필터하여 피드에 들어갈 내용을 반환
+
         :return:
         """
         user = self.request.user
@@ -280,5 +278,8 @@ class AnswerMainFeedListView(generics.ListAPIView):
         queryset = Answer.objects.filter(topic__in=answer_topic) \
             .filter(user__in=following_users) \
             .order_by('modified_at')
+
+        if not queryset:
+            queryset = Answer.objects.all()
 
         return queryset

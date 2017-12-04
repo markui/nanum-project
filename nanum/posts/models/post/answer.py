@@ -3,14 +3,13 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from ...models import PostManager
-from ...utils import QuillJSImageProcessor
+from ...utils.quill_js import QuillJSImageProcessor as img_processor
 
 __all__ = (
     'Answer',
     'QuillDeltaOperation',
 )
 
-img_processor = QuillJSImageProcessor()
 
 class Answer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
@@ -40,6 +39,10 @@ class Answer(models.Model):
 
 
 class QuillDeltaOperation(models.Model):
+    """
+    QuillJS 의 Content중 Operation 한 줄에 대한 정보를 갖는 모델
+    해당 content가 쓰인 Answer과 ForeignKey로 연결이 되어 있음
+    """
     text = models.TextField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
     attributes = JSONField(null=True, blank=True)
@@ -57,7 +60,7 @@ class QuillDeltaOperation(models.Model):
         { insert: 'Gandalf', attributes: { bold: true } }
 
         image 일 경우
-        insert: { image: 'https://octodex.github.com/images/labtocat.png' }
+        {insert: { image: 'https://octodex.github.com/images/labtocat.png' }}
 
         :return: quill delta operation
         """
@@ -73,4 +76,4 @@ class QuillDeltaOperation(models.Model):
         else:
             raise AssertionError(
                 "Neither 'text' or 'image' in answer_content. This is an empty instance and should be deleted.")
-        return quill_delta_operation
+            return quill_delta_operation
