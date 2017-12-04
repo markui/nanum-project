@@ -1,21 +1,18 @@
 from rest_framework import serializers
-from rest_framework.fields import empty
 
 from users.models import AnswerUpVoteRelation, AnswerDownVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
-from ..utils import QuillJSImageProcessor
+from ..utils.quill_js import QuillJSImageProcessor as img_processor
 
 __all__ = (
-    'AnswerSerializer',
+    'AnswerPostSerializer',
     'AnswerUpdateSerializer',
-    'AnswerFeedSerializer',
+    'AnswerGetSerializer',
 )
 
-img_processor = QuillJSImageProcessor()
 
-
-class AnswerSerializer(serializers.ModelSerializer):
-    content = serializers.JSONField(default="")
+class AnswerPostSerializer(serializers.ModelSerializer):
+    content = serializers.JSONField(default=None)
 
     class Meta:
         model = Answer
@@ -29,10 +26,17 @@ class AnswerSerializer(serializers.ModelSerializer):
             'modified_at',
         )
 
+    @property
+    def request_user(self):
+        """
+        Request를 보낸 유저를 반환
+        :return:
+        """
+        return self.context['request'].user
+
     def validate(self, data):
         """
         published가 True인데 content가 비어있을 경우 validation error 를 raise
-
         :param data:
         :return:
         """
@@ -47,7 +51,8 @@ class AnswerSerializer(serializers.ModelSerializer):
         :return:
         """
         content = self.validated_data.pop('content')
-        instance = super().save(**kwargs)
+        # request_user를 **kwargs에 추가하여 super().save() 호출
+        instance = super().save(user=self.request_user, **kwargs)
         if not content:
             return instance
         delta_list = img_processor.get_delta_operation_list(content, iterator=True)
@@ -73,7 +78,7 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         )
 
 
-class AnswerFeedSerializer(serializers.ModelSerializer):
+class AnswerGetSerializer(serializers.ModelSerializer):
     user_upvote_relation = serializers.SerializerMethodField()
     user_downvote_relation = serializers.SerializerMethodField()
     user_bookmark_relation = serializers.SerializerMethodField()
