@@ -2,7 +2,7 @@ import django_filters
 from django_filters import rest_framework as filters, OrderingFilter
 from django_filters.fields import Lookup
 
-from ..models import Answer
+from ..models import Answer, Question
 
 __all__ = (
     'AnswerFilter',
@@ -51,5 +51,17 @@ class AnswerFilter(filters.FilterSet):
         fields = ['user', 'topic', 'bookmarked_by', ]
 
 
-class QuestionFilter(filters.FilterSet):
-    pass
+# class QuestionFilter(filters.FilterSet):
+#     user = ListFilter(name='user')
+#     topics = ListFilter(name='question__topics')
+#     bookmarked_by = ListFilter(name='questionbookmarkrelation__user')
+#     ordering = OrderingFilter(
+#         fields=(
+#             ('modified_at', 'modified_at'),
+#             ('created_at', 'created_at')
+#         )
+#     )
+#
+#     class Meta:
+#         model = Question
+#         fields = ['user', 'topic', 'bookmarked_by', ]
