@@ -1,6 +1,9 @@
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
+
+from ..utils.image_resize import *
 
 __all__ = (
     'Profile',
@@ -30,15 +33,6 @@ YEAR_CHOICES = [
 ]
 
 
-def user_profile_img_path(instance, filename):
-    # 프로필 이미지 file 저장 경로
-    return f'profile/{instance.user.__str__()}/profile_img_{filename}'
-
-def user_thumb_img_path(instance, filename):
-    # 썸네일 이미지 file 저장 경로
-    return f'profile/{instance.user.__str__()}/thumb_img_{filename}'
-
-
 class Profile(models.Model):
     """
     유저 프로필 정보
@@ -58,8 +52,11 @@ class Profile(models.Model):
     }
     """
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to=user_profile_img_path, blank=True, null=True)
-    thumbnail_image = models.ImageField(upload_to=user_thumb_img_path, blank=True, null=True)
+    image = models.ImageField(upload_to=user_img_path, blank=True, null=True)
+    # A * A 픽셀별 썸네일 이미지
+    thumbnail_image_200 = models.ImageField(upload_to=user_thumb_img_200_path, blank=True, null=True)
+    thumbnail_image_50 = models.ImageField(upload_to=user_thumb_img_50_path, blank=True, null=True)
+    thumbnail_image_25 = models.ImageField(upload_to=user_thumb_img_25_path, blank=True, null=True)
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
     main_credential = models.CharField(max_length=100, blank=True)
@@ -74,6 +71,21 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Profile of {self.user}'
+
+    # 유저가 이미지를 업로드 할 시
+    # 200 * 200 / 50 * 50 / 25 * 25의 rescale된 썸네일 이미지들 역시 별도의 필드에 저장됨
+    def save(self, *args, **kwargs):
+        if self.image:
+            image_file_byte_data = self.image.read()
+            thumbnail_image_file_200 = rescale(image_file_byte_data, 200, 200, force=True)
+            thumbnail_image_file_50 = rescale(image_file_byte_data, 50, 50, force=True)
+            thumbnail_image_file_25 = rescale(image_file_byte_data, 25, 25, force=True)
+
+            self.thumbnail_image_200.save(f'{self.image.name}', ContentFile(thumbnail_image_file_200.getvalue()), save=False)
+            self.thumbnail_image_50.save(f'{self.image.name}', ContentFile(thumbnail_image_file_50.getvalue()), save=False)
+            self.thumbnail_image_25.save(f'{self.image.name}', ContentFile(thumbnail_image_file_25.getvalue()), save=False)
+
+        super().save(*args, **kwargs)
 
 
 class EducationCredentials(models.Model):
