@@ -37,7 +37,7 @@ class AnswerFilter(filters.FilterSet):
     답변 query_params를 통한 각종 필드 filter를 만들어주는 class
     """
     user = ListFilter(name='user', )
-    topic = ListFilter(name='question__topic')
+    topic = ListFilter(name='question__topics')
     bookmarked_by = ListFilter(name='answerbookmarkrelation__user', )
     ordering = OrderingFilter(
         fields=(
