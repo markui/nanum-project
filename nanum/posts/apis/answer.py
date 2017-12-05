@@ -129,109 +129,111 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         :param kwargs:
         :return:
         """
-        if self.request.method == 'POST':
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
             serializer_class = AnswerUpdateSerializer
         else:
             serializer_class = AnswerGetSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        """
-
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
-        """
-
-        partial = kwargs.pop('partial', False)
-
-        instance = self.get_object()
-        self.remove_images(instance=instance, request=request)
-
-        # serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        # serializer.is_valid(raise_exception=True)
-        # self.perform_update(serializer)
-        #
-        # if getattr(instance, '_prefetched_objects_cache', None):
-        #     # If 'prefetch_related' has been applied to a queryset, we need to
-        #     # forcibly invalidate the prefetch cache on the instance.
-        #     instance._prefetched_objects_cache = {}
-        #
-        # return Response(serializer.data)
-
-    def remove_images(self, instance, request):
-        """
-        instance_delta에는 있는데 request_delta에는 없는 image들을 storage에서 삭제하는 함수를 호출
-
-        :param instance:
-        :param request:
-        :return:
-        """
-        instance_delta = instance.content
-        instance_image_list = self.get_image_list(instance_delta)
-        instance_image_set = set(instance_image_list)
-
-        self.modify_request_data(request)
-        request_delta = img_processor.get_delta(request.data.get('content'))
-        request_image_list = self.get_image_list(request_delta)
-        request_image_set = set(request_image_list)
-
-        to_be_deleted = list(instance_image_set - request_image_set)
-
-    def get_image_list(self, delta):
-        """
-        Dict형태의 quillJS delta 값을 받아 delta안에 image의 url들을 추출해 List형태로 반환
-        :param content: dict 형태의 quillJS content
-        :return:
-        """
-        delta_list = img_processor.get_delta_list(delta=delta, iterator=True)
-        image_url_list = list()
-        for item in delta_list:
-            try:
-                image_url = item['insert']['image']
-                image_url_list.append(image_url)
-            except:
-                continue
-        return image_url_list
-
-    def modify_request_data(self, request):
-        """
-        request를 parameter로 받아 content내용을 변화시킴
-
-        :param request: Django Request 객체
-        :return:
-        """
-        request.data._mutable = True
-        content, question = request.data.get('content'), request.data.get('question')
-        if content:
-            request.data['content'] = self.modify_content_image_value(content=content, question=question)
-        request.data._mutable = False
-
-    def modify_content_image_value(self, content, question, *args, **kwargs):
-        """
-        Content의 image key의 value들을 base64형태의 전체 파일에서
-        storage의 url(local일 경우 default storage, deploy일 경우 S3)로 변환하여 새 content 반환
-
-        :param content: request객체에서 꺼낸 content dictionary
-        :param question: 해당 답변이 쓰이는 question 객체
-        :param args:
-        :param kwargs:
-        :return: modified_content: "image" key 의 value가 url로 바뀐 content
-        """
-        # Initializer quillJSImageProcessor
-        delta = img_processor.get_delta(content=content)
-        delta_list = img_processor.get_delta_list(delta=delta)
-
-        # iterate through delta list to modify the image string
-        for item in delta_list:
-            url = img_processor.get_image_url(item=item, question=question)
-            if url:  # 반환된 값이 url일 경우
-                item['insert']['image'] = url
-
-        modified_content = json.dumps(delta)
-        return modified_content
+    # def update(self, request, *args, **kwargs):
+    #     """
+    #
+    #     :param request:
+    #     :param args:
+    #     :param kwargs:
+    #     :return:
+    #     """
+    #
+    #     partial = kwargs.pop('partial', False)
+    #
+    #     instance = self.get_object()
+    #     self.remove_images(instance=instance, request=request)
+    #
+    #     # partial = kwargs.pop('partial', False)
+    #     # instance = self.get_object()
+    #     # serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    #     # serializer.is_valid(raise_exception=True)
+    #     # self.perform_update(serializer)
+    #     #
+    #     # if getattr(instance, '_prefetched_objects_cache', None):
+    #     #     # If 'prefetch_related' has been applied to a queryset, we need to
+    #     #     # forcibly invalidate the prefetch cache on the instance.
+    #     #     instance._prefetched_objects_cache = {}
+    #     #
+    #     # return Response(serializer.data)
+    #
+    # def remove_images(self, instance, request):
+    #     """
+    #     instance_delta에는 있는데 request_delta에는 없는 image들을 storage에서 삭제하는 함수를 호출
+    #
+    #     :param instance:
+    #     :param request:
+    #     :return:
+    #     """
+    #     instance_delta = instance.content
+    #     instance_image_list = self.get_image_list(instance_delta)
+    #     instance_image_set = set(instance_image_list)
+    #
+    #     self.modify_request_data(request)
+    #     request_delta = img_processor.get_delta(request.data.get('content'))
+    #     request_image_list = self.get_image_list(request_delta)
+    #     request_image_set = set(request_image_list)
+    #
+    #     to_be_deleted = list(instance_image_set - request_image_set)
+    #
+    # def get_image_list(self, delta):
+    #     """
+    #     Dict형태의 quillJS delta 값을 받아 delta안에 image의 url들을 추출해 List형태로 반환
+    #     :param content: dict 형태의 quillJS content
+    #     :return:
+    #     """
+    #     delta_list = img_processor.get_delta_list(delta=delta, iterator=True)
+    #     image_url_list = list()
+    #     for item in delta_list:
+    #         try:
+    #             image_url = item['insert']['image']
+    #             image_url_list.append(image_url)
+    #         except:
+    #             continue
+    #     return image_url_list
+    #
+    # def modify_request_data(self, request):
+    #     """
+    #     request를 parameter로 받아 content내용을 변화시킴
+    #
+    #     :param request: Django Request 객체
+    #     :return:
+    #     """
+    #     request.data._mutable = True
+    #     content, question = request.data.get('content'), request.data.get('question')
+    #     if content:
+    #         request.data['content'] = self.modify_content_image_value(content=content, question=question)
+    #     request.data._mutable = False
+    #
+    # def modify_content_image_value(self, content, question, *args, **kwargs):
+    #     """
+    #     Content의 image key의 value들을 base64형태의 전체 파일에서
+    #     storage의 url(local일 경우 default storage, deploy일 경우 S3)로 변환하여 새 content 반환
+    #
+    #     :param content: request객체에서 꺼낸 content dictionary
+    #     :param question: 해당 답변이 쓰이는 question 객체
+    #     :param args:
+    #     :param kwargs:
+    #     :return: modified_content: "image" key 의 value가 url로 바뀐 content
+    #     """
+    #     # Initializer quillJSImageProcessor
+    #     delta = img_processor.get_delta(content=content)
+    #     delta_list = img_processor.get_delta_list(delta=delta)
+    #
+    #     # iterate through delta list to modify the image string
+    #     for item in delta_list:
+    #         url = img_processor.get_image_url(item=item, question=question)
+    #         if url:  # 반환된 값이 url일 경우
+    #             item['insert']['image'] = url
+    #
+    #     modified_content = json.dumps(delta)
+    #     return modified_content
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

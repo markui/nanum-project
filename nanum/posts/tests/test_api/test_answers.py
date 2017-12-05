@@ -36,7 +36,7 @@ class AnswerListCreateAPIsTest(AnswerBaseTest):
         # Status 확인
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_get_answer_list(self):
+    def test_get_answer_list_of_user(self):
         """
         유저가 포스트한 답변 list만 나오는지 확인
         :return:
@@ -48,11 +48,11 @@ class AnswerListCreateAPIsTest(AnswerBaseTest):
         url = self.URL_API_ANSWER_LIST_CREATE + '?' + self.URL_FILTER_USER.format(pk=u1.pk)
         response = self.client.get(url)
 
-        answer = Answer.objects.filter(user=u1)
+        answer_count = Answer.objects.filter(user=u1).count()
         # Status 확인
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 개수 유저 1이 생성한 개수가 맞는지 확인
-        self.assertEqual(response.data['count'], answer.count())
+        self.assertEqual(response.data['count'], answer_count)
 
     def test_get_answer_list_when_not_authenticated(self):
         """

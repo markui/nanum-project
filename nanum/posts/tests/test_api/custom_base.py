@@ -49,13 +49,13 @@ class AnswerBaseTest(APITestCase):
     content = "{question} - {user}의 답변"
     ANSWER_CONTENT = {
         "ops": [
-            # {
-            #     "insert": {
-            #         "image": f"{IMAGE_BASE64}"
-            #     }
-            # },
             {
                 "insert": content
+            },
+            {
+                "insert": {
+                    "image": f"{IMAGE_BASE64}"
+                }
             }
         ]
     }
