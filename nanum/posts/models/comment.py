@@ -63,25 +63,38 @@ class Comment(MPTTModel):
     # Question / Answer Foreign Key
     comment_post_intermediate = models.ForeignKey(CommentPostIntermediate, on_delete=models.CASCADE)
 
+    # Upvote, Downvote의 개수
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
 
     @property
     def related_post(self):
+        """
+        Comment 와 엮어 있는 Answer 혹은 Question의 pk를 CommentPostIntermediate 의 to string 방식으로 반환
+        :return:
+        """
         return self.comment_post_intermediate.post
 
     @property
     def immediate_children(self):
         """
-
+        Instance 바로 밑에 있는 depth의 Comment object들을 반환
         :return:
         """
         return self.get_children()
 
     @property
+    def immediate_children_count(self):
+        """
+        Instancen 바로 밑에 있는 depth 의 Comment 개수를 반환
+        :return:
+        """
+        return self.get_children().count()
+
+    @property
     def all_children(self):
         """
-
+        Instance 밑에 있는 모든 Comment object들을 반환
         :return:
         """
         return self.get_descendants(include_self=False)
@@ -89,7 +102,7 @@ class Comment(MPTTModel):
     @property
     def all_children_count(self):
         """
-
+        Instance 밑에 있는 모든 Comment 개수를 반환
         :return:
         """
         return self.get_descendant_count()

@@ -2,14 +2,14 @@ from __future__ import unicode_literals
 
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions
+from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 
 from ..models import Answer
 from ..serializers.answer import AnswerUpdateSerializer, AnswerPostSerializer, AnswerGetSerializer
 from ..utils.filters import AnswerFilter
-from ..utils.permissions import IsAuthorOrAuthenticated
+from ..utils.permissions import IsAuthorOrAuthenticatedReadOnly
 
 __all__ = (
     'AnswerListCreateView',
@@ -60,36 +60,14 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
             error = {"message": "query parameter가 존재하나 value가 존재하지 않습니다."}
-
-        elif query_params and not query_params <= filter_fields:
+        if query_params and not query_params <= filter_fields:
             error = {"message": "존재하지 않는 query_parameter입니다. "
                                 "필터가 가능한 query_parameter는 다음과 같습니다:"
                                 f"{filter_fields}"}
-        else:
-            for backend in list(self.filter_backends):
-                queryset = backend().filter_queryset(self.request, queryset, self)
-        # error가 존재할 경우 list에 error를 전달, 아닐 경우 필터된 queryset이 들어감
-        return error, queryset
-
-    def list(self, request, *args, **kwargs):
-        """
-        ListModelMixin의 list override
-        filter_queryset 실행 시 error가 반환되었으면 error를 담은 400 BAD REQUEST를 반환
-
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        error, queryset = self.filter_queryset(self.get_queryset())
         if error:
-            return Response(error, status.HTTP_400_BAD_REQUEST)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+            raise NotFound(detail=error)
+
+        return super().filter_queryset(queryset)
 
     def get_serializer(self, *args, **kwargs):
         """
@@ -110,17 +88,18 @@ class AnswerListCreateView(generics.ListCreateAPIView):
 
 class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Answer 객체 하나를 Retrieve, Update혹은 Destroy 해주는 API
+    Answer Retrieve, Update, Destroy API View
+    Author 일 경우 Update, Destroy가 가능하고 Authenticated 일 경우 Get이 가능
     """
     queryset = Answer.objects.all()
     permission_classes = (
-        IsAuthorOrAuthenticated,
+        IsAuthorOrAuthenticatedReadOnly,
     )
 
     def get_serializer(self, *args, **kwargs):
         """
         GenericAPIView get_serializer override
-        POST요청과 GET요청을 나누어 Serializer 종류를 변경
+        PUT, PATCH와 GET요청을 나누어 Serializer 종류를 변경
 
         :param args:
         :param kwargs:

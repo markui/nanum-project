@@ -4,6 +4,7 @@ from ..models import Comment, CommentPostIntermediate
 
 __all__ = (
     'CommentSerializer',
+    'CommentUpdateSerializer',
 )
 
 
@@ -14,18 +15,31 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = (
-            'pk',
             'user',
             'content',
-            'related_post',
             'question',
             'answer',
             'parent',
+
+            'pk',
+            'related_post',
+            'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'related_post',
             'created_at',
             'modified_at',
         )
 
     def validate(self, data):
+        """
+        Answer 혹은 Question값이 필수적으로 들어왔는지 Validate
+        - Refactor 가능한지? 
+        :param data:
+        :return:
+        """
         if not data.get('answer', None) and not data.get('question', None):
             raise serializers.ValidationError("Question, Answer 중 한개의 값은 있어야 합니다.")
         return data
@@ -43,6 +57,13 @@ class CommentSerializer(serializers.ModelSerializer):
         return user
 
     def save(self, **kwargs):
+        """
+        serializers.py 의 save method override
+        validated_data에서 question 과 answer를 통해 comment 연결된 CommentPostIntermediate object를 get,
+        해당 값을 넣어 Comment를 저장
+        :param kwargs:
+        :return:
+        """
         question = self.validated_data.pop("question", None)
         answer = self.validated_data.pop("answer", None)
         if question:
@@ -56,4 +77,27 @@ class CommentSerializer(serializers.ModelSerializer):
             user=self.request_user,
             comment_post_intermediate=comment_post_intermediate,
             **kwargs
+        )
+
+
+class CommentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = (
+            'content',
+
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'created_at',
+            'modified_at',
         )

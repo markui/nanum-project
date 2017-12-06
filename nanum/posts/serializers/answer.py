@@ -17,13 +17,19 @@ class AnswerPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = (
-            'pk',
             'user',
             'question',
             'content',
             'published',
+
+            'pk',
             'created_at',
             'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'created_at',
+            'modified_at'
         )
 
     @property
@@ -75,11 +81,17 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         fields = (
             'content',
             'published',
+
+            'pk',
+            'user',
             'question',
+            'created_at',
+            'modified_at',
         )
         read_only_fields = (
             'pk',
             'user',
+            'question',
             'created_at',
             'modified_at',
         )
