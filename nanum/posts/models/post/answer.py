@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from ...models import PostManager
+from ...models import CommentPostIntermediate
 from ...utils.quill_js import QuillJSImageProcessor as img_processor
 
 __all__ = (
@@ -46,7 +46,7 @@ class Answer(models.Model):
 
     def save(self, *args, **kwargs):
         super().save()
-        PostManager.objects.get_or_create(answer=self)
+        CommentPostIntermediate.objects.get_or_create(answer=self)
 
 
 class QuillDeltaOperation(models.Model):

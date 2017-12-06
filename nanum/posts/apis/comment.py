@@ -1,7 +1,7 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 
-from ..models import Comment, PostManager
+from ..models import Comment, CommentPostIntermediate
 from ..serializers import CommentSerializer
 
 __all__ = (
@@ -51,15 +51,15 @@ class CommentListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         """
         CreateModelMixin의 create 함수 override
-        request.data의 question혹은 answer를 get_post_manager를 통해 연결된 post_manager과 연동
+        request.data의 question혹은 answer를 get_comment_post_intermediate를 통해 연결된 comment_post_intermediate과 연동
 
         :param data:
         :return:
         """
         # Immutable 한 Queryset을 mutable 하게 만들기 위해 Deepcopy
         data = request.data.copy()
-        post_manager = self.get_post_manager(data)
-        data['post_manager'] = post_manager.pk
+        comment_post_intermediate = self.get_comment_post_intermediate(data)
+        data['comment_post_intermediate'] = comment_post_intermediate.pk
 
         # 기존 get_serializer 함수에 request.data가 아닌 post_type이 추가된 data를 인자로 전달
         serializer = self.get_serializer(data=data)
@@ -70,7 +70,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    def get_post_manager(self, data):
+    def get_comment_post_intermediate(self, data):
         """
         Create helper method
         Data에 Question pk가 왔으면 해당 Question과 매핑되어있는 PostType pk를 반환
@@ -90,11 +90,11 @@ class CommentListCreateView(generics.ListCreateAPIView):
         # question 혹은 answer pk 를 통해 연결돈 PostManager instance를 반환
         try:
             question_pk = data.pop('question')[0]
-            post_manager = PostManager.objects.get(question=question_pk)
+            comment_post_intermediate = CommentPostIntermediate.objects.get(question=question_pk)
         except KeyError:
             answer_pk = data.pop('answer')[0]
-            post_manager = PostManager.objects.get(answer=answer_pk)
-        return post_manager
+            comment_post_intermediate = CommentPostIntermediate.objects.get(answer=answer_pk)
+        return comment_post_intermediate
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

@@ -15,7 +15,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'user',
             'content',
             'parent',
-            'post_manager',
+            'comment_post_intermediate',
             'created_at',
             'modified_at',
         )
