@@ -30,9 +30,9 @@ class CommentPostIntermediate(models.Model):
         둘 다 없을 경우 raise AssertionError
         :return:
         """
-        if self.question.pk is not None:
+        if self.question:
             return f'question - {self.question.pk}'
-        if self.answer.pk is not None:
+        if self.answer:
             return f'answer - {self.answer.pk}'
         raise AssertionError("Neither 'question' or 'answer' set")
 

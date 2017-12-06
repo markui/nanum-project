@@ -26,8 +26,8 @@ class CommentSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data.get('answer', None) and not data.get('question', None) and not data.get('parent', None):
-            raise serializers.ValidationError("Question, Answer, Parent중 한개의 값은 있어야 합니다.")
+        if not data.get('answer', None) and not data.get('question', None):
+            raise serializers.ValidationError("Question, Answer 중 한개의 값은 있어야 합니다.")
         return data
 
     @property
@@ -45,8 +45,13 @@ class CommentSerializer(serializers.ModelSerializer):
     def save(self, **kwargs):
         question = self.validated_data.pop("question", None)
         answer = self.validated_data.pop("answer", None)
-        comment_post_intermediate = CommentPostIntermediate.objects.filter(question=question).first() or \
-                                    CommentPostIntermediate.objects.filter(answer=answer).first()
+        if question:
+            comment_post_intermediate = CommentPostIntermediate.objects.get(question=question)
+        elif answer:
+            comment_post_intermediate = CommentPostIntermediate.objects.get(answer=answer)
+        else:
+            raise serializers.ValidationError({"save_error": ["Question, Answer 중 한개의 값은 있어야 합니다."]})
+
         super().save(
             user=self.request_user,
             comment_post_intermediate=comment_post_intermediate,
