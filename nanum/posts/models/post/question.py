@@ -33,4 +33,4 @@ class Question(models.Model):
         return f'user: {self.user}, content: {self.content}'
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['created_at']

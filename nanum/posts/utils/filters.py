@@ -6,6 +6,7 @@ from ..models import Answer, Question
 
 __all__ = (
     'AnswerFilter',
+    'QuestionFilter',
 )
 
 
@@ -51,17 +52,17 @@ class AnswerFilter(filters.FilterSet):
         fields = ['user', 'topic', 'bookmarked_by', ]
 
 
-# class QuestionFilter(filters.FilterSet):
-#     user = ListFilter(name='user')
-#     topics = ListFilter(name='question__topics')
-#     bookmarked_by = ListFilter(name='questionbookmarkrelation__user')
-#     ordering = OrderingFilter(
-#         fields=(
-#             ('modified_at', 'modified_at'),
-#             ('created_at', 'created_at')
-#         )
-#     )
-#
-#     class Meta:
-#         model = Question
-#         fields = ['user', 'topic', 'bookmarked_by', ]
+class QuestionFilter(filters.FilterSet):
+    user = ListFilter(name='user')
+    topic = ListFilter(name='question__topics')
+    bookmarked_by = ListFilter(name='questionbookmarkrelation__user')
+    ordering = OrderingFilter(
+        fields=(
+            ('modified_at', 'modified_at'),
+            ('created_at', 'created_at')
+        )
+    )
+
+    class Meta:
+        model = Question
+        fields = ['user', 'topic', 'bookmarked_by', ]
