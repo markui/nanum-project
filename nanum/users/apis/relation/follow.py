@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 
 from users.models import InterestFollowRelation, ExpertiseFollowRelation, UserFollowRelation, QuestionFollowRelation
 from users.serializers.relation.follow import UserFollowRelationSerializer, QuestionFollowRelationSerializer, \
-    UserFollowParticipantSerializer
+    UserFollowParticipantSerializer, FollowingTopicSerializer
+from users.utils.pagination import UserFollowParticipantPagination, FollowingTopicPagination
 from users.utils.permissions import IsFollower
 from ...serializers import TopicFollowRelationSerializer
 
@@ -22,8 +23,8 @@ __all__ = (
     # User Follow
     'UserFollowRelationCreateView',
     'UserFollowRelationDetailView',
-    'UserFollowerView',
-    'UserFollowingView',
+    'UserFollowerListView',
+    'UserFollowingListView',
     # Question Follow
     'QuestionFollowRelationCreateView',
     'QuestionFollowRelationDetailView',
@@ -85,6 +86,49 @@ class ExpertiseFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = TopicFollowRelationSerializer
 
 
+class FollowingInterestListView(generics.ListAPIView):
+    """
+    유저가 팔로우하는 관심분야 주제 가져오기
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = FollowingTopicSerializer
+    pagination_class = FollowingTopicPagination
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs.get('pk'))
+        return user.topic_interests.all()
+
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        오버라이드를 하여 serializer에게 "관심분야" type이라는 정보를 전달
+        """
+        context = super().get_serializer_context()
+        context.update({'topic_type': 'interest'})
+        return context
+
+class FollowingExpertiseListView(generics.ListAPIView):
+    """
+    유저가 팔로우하는 전문분야 주제 가져오기
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = FollowingTopicSerializer
+    pagination_class = FollowingTopicPagination
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs.get('pk'))
+        return user.topic_expertise.all()
+
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        오버라이드를 하여 serializer에게 "전문분야" type이라는 정보를 전달
+        """
+        context = super().get_serializer_context()
+        context.update({'topic_type': 'expertise'})
+        return context
+
+
 # User Follow
 class UserFollowRelationCreateView(APIView):
     """
@@ -113,24 +157,36 @@ class UserFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = UserFollowRelationSerializer
 
 
-class UserFollowerView(generics.ListAPIView):
+class UserFollowerListView(generics.ListAPIView):
+    """
+    유저의 팔로워 리스트를 가져오기
+    """
     permission_classes = (IsAuthenticated,)
     serializer_class = UserFollowParticipantSerializer
+    pagination_class = UserFollowParticipantPagination
+
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs.get('pk'))
         return user.followers.all()
 
-class UserFollowingView(generics.ListAPIView):
-    # def get_queryset(self):
-    #     user = get_object_or_404(User, pk=self.kwargs.get('pk'))
-    #     return user.following.all()
-    pass
+
+class UserFollowingListView(generics.ListAPIView):
+    """
+    유저가 팔로우하는 사용자 리스트를 가져오기
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserFollowParticipantSerializer
+    pagination_class = UserFollowParticipantPagination
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs.get('pk'))
+        return user.following.all()
 
 
 # Question Follow
 class QuestionFollowRelationCreateView(APIView):
     """
-    유저 - 다른 유저 팔로우 관계 생성
+    유저 - 질문 팔로우 관계 생성
     """
     permission_classes = (IsAuthenticated,)
 

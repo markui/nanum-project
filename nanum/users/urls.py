@@ -1,7 +1,8 @@
 from django.conf.urls import url
 
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
-    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerView, UserFollowingView
+    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
+    FollowingInterestListView, FollowingExpertiseListView
 from .apis import SignupView, LoginView, FacebookLoginView, InterestFollowRelationCreateView, \
     ExpertiseFollowRelationCreateView, InterestFollowRelationDetailView, ExpertiseFollowRelationDetailView
 
@@ -36,6 +37,12 @@ urlpatterns = [
     # /user/topic-expertise-follow-relation/1/
     url(r'^topic-expertise-follow-relation/(?P<pk>\d+)/$', ExpertiseFollowRelationDetailView.as_view(),
         name='topic-expertise-follow-relation-detail'),
+    # /user/1/following-interests/
+    url(r'^(?P<pk>\d+)/following-interests/$', FollowingInterestListView.as_view(),
+        name='following-interests'),
+    # /user/1/following-expertise/
+    url(r'^(?P<pk>\d+)/following-expertise/$', FollowingExpertiseListView.as_view(),
+        name='following-expertise'),
 
     # 1-2. FOLLOW-USER
 
@@ -46,11 +53,11 @@ urlpatterns = [
     url(r'^user-follow-relation/(?P<pk>\d+)/$', UserFollowRelationDetailView.as_view(),
         name='user-follow-relation-detail'),
     # /user/1/follower/
-    url(r'^(?P<pk>\d+)/follower/$', UserFollowerView.as_view(),
-        name='user-follower'),
+    url(r'^(?P<pk>\d+)/followers/$', UserFollowerListView.as_view(),
+        name='user-followers'),
     # /user/1/following/
-    url(r'^(?P<pk>\d+)/following-user/$', UserFollowingView.as_view(),
-        name='user-following'),
+    url(r'^(?P<pk>\d+)/followings/$', UserFollowingListView.as_view(),
+        name='user-followings'),
 
     # 1-3. FOLLOW-QUESTION
 
@@ -60,6 +67,5 @@ urlpatterns = [
     # /user/question-follow-relation/1/
     url(r'^question-follow-relation/(?P<pk>\d+)/$', QuestionFollowRelationDetailView.as_view(),
         name='question-follow-relation-detail'),
-
 
 ]
