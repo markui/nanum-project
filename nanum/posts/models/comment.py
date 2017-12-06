@@ -21,7 +21,7 @@ class CommentPostIntermediate(models.Model):
                                   related_name='comment_post_intermediate')
 
     def __str__(self):
-        return f'{self.post}, {self.parent_comments}'
+        return f'{self.post} \n{self.parent_comments}'
 
     @property
     def post(self):
@@ -31,9 +31,9 @@ class CommentPostIntermediate(models.Model):
         :return:
         """
         if self.question.pk is not None:
-            return f'question - {self.question}'
+            return f'question - {self.question.pk}'
         if self.answer.pk is not None:
-            return f'answer - {self.answer}'
+            return f'answer - {self.answer.pk}'
         raise AssertionError("Neither 'question' or 'answer' set")
 
     @property
@@ -43,7 +43,7 @@ class CommentPostIntermediate(models.Model):
         없을 경우 빈 queryset 반환
         :return:
         """
-        return Comment.objects.filter(parent=None, post_manager=self.pk)
+        return Comment.objects.filter(parent=None, comment_post_intermediate=self.pk)
 
 
 class Comment(MPTTModel):
@@ -65,6 +65,10 @@ class Comment(MPTTModel):
 
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
+
+    @property
+    def related_post(self):
+        return self.comment_post_intermediate.post
 
     @property
     def immediate_children(self):

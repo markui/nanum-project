@@ -32,7 +32,11 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         Request를 보낸 유저를 반환
         :return:
         """
-        return self.context['request'].user
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        return user
 
     def validate(self, data):
         """
