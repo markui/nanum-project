@@ -10,6 +10,7 @@ class TopicSerializer(serializers.ModelSerializer):
             'pk',
             'creator',
             'name',
+            'questions',
             'description',
             'image',
             'created_at'
