@@ -52,29 +52,45 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         """
         content = self.validated_data.pop('content')
         # request_user를 **kwargs에 추가하여 super().save() 호출
-        instance = super().save(user=self.request_user, **kwargs)
+        answer_instance = super().save(user=self.request_user, **kwargs)
         if not content:
-            return instance
-        delta_list = img_processor.get_delta_operation_list(content, iterator=True)
+            return answer_instance
 
         # Answer에 대한 content를 Save해주는 함수
-        img_processor.save_delta_operation_list(delta_list=delta_list, model=QuillDeltaOperation, post=instance)
+        img_processor.save_delta_operation_list(content=content,
+                                                model=QuillDeltaOperation,
+                                                answer=answer_instance)
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
+    content = serializers.JSONField(default=None)
+
     # 해당 유저에 대해서
     class Meta:
         model = Answer
         fields = (
-            'question',
             'content',
             'published',
-        )
-        read_only_fields = (
+            'question',
             'pk',
             'user',
             'created_at',
             'modified_at',
+        )
+
+    def save(self, **kwargs):
+        """
+
+        :param kwargs:
+        :return:
+        """
+        queryset = self.instance.quill_delta_operation_set.all()
+        content = self.validated_data.pop('content')
+        img_processor.update_delta_operation_list(
+            queryset=queryset,
+            content=content,
+            model=QuillDeltaOperation,
+            answer=self.instance,
         )
 
 
