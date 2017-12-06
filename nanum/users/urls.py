@@ -3,6 +3,8 @@ from django.conf.urls import url
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
+from users.apis.relation.vote import AnswerUpVoteRelationCreateView, AnswerUpVoteRelationDetailView, \
+    AnswerDownVoteRelationCreateView
 from .apis import SignupView, LoginView, FacebookLoginView, InterestFollowRelationCreateView, \
     ExpertiseFollowRelationCreateView, InterestFollowRelationDetailView, ExpertiseFollowRelationDetailView
 
@@ -70,5 +72,18 @@ urlpatterns = [
     # /user/question-follow-relation/1/
     url(r'^question-follow-relation/(?P<pk>\d+)/$', QuestionFollowRelationDetailView.as_view(),
         name='question-follow-relation-detail'),
+
+    # 2. VOTE
+    # /user/answer-upvote-relation/
+    url(r'^answer-upvote-relation/$', AnswerUpVoteRelationCreateView.as_view(),
+        name='answer-upvote-relation'),
+    # /user/answer-upvote-relation/1/
+    url(r'^answer-upvote-relation/(?P<pk>\d+)/$', AnswerUpVoteRelationDetailView.as_view(),
+        name='answer-upvote-relation-detail'),
+    # /user/answer-downvote-relation/
+    url(r'^answer-downvote-relation/$', AnswerDownVoteRelationCreateView.as_view(),
+        name='answer-downvote-relation'),
+
+    # 3. BOOKMARK
 
 ]

@@ -9,7 +9,7 @@ from users.models import InterestFollowRelation, ExpertiseFollowRelation, UserFo
 from users.serializers.relation.follow import UserFollowRelationSerializer, QuestionFollowRelationSerializer, \
     UserFollowParticipantSerializer, FollowingTopicSerializer
 from users.utils.pagination import UserFollowParticipantPagination, FollowingTopicPagination
-from users.utils.permissions import IsFollower
+from users.utils.permissions import IsUserWhoTookAction
 from ...serializers import TopicFollowRelationSerializer
 
 User = get_user_model()
@@ -20,6 +20,8 @@ __all__ = (
     'InterestFollowRelationDetailView',
     'ExpertiseFollowRelationCreateView',
     'ExpertiseFollowRelationDetailView',
+    'FollowingInterestListView',
+    'FollowingExpertiseListView',
     # User Follow
     'UserFollowRelationCreateView',
     'UserFollowRelationDetailView',
@@ -54,7 +56,7 @@ class InterestFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        IsFollower,
+        IsUserWhoTookAction,
     )
 
     queryset = InterestFollowRelation.objects.all()
@@ -81,7 +83,7 @@ class ExpertiseFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        IsFollower,
+        IsUserWhoTookAction,
     )
 
     queryset = ExpertiseFollowRelation.objects.all()
@@ -169,7 +171,7 @@ class UserFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        IsFollower,
+        IsUserWhoTookAction,
     )
 
     queryset = UserFollowRelation.objects.all()
@@ -223,7 +225,7 @@ class QuestionFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     """
     permission_classes = (
         IsAuthenticated,
-        IsFollower,
+        IsUserWhoTookAction,
     )
 
     queryset = QuestionFollowRelation.objects.all()
