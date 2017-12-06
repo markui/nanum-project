@@ -20,6 +20,9 @@ class PostManager(models.Model):
     answer = models.OneToOneField('Answer', null=True, blank=True, on_delete=models.CASCADE,
                                   related_name='post_manager')
 
+    def __str__(self):
+        return f'{self.post}, {self.parent_comments}'
+
     @property
     def post(self):
         """
@@ -28,9 +31,9 @@ class PostManager(models.Model):
         :return:
         """
         if self.question.pk is not None:
-            return self.question
+            return f'question - {self.question}'
         if self.answer.pk is not None:
-            return self.answer
+            return f'answer - {self.answer}'
         raise AssertionError("Neither 'question' or 'answer' set")
 
     @property
