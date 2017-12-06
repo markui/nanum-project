@@ -72,6 +72,8 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
             'content',
             'published',
             'question',
+        )
+        read_only_fields = (
             'pk',
             'user',
             'created_at',

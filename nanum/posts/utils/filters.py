@@ -25,7 +25,6 @@ class ListFilter(django_filters.Filter):
         return value
 
     def filter(self, qs, value):
-        print(qs)
         multiple_vals = value.split(u",")
         multiple_vals = self.sanitize(multiple_vals)
         multiple_vals = map(self.customize, multiple_vals)

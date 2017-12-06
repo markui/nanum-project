@@ -16,8 +16,6 @@ class CommentSerializer(serializers.ModelSerializer):
             'content',
             'parent',
             'post_manager',
-        )
-        read_only_fields = (
             'created_at',
             'modified_at',
         )
