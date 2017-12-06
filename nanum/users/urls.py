@@ -58,6 +58,9 @@ urlpatterns = [
     # /user/1/following/
     url(r'^(?P<pk>\d+)/followings/$', UserFollowingListView.as_view(),
         name='user-followings'),
+    # # /user/multiple-user-follow-relation/
+    # url(r'^user-follow-relation/$', UserFollowRelationCreateView.as_view(),
+    #     name='user-follow-relation'),
 
     # 1-3. FOLLOW-QUESTION
 

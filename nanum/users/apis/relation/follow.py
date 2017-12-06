@@ -39,8 +39,10 @@ class InterestFollowRelationCreateView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        print(request.data)
         serializer = TopicFollowRelationSerializer(data=request.data, context={'request': request, 'type': 'interest'})
         serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
         serializer.save(user=request.user)
         # 유저 - 관심주제 팔로우 성공했을 경우
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -86,6 +88,22 @@ class ExpertiseFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = TopicFollowRelationSerializer
 
 
+class MultipleInterestFollowRelationCreateView(generics.CreateAPIView):
+    """
+    회원가입 직후, "주제 설정 페이지" 에서
+    유저 - 관심분야 주제 다중 팔로우하기
+    """
+    pass
+
+
+class MultipleExpertiseFollowRelationCreateView(generics.CreateAPIView):
+    """
+    회원가입 직후, "주제 설정 페이지" 에서
+    유저 - 전문분야 주제 다중 팔로우하기
+    """
+    pass
+
+
 class FollowingInterestListView(generics.ListAPIView):
     """
     유저가 팔로우하는 관심분야 주제 가져오기
@@ -106,6 +124,7 @@ class FollowingInterestListView(generics.ListAPIView):
         context = super().get_serializer_context()
         context.update({'topic_type': 'interest'})
         return context
+
 
 class FollowingExpertiseListView(generics.ListAPIView):
     """

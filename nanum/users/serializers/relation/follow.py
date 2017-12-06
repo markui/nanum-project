@@ -8,7 +8,62 @@ User = get_user_model()
 
 __all__ = (
     'TopicFollowRelationSerializer',
+    'FollowingTopicSerializer',
+    'UserFollowRelationSerializer',
+    'UserFollowParticipantSerializer',
+    'QuestionFollowRelationSerializer',
 )
+
+
+class TopicFollowRelationSerializer(serializers.Serializer):
+    """
+    주제(관심분야/전문분야) 팔로우를 위한 Serializer
+    """
+    # follow_relation_pk = serializers.IntegerField(source='pk', read_only=True)
+    # user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    topics = serializers.ListField(
+        # child=serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all()),
+        child=serializers.CharField()
+    )
+
+    def validate_topics(self, value):
+        """
+        이미 팔로우하고 있는 주제인지 확인
+        """
+        TopicModel = InterestFollowRelation if self.context['type'] == 'interest' else ExpertiseFollowRelation
+        for topic in value:
+            if TopicModel.objects.filter(user=self.context['request'].user, topic=value).exists():
+                raise serializers.ValidationError('이미 팔로우하고 있는 주제입니다.')
+        return value
+
+    def create(self, validated_data):
+        """
+        전문분야/관심분야 모두 TopicFollowRelationSerializer를 공통으로
+        사용하게 하기 위해서, APIView에서 어떤 분야인지를 판별해주는,
+        self.context['type']을 받아옴
+        """
+        if self.context['type'] == 'interest':
+            interest_follow_relations = [
+                InterestFollowRelation.objects.create(
+                    user=validated_data['user'],
+                    topic=topic
+                )
+                for topic in validated_data['topics']
+            ]
+            return interest_follow_relations
+        elif self.context['type'] == 'expertise':
+            return ExpertiseFollowRelation.objects.create(
+                user=validated_data['user'],
+                topic=validated_data['topic']
+            )
+
+
+class MultipleTopicFollowRelationSerializer(serializers.Serializer):
+    """
+    주제 다중 팔로우를 위한 Serializer
+    """
+    topics = serializers.ListField(child=serializers.IntegerField())
 
 
 class FollowingTopicSerializer(serializers.ModelSerializer):
@@ -46,43 +101,6 @@ class FollowingTopicSerializer(serializers.ModelSerializer):
                 return None
             else:
                 return topic_follow_relation.pk
-
-
-class TopicFollowRelationSerializer(serializers.Serializer):
-    """
-    주제(관심분야/전문분야) 팔로우를 위한 Serializer
-    """
-    follow_relation_pk = serializers.IntegerField(source='pk', read_only=True)
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    topic = serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all(), required=True)
-
-    def validate_topic(self, value):
-        """
-        이미 팔로우하고 있는 주제인지 확인
-        """
-        TopicModel = InterestFollowRelation if self.context['type'] == 'interest' else ExpertiseFollowRelation
-
-        if TopicModel.objects.filter(user=self.context['request'].user, topic=value).exists():
-            raise serializers.ValidationError('이미 팔로우하고 있는 주제입니다.')
-        return value
-
-    def create(self, validated_data):
-        """
-        전문분야/관심분야 모두 TopicFollowRelationSerializer를 공통으로
-        사용하게 하기 위해서, APIView에서 어떤 분야인지를 판별해주는,
-        self.context['type']을 받아옴
-        """
-        if self.context['type'] == 'interest':
-            return InterestFollowRelation.objects.create(
-                user=validated_data['user'],
-                topic=validated_data['topic']
-            )
-
-        elif self.context['type'] == 'expertise':
-            return ExpertiseFollowRelation.objects.create(
-                user=validated_data['user'],
-                topic=validated_data['topic']
-            )
 
 
 class UserFollowRelationSerializer(serializers.ModelSerializer):
