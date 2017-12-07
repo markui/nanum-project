@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import answer, question
+from .models import Question, Answer
 
-admin.site.register(answer)
-admin.site.register(question)
+admin.site.register(Answer)
+admin.site.register(Question)
