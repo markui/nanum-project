@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ParseError
 
 from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
@@ -70,10 +71,12 @@ class AnswerPostSerializer(serializers.ModelSerializer):
             return answer_instance
 
         # Answer에 대한 content를 Save해주는 함수
-        img_processor.save_delta_operation_list(
+        objs = img_processor.save_delta_operation_list(
             content=content,
-            instance=answer_instance
+            parent_instance=answer_instance
         )
+        if not objs:
+            raise ParseError("")
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
@@ -111,7 +114,7 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         img_processor.update_delta_operation_list(
             queryset=queryset,
             content=content,
-            instance=self.instance,
+            parent_instance=self.instance,
         )
 
 
