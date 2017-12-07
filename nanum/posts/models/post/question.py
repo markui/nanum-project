@@ -1,11 +1,11 @@
 from django.conf import settings
 from django.db import models
 
-from . import PostManager
+from ...models import CommentPostIntermediate
 
 __all__ = (
     'Question',
-    'Answer',
+
 )
 
 
@@ -21,20 +21,16 @@ class Question(models.Model):
     topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    follow_count = models.IntegerField(null=False, default=0)
+    bookmark_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
         super().save()
-        PostManager.objects.create(question=self)
+        CommentPostIntermediate.objects.get_or_create(question=self)
 
+    def __str__(self):
+        return f'user: {self.user}, content: {self.content}'
 
-class Answer(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    question = models.ForeignKey('Question', on_delete=models.CASCADE)
-    content = models.TextField()
-    created_at = models.DateField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        super().save()
-        PostManager.objects.create(answer=self)
+    class Meta:
+        ordering = ['-created_at']

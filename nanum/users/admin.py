@@ -1,7 +1,26 @@
 from django.contrib import admin
-from django.conf import settings
+
+from .models import *
+
 # Register your models here.
+user_models = [
+    # user.py
+    User,
+    # profile.py
+    Profile,
+    EducationCredentials,
+    EmploymentCredentials,
+    # relation.py
+    # relation - vote
+    AnswerUpVoteRelation,
+    AnswerDownVoteRelation,
+    CommentUpVoteRelation,
+    CommentDownVoteRelation,
+    # relation - follow
+    UserFollowRelation,
+    ExpertiseFollowRelation,
+    InterestFollowRelation,
+    QuestionFollowRelation,
+]
 
-from .models import User
-
-admin.site.register(User)
+admin.site.register(user_models)

@@ -2,15 +2,15 @@ from django.conf import settings
 from django.db import models
 
 __all__ = (
-    'UserFollow',
-    'TopicFollow',
-    'TopicExpertiseFollow',
-    'TopicInterestFollow',
-    'QuestionFollow',
+    'UserFollowRelation',
+    'TopicFollowRelation',
+    'ExpertiseFollowRelation',
+    'InterestFollowRelation',
+    'QuestionFollowRelation',
 )
 
 
-class UserFollow(models.Model):
+class UserFollowRelation(models.Model):
     """
     유저 팔로우
     """
@@ -24,7 +24,7 @@ class UserFollow(models.Model):
         unique_together = ('user', 'target')
 
 
-class TopicFollow(models.Model):
+class TopicFollowRelation(models.Model):
     """
     주제 팔로우
     """
@@ -38,17 +38,17 @@ class TopicFollow(models.Model):
         abstract = True
 
 
-class TopicExpertiseFollow(TopicFollow):
+class ExpertiseFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
 
-class TopicInterestFollow(TopicFollow):
+class InterestFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
 
-class QuestionFollow(models.Model):
+class QuestionFollowRelation(models.Model):
     """
     질문 팔로우
     """
@@ -61,3 +61,19 @@ class QuestionFollow(models.Model):
 
     class Meta:
         unique_together = ('user', 'question')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.question.follow_count < 0:
+            self.question.follow_count = 1
+        else:
+            self.question.follow_count += 1
+        self.question.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.question.follow_count > 0:
+            self.question.follow_count -= 1
+        else:
+            self.question.follow_count = 0
+        self.question.save()

@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions
 from rest_framework.pagination import PageNumberPagination
 
-from .serializers import TopicSerializer
 from .models import Topic
+from .serializers import TopicSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -11,8 +11,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 1000
 
 
-
-class TopicList(generics.ListCreateAPIView):
+class TopicListCreateView(generics.ListCreateAPIView):
     """
     토픽 전체 API View
     """
@@ -26,12 +25,11 @@ class TopicList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
-class TopicDetail(generics.RetrieveDestroyAPIView):
+
+class TopicDetailView(generics.RetrieveDestroyAPIView):
     """
     토픽 한개 API View
 
     """
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer
-
-

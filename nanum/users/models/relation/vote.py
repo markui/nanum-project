@@ -3,19 +3,19 @@ from django.db import models
 
 __all__ = (
     # 답변
-    'BaseAnswerVote',
-    'AnswerUpVote',
-    'AnswerDownVote',
+    'BaseAnswerVoteRelation',
+    'AnswerUpVoteRelation',
+    'AnswerDownVoteRelation',
 
     # 코멘트
-    'BaseCommentVote',
-    'CommentUpVote',
-    'CommentDownVote',
+    'BaseCommentVoteRelation',
+    'CommentUpVoteRelation',
+    'CommentDownVoteRelation',
 )
 
 
 # 답변 추천/비추천
-class BaseAnswerVote(models.Model):
+class BaseAnswerVoteRelation(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -29,7 +29,7 @@ class BaseAnswerVote(models.Model):
         abstract = True
 
 
-class AnswerUpVote(BaseAnswerVote):
+class AnswerUpVoteRelation(BaseAnswerVoteRelation):
     """
     답변 추천
     """
@@ -37,8 +37,24 @@ class AnswerUpVote(BaseAnswerVote):
     class Meta:
         unique_together = ('user', 'answer')
 
+    def save(self, *args, **kwargs):
+        super().save()
+        if self.answer.upvote_count < 0:
+            self.answer.upvote_count = 1
+        else:
+            self.answer.upvote_count += 1
+        self.answer.save()
 
-class AnswerDownVote(BaseAnswerVote):
+    def delete(self, *args, **kwargs):
+        super().delete()
+        if self.answer.upvote_count > 0:
+            self.answer.upvote_count -= 1
+        else:
+            self.answer.upvote_count = 0
+        self.answer.save()
+
+
+class AnswerDownVoteRelation(BaseAnswerVoteRelation):
     """
     답변 비추천
     """
@@ -46,10 +62,29 @@ class AnswerDownVote(BaseAnswerVote):
     class Meta:
         unique_together = ('user', 'answer')
 
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        if self.answer.downvote_count < 0:
+            self.answer.downvote_count = 1
+        else:
+            self.answer.downvote_count += 1
+
+        if self.answer.upvote_count > 0:
+            self.answer.upvote_count -= 1
+        self.answer.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        if self.answer.downvote_count > 0:
+            self.answer.downvote_count -= 1
+        else:
+            self.answer.downvote_count = 0
+        self.answer.save()
+
 
 # 댓글 추천/비추천
 # 기본 댓글 관계
-class BaseCommentVote(models.Model):
+class BaseCommentVoteRelation(models.Model):
     """
     상속받는 기본 추천/비추천 모델
     """
@@ -62,11 +97,46 @@ class BaseCommentVote(models.Model):
         abstract = True
 
 
-class CommentUpVote(BaseCommentVote):
+class CommentUpVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
 
+    def save(self, *args, **kwargs):
+        super().save()
+        if self.comment.upvote_count < 0:
+            self.comment.upvote_count = 1
+        else:
+            self.comment.upvote_count += 1
+        self.comment.save()
 
-class CommentDownVote(BaseCommentVote):
+    def delete(self, *args, **kwargs):
+        super().delete()
+        if self.comment.upvote_count > 0:
+            self.comment.upvote_count -= 1
+        else:
+            self.comment.upvote_count = 0
+        self.comment.save()
+
+
+class CommentDownVoteRelation(BaseCommentVoteRelation):
     class Meta:
         unique_together = ('user', 'comment')
+
+    def save(self, *args, **kwargs):
+        super().save(self, *args, **kwargs)
+        if self.comment.downvote_count < 0:
+            self.comment.downvote_count = 1
+        else:
+            self.comment.downvote_count += 1
+
+        if self.comment.upvote_count > 0:
+            self.comment.upvote_count -= 1
+        self.comment.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(self, *args, **kwargs)
+        if self.comment.downvote_count > 0:
+            self.comment.downvote_count -= 1
+        else:
+            self.comment.downvote_count = 0
+        self.comment.save()
