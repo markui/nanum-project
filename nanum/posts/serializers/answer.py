@@ -1,14 +1,17 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ParseError
 
 from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
-from ..utils.quill_js import QuillJSImageProcessor as img_processor
+from ..utils.quill_js import QuillJSDeltaParser
 
 __all__ = (
     'AnswerPostSerializer',
     'AnswerUpdateSerializer',
     'AnswerGetSerializer',
 )
+
+img_processor = QuillJSDeltaParser(model=QuillDeltaOperation, parent_model=Answer)
 
 
 class AnswerPostSerializer(serializers.ModelSerializer):
@@ -21,9 +24,16 @@ class AnswerPostSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content',
+            'content_html',
             'published',
             'created_at',
             'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'created_at',
+            'modified_at'
         )
 
     @property
@@ -32,7 +42,11 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         Request를 보낸 유저를 반환
         :return:
         """
-        return self.context['request'].user
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        return user
 
     def validate(self, data):
         """
@@ -52,29 +66,55 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         """
         content = self.validated_data.pop('content')
         # request_user를 **kwargs에 추가하여 super().save() 호출
-        instance = super().save(user=self.request_user, **kwargs)
+        answer_instance = super().save(user=self.request_user, **kwargs)
         if not content:
-            return instance
-        delta_list = img_processor.get_delta_operation_list(content, iterator=True)
+            return answer_instance
 
         # Answer에 대한 content를 Save해주는 함수
-        img_processor.save_delta_operation_list(delta_list=delta_list, model=QuillDeltaOperation, post=instance)
+        objs = img_processor.save_delta_operation_list(
+            content=content,
+            parent_instance=answer_instance
+        )
+        if not objs:
+            raise ParseError("")
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
+    content = serializers.JSONField(default=None)
+
     # 해당 유저에 대해서
     class Meta:
         model = Answer
         fields = (
+            'pk',
+            'user',
             'question',
             'content',
             'published',
+            'created_at',
+            'modified_at',
         )
         read_only_fields = (
             'pk',
             'user',
+            'question',
             'created_at',
             'modified_at',
+        )
+
+    def save(self, **kwargs):
+        """
+
+        :param kwargs:
+        :return:
+        """
+        queryset = self.instance.quill_delta_operation_set.all()
+        content = self.validated_data.pop('content')
+
+        img_processor.update_delta_operation_list(
+            queryset=queryset,
+            content=content,
+            parent_instance=self.instance,
         )
 
 
@@ -92,6 +132,19 @@ class AnswerGetSerializer(serializers.ModelSerializer):
             'upvote_count',
             'user_upvote_relation',
             'user_bookmark_relation',
+            'published',
+            'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'question',
+            'content',
+            'upvote_count',
+            'user_upvote_relation',
+            'user_bookmark_relation',
+            'published',
             'created_at',
             'modified_at',
         )

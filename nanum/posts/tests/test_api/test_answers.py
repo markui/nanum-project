@@ -1,10 +1,9 @@
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
 from posts.models import Answer, Question
 from .custom_base import AnswerBaseTest
-from topics.models import Topic
 
 User = get_user_model()
 
@@ -36,24 +35,6 @@ class AnswerListCreateAPIsTest(AnswerBaseTest):
         # Status 확인
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_get_answer_list(self):
-        """
-        유저가 포스트한 답변 list만 나오는지 확인
-        :return:
-        """
-        u1_email = self.USER_EMAIL_LIST[0]
-        u1 = User.objects.get(email=u1_email)
-        self.client.force_authenticate(user=u1)
-
-        url = self.URL_API_ANSWER_LIST_CREATE + '?' + self.URL_FILTER_USER.format(pk=u1.pk)
-        response = self.client.get(url)
-
-        answer = Answer.objects.filter(user=u1)
-        # Status 확인
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # 개수 유저 1이 생성한 개수가 맞는지 확인
-        self.assertEqual(response.data['count'], answer.count())
-
     def test_get_answer_list_when_not_authenticated(self):
         """
         유저가 로그인 되지 않았을 시 401에러를 올리는지 확인
@@ -62,11 +43,55 @@ class AnswerListCreateAPIsTest(AnswerBaseTest):
         response = self.client.get(self.URL_API_ANSWER_LIST_CREATE)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_answer_main_feed_list_view(self):
+    def test_get_answer_main_feed_list_view(self):
+        """
+
+        :return:
+        """
         pass
 
-    def test_answer_bookmark_feed_list_view(self):
+    def test_get_answer_filter_feed_list_view_with_wrong_query_params(self):
+        """
+
+        :return:
+        """
         pass
 
-    def test_answer_filter_feed_list_view(self):
+    def test_get_answer_filter_feed_list_view_with_query_params_witout_value(self):
+        """
+        :return:
+        """
+        pass
+
+    def test_get_answer_filter_feed_list_view_with_query_params_not_matching_type(self):
+        """
+
+        :return:
+        """
+        pass
+
+    def test_get_answer_filter_feed_list_view_single_query_params(self):
+        def test_get_answer_list_of_user():
+            """
+            유저가 포스트한 답변 list만 나오는지 확인
+            :return:
+            """
+            u1_email = self.USER_EMAIL_LIST[0]
+            u1 = User.objects.get(email=u1_email)
+            self.client.force_authenticate(user=u1)
+
+            url = self.URL_API_ANSWER_LIST_CREATE + '?' + self.URL_FILTER_USER.format(pk=u1.pk)
+            response = self.client.get(url)
+
+            answer_count = Answer.objects.filter(user=u1).count()
+            # Status 확인
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # 개수 유저 1이 생성한 개수가 맞는지 확인
+            self.assertEqual(response.data['count'], answer_count)
+
+    def test_get_answer_filter_feed_list_view_multiple_query_params(self):
+        """
+
+        :return:
+        """
         pass

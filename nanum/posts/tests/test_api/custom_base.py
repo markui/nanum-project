@@ -1,5 +1,4 @@
 import base64
-import json
 import os
 
 from django.contrib.auth import get_user_model
@@ -37,29 +36,31 @@ class AnswerBaseTest(APITestCase):
     ]
     QUESTION_CONTENT = '{topic} - {user}의 질문'
 
-    TEST_IMAGE_PATH = os.path.join(os.path.join(os.path.join(os.path.join(BASE_DIR, 'posts'), 'tests'), 'test_api'),
+    img_path = os.path.join(os.path.join(os.path.join(os.path.join(BASE_DIR, 'posts'), 'tests'), 'test_api'),
                                    'image.jpg')
-    with open(TEST_IMAGE_PATH, 'rb') as image:
+    with open(img_path, 'rb') as image:
         data = image.read()
+    data = base64.b64encode(data)
+    print(data)
+    data_decode = base64.b64decode(data)
+    print(data_decode)
+    IMAGE_BASE64 = base64.b64decode(data_decode)
+    print(IMAGE_BASE64)
 
-    data_encode = base64.b64encode(data)
-    data_decode = base64.b64decode(data_encode)
-    IMAGE_BASE64 = data_decode
 
     content = "{question} - {user}의 답변"
     ANSWER_CONTENT = {
         "ops": [
-            # {
-            #     "insert": {
-            #         "image": f"{IMAGE_BASE64}"
-            #     }
-            # },
             {
                 "insert": content
+            },
+            {
+                "insert": {
+                    "image": f"{IMAGE_BASE64}"
+                }
             }
         ]
     }
-
 
     @classmethod
     def create_user(cls, name, email):
@@ -79,15 +80,14 @@ class AnswerBaseTest(APITestCase):
     @classmethod
     def create_answer(cls, user=None, question=None):
         content = cls.content.format(question=question, user=user)
-        c = Client()
+        client = Client()
         cls.ANSWER_CONTENT['ops'][0]["insert"] = content
         data = {
             'user': user,
             'question': question,
             'content': cls.ANSWER_CONTENT,
         }
-        c.post(cls.URL_API_ANSWER_LIST_CREATE, data=data)
-        return Answer.objects.create(user=user, question=question)
+        return client.post(cls.URL_API_ANSWER_LIST_CREATE, data=data)
 
     @classmethod
     def setUpTestData(cls):
@@ -97,15 +97,15 @@ class AnswerBaseTest(APITestCase):
         for email in cls.USER_EMAIL_LIST:
             user = cls.create_user(name=email, email=email)
             users.append(user)
-        # print(users)
-        topics = []
+
         # Topic 생성
         # 유저 1 - Topic 1, 유저 2 - Topic 2,... 유저 n - Topic n
+        topics = []
         for i, topic_name in enumerate(cls.TOPIC_NAME_LIST):
             topic = cls.create_topic(user=users[i],
                                      name=topic_name)
             topics.append(topic)
-        # print(topics)
+
         # Question 생성
         # T = Question with Topic
         # 유저 1 - T 1, T 2, T 3, T 4, 유저 2 - T 1, T 2, T 3, T 4,...
@@ -115,16 +115,16 @@ class AnswerBaseTest(APITestCase):
             for topic in topics:
                 question = cls.create_question(user=user, topic=topic.pk)
                 questions.append(question)
-        # print(questions)
-        answers = []
+
         # Answer 생성
         # T{pk}_U{pk} = Q with T pk, U pk
         # 유저 1 - T1_U1, T1_U2, T1_U3, T1_U4, T2_U1...유저 2 - T1_U1,...
         # 총 len(user) * len(question) 만큼의 답변 생성
+        answers = []
         for user in users:
             for topic in topics:
                 for question_user in users:
                     question = Question.objects.get(user=question_user, topics=topic)
                     answer = cls.create_answer(user=user, question=question)
                     answers.append(answer)
-                    # print(answers)
+
