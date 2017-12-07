@@ -4,11 +4,11 @@ from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
-from rest_framework.pagination import PageNumberPagination
 
 from ..models import Answer
 from ..serializers.answer import AnswerUpdateSerializer, AnswerPostSerializer, AnswerGetSerializer
 from ..utils.filters import AnswerFilter
+from ..utils.pagination import CustomPagination
 from ..utils.permissions import IsAuthorOrAuthenticatedReadOnly
 
 __all__ = (
@@ -18,15 +18,6 @@ __all__ = (
 )
 
 User = get_user_model()
-
-
-class FeedPagination(PageNumberPagination):
-    """
-    Answer List에 대한 Pagination Class
-    """
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 100000
 
 
 class AnswerListCreateView(generics.ListCreateAPIView):
@@ -43,7 +34,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     )
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = AnswerFilter  # utils.filter
-    pagination_class = FeedPagination
+    pagination_class = CustomPagination
 
     def filter_queryset(self, queryset):
         """
@@ -125,7 +116,7 @@ class AnswerMainFeedListView(generics.ListAPIView):
     authentication_classes = (
         permissions.IsAuthenticated,
     )
-    pagination_class = FeedPagination
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         """

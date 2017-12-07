@@ -1,28 +1,34 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ParseError
 
 from ..models import Comment, CommentPostIntermediate
 
 __all__ = (
-    'CommentSerializer',
+    'CommentCreateSerializer',
     'CommentUpdateSerializer',
+    'CommentGetSerializer',
 )
 
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentCreateSerializer(serializers.ModelSerializer):
+    """
+    METHOD: CREATE
+    user, parent, question, answer, content를 데이터로 받음
+    CommentPostIntermediate을 통해 question / answer과 연결되며, related_post로 해당 정보를 보여줌
+    """
     question = serializers.IntegerField(required=False)
     answer = serializers.IntegerField(required=False)
 
     class Meta:
         model = Comment
         fields = (
+            'pk',
             'user',
+            'related_post',
+            'parent',
             'content',
             'question',
             'answer',
-            'parent',
-
-            'pk',
-            'related_post',
             'created_at',
             'modified_at',
         )
@@ -36,12 +42,12 @@ class CommentSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """
         Answer 혹은 Question값이 필수적으로 들어왔는지 Validate
-        - Refactor 가능한지? 
+        - Refactor 가능한지?
         :param data:
         :return:
         """
         if not data.get('answer', None) and not data.get('question', None):
-            raise serializers.ValidationError("Question, Answer 중 한개의 값은 있어야 합니다.")
+            raise ParseError(detail="Question, Answer 중 한개의 값은 있어야 합니다.")
         return data
 
     @property
@@ -71,7 +77,7 @@ class CommentSerializer(serializers.ModelSerializer):
         elif answer:
             comment_post_intermediate = CommentPostIntermediate.objects.get(answer=answer)
         else:
-            raise serializers.ValidationError({"save_error": ["Question, Answer 중 한개의 값은 있어야 합니다."]})
+            raise ParseError(detail="Question, Answer 중 한개의 값은 있어야 합니다.")
 
         super().save(
             user=self.request_user,
@@ -80,16 +86,51 @@ class CommentSerializer(serializers.ModelSerializer):
         )
 
 
-class CommentUpdateSerializer(serializers.ModelSerializer):
+class CommentGetSerializer(serializers.ModelSerializer):
+    """
+    METHOD: GET
+    모든 값이 read_only
+    all_children_count, 즉 밑에 달린 댓글의 총 개수 또한 반환
+    """
+
     class Meta:
         model = Comment
         fields = (
-            'content',
-
             'pk',
             'user',
             'related_post',
             'parent',
+            'content',
+            'created_at',
+            'modified_at',
+            'all_children_count',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'created_at',
+            'modified_at',
+            'all_children_count',
+            'content',
+        )
+
+
+class CommentUpdateSerializer(serializers.ModelSerializer):
+    """
+    METHOD: PUT, PATCH
+    content 만 form에서 받을 수 있도록 설정
+    """
+
+    class Meta:
+        model = Comment
+        fields = (
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'content',
             'created_at',
             'modified_at',
         )

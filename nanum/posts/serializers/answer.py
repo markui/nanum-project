@@ -17,17 +17,17 @@ class AnswerPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = (
+            'pk',
             'user',
             'question',
             'content',
             'published',
-
-            'pk',
             'created_at',
             'modified_at',
         )
         read_only_fields = (
             'pk',
+            'user',
             'created_at',
             'modified_at'
         )
@@ -79,12 +79,11 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = (
-            'content',
-            'published',
-
             'pk',
             'user',
             'question',
+            'content',
+            'published',
             'created_at',
             'modified_at',
         )
@@ -126,6 +125,19 @@ class AnswerGetSerializer(serializers.ModelSerializer):
             'upvote_count',
             'user_upvote_relation',
             'user_bookmark_relation',
+            'published',
+            'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'question',
+            'content',
+            'upvote_count',
+            'user_upvote_relation',
+            'user_bookmark_relation',
+            'published',
             'created_at',
             'modified_at',
         )

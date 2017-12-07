@@ -2,7 +2,7 @@ import django_filters
 from django_filters import rest_framework as filters, OrderingFilter
 from django_filters.fields import Lookup
 
-from ..models import Answer
+from ..models import Answer, Comment
 
 __all__ = (
     'AnswerFilter',
@@ -48,3 +48,15 @@ class AnswerFilter(filters.FilterSet):
     class Meta:
         model = Answer
         fields = ['user', 'topic', 'bookmarked_by', ]
+
+class CommentFilter(AnswerFilter):
+    ordering = OrderingFilter(
+        fields=(
+            ('modified_at', 'modified_at'),
+            ('created_at', 'created_at')
+        )
+    )
+
+    class Meta:
+        model = Comment
+        fields = []
