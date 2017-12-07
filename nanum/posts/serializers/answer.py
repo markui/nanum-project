@@ -2,13 +2,15 @@ from rest_framework import serializers
 
 from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
-from ..utils.quill_js import QuillJSImageProcessor as img_processor
+from ..utils.quill_js import QuillJSDeltaParser
 
 __all__ = (
     'AnswerPostSerializer',
     'AnswerUpdateSerializer',
     'AnswerGetSerializer',
 )
+
+img_processor = QuillJSDeltaParser(model=QuillDeltaOperation, parent_model=Answer)
 
 
 class AnswerPostSerializer(serializers.ModelSerializer):
@@ -21,6 +23,7 @@ class AnswerPostSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content',
+            'content_html',
             'published',
             'created_at',
             'modified_at',
@@ -67,9 +70,10 @@ class AnswerPostSerializer(serializers.ModelSerializer):
             return answer_instance
 
         # Answer에 대한 content를 Save해주는 함수
-        img_processor.save_delta_operation_list(content=content,
-                                                model=QuillDeltaOperation,
-                                                answer=answer_instance)
+        img_processor.save_delta_operation_list(
+            content=content,
+            instance=answer_instance
+        )
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
@@ -103,11 +107,11 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         """
         queryset = self.instance.quill_delta_operation_set.all()
         content = self.validated_data.pop('content')
+
         img_processor.update_delta_operation_list(
             queryset=queryset,
             content=content,
-            model=QuillDeltaOperation,
-            answer=self.instance,
+            instance=self.instance,
         )
 
 

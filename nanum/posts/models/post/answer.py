@@ -3,7 +3,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from ...models import CommentPostIntermediate
-from ...utils.quill_js import QuillJSImageProcessor as img_processor
+from ...utils.quill_js import QuillJSDeltaParser
 
 __all__ = (
     'Answer',
@@ -17,6 +17,7 @@ class Answer(models.Model):
     published = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    content_html = models.TextField(null=False)
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
@@ -41,7 +42,8 @@ class Answer(models.Model):
         delta_operation_list = list()
         for quill_delta_operation in quill_delta_operation_querydict:
             delta_operation_list.append(quill_delta_operation.delta_operation)
-        content = img_processor.create_quill_content(delta_operation_list=delta_operation_list)
+
+        content = QuillJSDeltaParser.create_quill_content(delta_operation_list=delta_operation_list)
         return content
 
     def save(self, *args, **kwargs):
@@ -54,11 +56,13 @@ class QuillDeltaOperation(models.Model):
     QuillJS 의 Content중 Operation 한 줄에 대한 정보를 갖는 모델
     해당 content가 쓰인 Post와 ForeignKey로 연결이 되어 있음
     """
+    line_no = models.IntegerField(null=False)
+
     insert_value = models.TextField(null=True, blank=True)
-    image = models.ImageField(null=True, blank=True)
     image_insert_value = JSONField(null=True, blank=True)
     attributes_value = JSONField(null=True, blank=True)
-    line_no = models.IntegerField(null=False)
+
+    image = models.ImageField(null=True, blank=True)
     answer = models.ForeignKey(
         'Answer',
         on_delete=models.CASCADE,

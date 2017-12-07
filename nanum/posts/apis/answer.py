@@ -133,7 +133,6 @@ class AnswerMainFeedListView(generics.ListAPIView):
 
         # Combine both
         answer_topic = answer_topic_interest | answer_topic_expertise
-        print(answer_topic)
 
         # Get Follower's Answers
         following_users = user.following.values_list(flat=True)
