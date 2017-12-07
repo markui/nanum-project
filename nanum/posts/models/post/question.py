@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-
 from ...models import PostManager
 
 __all__ = (
@@ -32,5 +31,3 @@ class Question(models.Model):
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
 
-    class Meta:
-        ordering = ['created_at']

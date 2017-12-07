@@ -49,7 +49,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     filter_class = AnswerFilter  # utils.filter
     pagination_class = FeedPagination
 
-
     def filter_queryset(self, queryset):
         """
         GenericAPIView의 filter_queryset override

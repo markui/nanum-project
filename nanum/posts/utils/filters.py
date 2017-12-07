@@ -52,10 +52,21 @@ class AnswerFilter(filters.FilterSet):
         fields = ['user', 'topic', 'bookmarked_by', ]
 
 
-class QuestionFilter(filters.FilterSet):
-    user = ListFilter(name='user')
-    topic = ListFilter(name='question__topics')
-    bookmarked_by = ListFilter(name='questionbookmarkrelation__user')
+# QuestionListFilter
+class QuestionListFilter(django_filters.Filter):
+    def filter(self, qs, value):
+        return super().filter(qs, Lookup(value, 'in'))
+
+
+class QuestionFilter(django_filters.FilterSet):
+    # 해당 유저의 모든 질문
+    user = QuestionListFilter(name='user', )
+    # 해당 유저가 답변한 질문
+    answered_by = QuestionListFilter(name='answer__user_id', )
+    # 해당 유저가 팔로우하는 질문
+    followed_by = QuestionListFilter(name='followers', )
+    # 해당 유저가 북마크하는 질문
+    bookmarked_by = QuestionListFilter(name='who_bookmarked', )
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
@@ -65,4 +76,4 @@ class QuestionFilter(filters.FilterSet):
 
     class Meta:
         model = Question
-        fields = ['user', 'topic', 'bookmarked_by', ]
+        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'follow_count']
