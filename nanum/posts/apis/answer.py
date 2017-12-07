@@ -32,6 +32,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     permission_classes = (
         permissions.IsAuthenticated,
     )
+
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = AnswerFilter  # utils.filter
     pagination_class = CustomPagination

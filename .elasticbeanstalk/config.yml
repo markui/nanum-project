@@ -1,6 +1,8 @@
 branch-defaults:
   dev-siwon:
     environment: EB-Docker-Deploy-Master
+  master:
+    environment: EB-Docker-Deploy-Master
 environment-defaults:
   EB-Docker-Deploy-Master:
     branch: null

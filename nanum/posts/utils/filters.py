@@ -2,10 +2,11 @@ import django_filters
 from django_filters import rest_framework as filters, OrderingFilter
 from django_filters.fields import Lookup
 
-from ..models import Answer, Comment
+from ..models import Answer, Question, Comment
 
 __all__ = (
     'AnswerFilter',
+    'QuestionFilter',
 )
 
 
@@ -49,6 +50,7 @@ class AnswerFilter(filters.FilterSet):
         model = Answer
         fields = ['user', 'topic', 'bookmarked_by', ]
 
+
 class CommentFilter(AnswerFilter):
     ordering = OrderingFilter(
         fields=(
@@ -60,3 +62,30 @@ class CommentFilter(AnswerFilter):
     class Meta:
         model = Comment
         fields = []
+
+
+# QuestionListFilter
+class QuestionListFilter(django_filters.Filter):
+    def filter(self, qs, value):
+        return super().filter(qs, Lookup(value, 'in'))
+
+
+class QuestionFilter(django_filters.FilterSet):
+    # 해당 유저의 모든 질문
+    user = QuestionListFilter(name='user', )
+    # 해당 유저가 답변한 질문
+    answered_by = QuestionListFilter(name='answer__user_id', )
+    # 해당 유저가 팔로우하는 질문
+    followed_by = QuestionListFilter(name='followers', )
+    # 해당 유저가 북마크하는 질문
+    bookmarked_by = QuestionListFilter(name='who_bookmarked', )
+    ordering = OrderingFilter(
+        fields=(
+            ('modified_at', 'modified_at'),
+            ('created_at', 'created_at')
+        )
+    )
+
+    class Meta:
+        model = Question
+        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'follow_count']
