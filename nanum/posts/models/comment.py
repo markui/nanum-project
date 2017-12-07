@@ -4,21 +4,24 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 __all__ = (
-    'PostManager',
+    'CommentPostIntermediate',
     'Comment',
 )
 
 
-class PostManager(models.Model):
+class CommentPostIntermediate(models.Model):
     """
     PostType 모델
     Comment에 어떤 종류의 포스트와 연결이 되어있는지, Question/Answer에 어떤 Comment가 연결되어있는지를 위한 중간모델
     Reference: https://lukeplant.me.uk/blog/posts/avoid-django-genericforeignkey/
     """
     question = models.OneToOneField('Question', null=True, blank=True, on_delete=models.CASCADE,
-                                    related_name='post_manager')
+                                    related_name='comment_post_intermediate')
     answer = models.OneToOneField('Answer', null=True, blank=True, on_delete=models.CASCADE,
-                                  related_name='post_manager')
+                                  related_name='comment_post_intermediate')
+
+    def __str__(self):
+        return f'{self.post} \n{self.parent_comments}'
 
     @property
     def post(self):
@@ -27,10 +30,10 @@ class PostManager(models.Model):
         둘 다 없을 경우 raise AssertionError
         :return:
         """
-        if self.question.pk is not None:
-            return self.question
-        if self.answer.pk is not None:
-            return self.answer
+        if self.question:
+            return f'question - {self.question.pk}'
+        if self.answer:
+            return f'answer - {self.answer.pk}'
         raise AssertionError("Neither 'question' or 'answer' set")
 
     @property
@@ -40,7 +43,7 @@ class PostManager(models.Model):
         없을 경우 빈 queryset 반환
         :return:
         """
-        return Comment.objects.filter(parent=None, post_manager=self.pk)
+        return Comment.objects.filter(parent=None, comment_post_intermediate=self.pk)
 
 
 class Comment(MPTTModel):
@@ -58,23 +61,40 @@ class Comment(MPTTModel):
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children_comments', db_index=True)
 
     # Question / Answer Foreign Key
-    post_manager = models.ForeignKey(PostManager, on_delete=models.CASCADE)
+    comment_post_intermediate = models.ForeignKey(CommentPostIntermediate, on_delete=models.CASCADE)
 
+    # Upvote, Downvote의 개수
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
 
     @property
+    def related_post(self):
+        """
+        Comment 와 엮어 있는 Answer 혹은 Question의 pk를 CommentPostIntermediate 의 to string 방식으로 반환
+        :return:
+        """
+        return self.comment_post_intermediate.post
+
+    @property
     def immediate_children(self):
         """
-
+        Instance 바로 밑에 있는 depth의 Comment object들을 반환
         :return:
         """
         return self.get_children()
 
     @property
+    def immediate_children_count(self):
+        """
+        Instancen 바로 밑에 있는 depth 의 Comment 개수를 반환
+        :return:
+        """
+        return self.get_children().count()
+
+    @property
     def all_children(self):
         """
-
+        Instance 밑에 있는 모든 Comment object들을 반환
         :return:
         """
         return self.get_descendants(include_self=False)
@@ -82,7 +102,7 @@ class Comment(MPTTModel):
     @property
     def all_children_count(self):
         """
-
+        Instance 밑에 있는 모든 Comment 개수를 반환
         :return:
         """
         return self.get_descendant_count()
