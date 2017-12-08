@@ -8,7 +8,7 @@ from ..utils import (
     user_thumb_img_50_path,
     user_thumb_img_200_path
 )
-from ...utils import rescale
+from nanum.utils import rescale
 
 __all__ = (
     'Profile',
