@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-class IsFollower(permissions.BasePermission):
+class IsUserWhoTookAction(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
 

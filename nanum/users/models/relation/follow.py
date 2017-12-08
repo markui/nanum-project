@@ -23,6 +23,20 @@ class UserFollowRelation(models.Model):
     class Meta:
         unique_together = ('user', 'target')
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.user.profile.following_count += 1
+        self.target.profile.follower_count += 1
+        self.user.profile.save()
+        self.target.profile.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self.user.profile.following_count -= 1
+        self.target.profile.follower_count -= 1
+        self.user.profile.save()
+        self.target.profile.save()
+
 
 class TopicFollowRelation(models.Model):
     """
@@ -55,7 +69,7 @@ class QuestionFollowRelation(models.Model):
 
     # 팔로우 하는 유저(from)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # 팔로우 받는 질문(to)
+    # 팔로우 받는 질문(to
     question = models.ForeignKey('posts.Question', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 

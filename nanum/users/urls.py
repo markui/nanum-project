@@ -1,7 +1,11 @@
 from django.conf.urls import url
 
+from users.apis import ProfileRetrieveUpdateView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
-    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerView, UserFollowingView
+    QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
+    FollowingInterestListView, FollowingExpertiseListView
+from users.apis.relation.vote import AnswerUpVoteRelationCreateView, AnswerUpVoteRelationDetailView, \
+    AnswerDownVoteRelationCreateView
 from .apis import SignupView, LoginView, FacebookLoginView, InterestFollowRelationCreateView, \
     ExpertiseFollowRelationCreateView, InterestFollowRelationDetailView, ExpertiseFollowRelationDetailView
 
@@ -36,6 +40,12 @@ urlpatterns = [
     # /user/topic-expertise-follow-relation/1/
     url(r'^topic-expertise-follow-relation/(?P<pk>\d+)/$', ExpertiseFollowRelationDetailView.as_view(),
         name='topic-expertise-follow-relation-detail'),
+    # /user/1/following-interests/
+    url(r'^(?P<pk>\d+)/following-interests/$', FollowingInterestListView.as_view(),
+        name='following-interests'),
+    # /user/1/following-expertise/
+    url(r'^(?P<pk>\d+)/following-expertise/$', FollowingExpertiseListView.as_view(),
+        name='following-expertise'),
 
     # 1-2. FOLLOW-USER
 
@@ -45,12 +55,12 @@ urlpatterns = [
     # /user/user-follow-relation/1/
     url(r'^user-follow-relation/(?P<pk>\d+)/$', UserFollowRelationDetailView.as_view(),
         name='user-follow-relation-detail'),
-    # /user/1/follower/
-    url(r'^(?P<pk>\d+)/follower/$', UserFollowerView.as_view(),
-        name='user-follower'),
-    # /user/1/following/
-    url(r'^(?P<pk>\d+)/following-user/$', UserFollowingView.as_view(),
-        name='user-following'),
+    # /user/1/followers/
+    url(r'^(?P<pk>\d+)/followers/$', UserFollowerListView.as_view(),
+        name='user-followers'),
+    # /user/1/followings/
+    url(r'^(?P<pk>\d+)/followings/$', UserFollowingListView.as_view(),
+        name='user-followings'),
 
     # 1-3. FOLLOW-QUESTION
 
@@ -61,5 +71,23 @@ urlpatterns = [
     url(r'^question-follow-relation/(?P<pk>\d+)/$', QuestionFollowRelationDetailView.as_view(),
         name='question-follow-relation-detail'),
 
+    # 2. VOTE
+    # /user/answer-upvote-relation/
+    url(r'^answer-upvote-relation/$', AnswerUpVoteRelationCreateView.as_view(),
+        name='answer-upvote-relation'),
+    # /user/answer-upvote-relation/1/
+    url(r'^answer-upvote-relation/(?P<pk>\d+)/$', AnswerUpVoteRelationDetailView.as_view(),
+        name='answer-upvote-relation-detail'),
+    # /user/answer-downvote-relation/
+    url(r'^answer-downvote-relation/$', AnswerDownVoteRelationCreateView.as_view(),
+        name='answer-downvote-relation'),
+
+    # 3. BOOKMARK
+
+    # Profile
+    # 1. Profile Retrieve / Update
+    # /user/1/profile/
+    url(r'^(?P<pk>\d+)/profile/$', ProfileRetrieveUpdateView.as_view(),
+        name='profile-detail'),
 
 ]
