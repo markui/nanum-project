@@ -6,11 +6,10 @@ import re
 import string
 from collections import OrderedDict
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models.base import ModelBase
 from django.db.transaction import atomic
-
-from config.settings import MEDIA_URL
 
 __all__ = (
     'QuillJSDeltaParser',
@@ -199,7 +198,7 @@ class QuillJSDeltaParser:
             # image 가 base64가 아닌 경우
             except AttributeError:
                 # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
-                if image_value[:4] == "http" or image_value[:6] == MEDIA_URL:
+                if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
                 # image 가 base64도 아니고 link도 아닌 잘못된 형식일 경우
                 else:
@@ -213,10 +212,12 @@ class QuillJSDeltaParser:
     def _parse_base64(self, image_base64):
         """
         Base64 형태의 image를 받아서 이미지 format과 decoded_data를 분리해서 반환
-        :param image_data_string:
+        :param image_base64: base64 형태의 이미지 데이터 string
         :return:
         """
         data = re.match(r'\w+:image\/(\w+);\w+,(.+)', image_base64)
+
+        # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
         format, byte_data_string = data.group(1), data.group(2)
 
         # image_data_string 파싱에 실패 했을 경우
@@ -239,11 +240,10 @@ class QuillJSDeltaParser:
         """
         fk_field_name = self._get_related_field()
         fk_field_instance = kwargs.get(fk_field_name)
-        line_no = kwargs.get('line_no')
 
         # Create filename
         rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        filename = f'{fk_field_name}-{fk_field_instance.pk}__line-{line_no}.{format}'
+        filename = f'{fk_field_name}-{fk_field_instance.pk}__{rand_str}.{format}'
 
         return filename
 
@@ -261,12 +261,15 @@ class QuillJSDeltaParser:
         assert type(parent_instance) == self.parent_model
 
         # Queryset 에서 {Quill operation : instance, ...} 형식의 dict 생성
+        # Quill operation 은 json dumps를 통한 string 형태
         operation_instance_dict = {
             json.dumps(qdo_instance.delta_operation): qdo_instance
             for qdo_instance
             in queryset
         }
+
         # Request.data.content 에서 {Quill operation : line_number, ...} 형식의 dict 생성
+        # Quill operation 은 json dumps를 통한 string 형태
         operation_lineno_dict = {
             json.dumps(qdo): line_no
             for line_no, qdo
