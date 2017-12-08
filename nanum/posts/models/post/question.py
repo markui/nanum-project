@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-
 from ...models import CommentPostIntermediate
 
 __all__ = (
@@ -21,8 +20,8 @@ class Question(models.Model):
     topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
-    follow_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
+    follow_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
@@ -32,5 +31,3 @@ class Question(models.Model):
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
 
-    class Meta:
-        ordering = ['-created_at']

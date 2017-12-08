@@ -7,7 +7,6 @@ class Topic(models.Model):
     """
     토픽 모델
     Question과 Answer에 ManyToMany로 연결
-    
     """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,

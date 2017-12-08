@@ -76,7 +76,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-    )
+    ),
+
+    # DRF filter
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
 }
 
 # Allowed hosts
@@ -97,6 +102,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'mptt',
+    'django_filters',
 
     # 'stream_django',
 

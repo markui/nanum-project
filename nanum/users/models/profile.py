@@ -2,6 +2,14 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from ..utils import (
+    user_img_path,
+    user_thumb_img_25_path,
+    user_thumb_img_50_path,
+    user_thumb_img_200_path
+)
+from ...utils import rescale
+
 __all__ = (
     'Profile',
     'EducationCredentials',
@@ -49,7 +57,11 @@ class Profile(models.Model):
     }
     """
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to='profile/', blank=True, null=True)
+    image = models.ImageField(upload_to=user_img_path, blank=True, null=True)
+    # A * A 픽셀별 썸네일 이미지
+    thumbnail_image_200 = models.ImageField(upload_to=user_thumb_img_200_path, blank=True, null=True)
+    thumbnail_image_50 = models.ImageField(upload_to=user_thumb_img_50_path, blank=True, null=True)
+    thumbnail_image_25 = models.ImageField(upload_to=user_thumb_img_25_path, blank=True, null=True)
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
     main_credential = models.CharField(max_length=100, blank=True)
@@ -58,8 +70,31 @@ class Profile(models.Model):
     # facebook 그래프 API로 가져온 정보
     gender = models.CharField(max_length=30, blank=True)
 
+    # relation 에서 가져온 정보 - 누적되는 팔로워/팔로잉 수
+    follower_count = models.IntegerField(default=0)
+    following_count = models.IntegerField(default=0)
+
     def __str__(self):
         return f'Profile of {self.user}'
+
+    # 유저가 이미지를 업로드 할 시
+    # 200 * 200 / 50 * 50 / 25 * 25의 rescale된 썸네일 이미지들 역시 별도의 필드에 저장됨
+    def save(self, *args, **kwargs):
+        status = kwargs.pop('status', None)
+        if self.image:
+            # ProfileSerializer update에서, image를 제외한 다른
+            # Profile 필드들을 새로 업데이트하는 경우 resizing을 실시하지 않는다
+            if status != 'same-image':
+                image_file_byte_data = self.image.read()
+                thumbnail_image_file_200 = rescale(image_file_byte_data, 200, 200, force=True)
+                thumbnail_image_file_50 = rescale(image_file_byte_data, 50, 50, force=True)
+                thumbnail_image_file_25 = rescale(image_file_byte_data, 25, 25, force=True)
+
+                self.thumbnail_image_200.save(f'{self.image.name}', thumbnail_image_file_200, save=False)
+                self.thumbnail_image_50.save(f'{self.image.name}', thumbnail_image_file_50, save=False)
+                self.thumbnail_image_25.save(f'{self.image.name}', thumbnail_image_file_25, save=False)
+
+        super().save(*args, **kwargs)
 
 
 class EducationCredentials(models.Model):

@@ -38,7 +38,15 @@ class AnswerUpVoteRelation(BaseAnswerVoteRelation):
         unique_together = ('user', 'answer')
 
     def save(self, *args, **kwargs):
-        super().save()
+        super().save(*args, **kwargs)
+        # 만일 user가 이미 Downvote를 한 상황이면, Upvote 시에
+        # AnswerDownVoteRelation 인스턴스 삭제하기
+        try:
+            answer_downvote_relation = AnswerDownVoteRelation.objects.get(user=self.user, answer=self.answer)
+        except AnswerDownVoteRelation.DoesNotExist:
+            pass
+        else:
+            answer_downvote_relation.delete()
         if self.answer.upvote_count < 0:
             self.answer.upvote_count = 1
         else:
@@ -46,7 +54,7 @@ class AnswerUpVoteRelation(BaseAnswerVoteRelation):
         self.answer.save()
 
     def delete(self, *args, **kwargs):
-        super().delete()
+        super().delete(*args, **kwargs)
         if self.answer.upvote_count > 0:
             self.answer.upvote_count -= 1
         else:
@@ -63,7 +71,15 @@ class AnswerDownVoteRelation(BaseAnswerVoteRelation):
         unique_together = ('user', 'answer')
 
     def save(self, *args, **kwargs):
-        super().save(self, *args, **kwargs)
+        super().save(*args, **kwargs)
+        # 만일 user가 이미 Upvote를 한 상황이면, Downvote 시에
+        # AnswerUpVoteRelation 인스턴스 삭제하기
+        try:
+            answer_upvote_relation = AnswerUpVoteRelation.objects.get(user=self.user, answer=self.answer)
+        except AnswerUpVoteRelation.DoesNotExist:
+            pass
+        else:
+            answer_upvote_relation.delete()
         if self.answer.downvote_count < 0:
             self.answer.downvote_count = 1
         else:
@@ -74,7 +90,7 @@ class AnswerDownVoteRelation(BaseAnswerVoteRelation):
         self.answer.save()
 
     def delete(self, *args, **kwargs):
-        super().delete(self, *args, **kwargs)
+        super().delete(*args, **kwargs)
         if self.answer.downvote_count > 0:
             self.answer.downvote_count -= 1
         else:
