@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import users.utils.image_resize
+from users.utils import image_path
 
 
 class Migration(migrations.Migration):
@@ -30,21 +30,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='profile',
             name='image',
-            field=models.ImageField(blank=True, null=True, upload_to=users.utils.image_resize.user_img_path),
+            field=models.ImageField(blank=True, null=True, upload_to=image_path.user_img_path),
         ),
         migrations.AddField(
             model_name='profile',
             name='thumbnail_image_200',
-            field=models.ImageField(blank=True, null=True, upload_to=users.utils.image_resize.user_thumb_img_200_path),
+            field=models.ImageField(blank=True, null=True, upload_to=image_path.user_thumb_img_200_path),
         ),
         migrations.AddField(
             model_name='profile',
             name='thumbnail_image_25',
-            field=models.ImageField(blank=True, null=True, upload_to=users.utils.image_resize.user_thumb_img_25_path),
+            field=models.ImageField(blank=True, null=True, upload_to=image_path.user_thumb_img_25_path),
         ),
         migrations.AddField(
             model_name='profile',
             name='thumbnail_image_50',
-            field=models.ImageField(blank=True, null=True, upload_to=users.utils.image_resize.user_thumb_img_50_path),
+            field=models.ImageField(blank=True, null=True, upload_to=image_path.user_thumb_img_50_path),
         ),
     ]
