@@ -5,10 +5,12 @@ import random
 import re
 import string
 from collections import OrderedDict
+from io import BytesIO
 
+from PIL import Image as pil
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.db.models.base import ModelBase
+from django.db.models.query import QuerySet
 from django.db.transaction import atomic
 
 __all__ = (
@@ -181,28 +183,29 @@ class QuillJSDeltaParser:
         instance = self.model(**kwargs)
 
         # insert 안에 image가 있을 경우
+        # image 가 base64인 경우 instance에 이미지 추가
         try:
             image_value = insert_value.get('image')
-            # image 가 base64인 경우 instance에 이미지 추가
             try:
-                format, decoded_data = self._parse_base64(image_base64=image_value)
+                decoded_data = self._parse_base64(image_base64=image_value)
                 filename = self._generate_filename(format=format, **kwargs)
+                image = self._image_process(data=decoded_data, max_size=600)
 
                 instance.image.save(
                     filename,
-                    ContentFile(decoded_data),
+                    image,
                     save=False
                 )
                 instance.image_insert_value = {"image": f"{instance.image.url}"}
 
             # image 가 base64가 아닌 경우
+            # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
+            # image 가 base64도 아니고 link도 아닌 잘못된 형식일 경우
             except AttributeError:
-                # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
                 if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
-                # image 가 base64도 아니고 link도 아닌 잘못된 형식일 경우
                 else:
-                    return
+                    raise ValueError("올바른 형태의 이미지가 아닙니다.")
 
         # insert 안에 Text만 있을 경우
         except AttributeError:
@@ -215,27 +218,24 @@ class QuillJSDeltaParser:
         :param image_base64: base64 형태의 이미지 데이터 string
         :return:
         """
-        data = re.match(r'\w+:image\/(\w+);\w+,(.+)', image_base64)
+        data = re.match(r'\w+:image\/\w+;\w+,(.+)', image_base64)
 
         # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
-        format, byte_data_string = data.group(1), data.group(2)
+        byte_data_string = data.group(1)
 
         # image_data_string 파싱에 실패 했을 경우
-        if not format or not byte_data_string:
+        if not byte_data_string:
             raise AttributeError
 
         byte_data_base64 = bytes(byte_data_string, 'utf-8')
         decoded_data = base64.b64decode(byte_data_base64)
-        return format, decoded_data
+        return decoded_data
 
     def _generate_filename(self, format, **kwargs) -> string:
         """
         이미지 파일 이름 생성
 
-        :param image_type:
-        :param decoded_data:
-        :param post:
-        :param classname:
+        :param format: 파일 형태 format
         :return:
         """
         fk_field_name = self._get_related_field()
@@ -243,18 +243,51 @@ class QuillJSDeltaParser:
 
         # Create filename
         rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        filename = f'{fk_field_name}-{fk_field_instance.pk}__{rand_str}.{format}'
+        filename = f'{fk_field_name}-{fk_field_instance.pk}__{rand_str}.jpeg'
 
         return filename
 
-    def update_delta_operation_list(self, queryset, content, parent_instance):
+    def _image_process(self, data: base64, max_size: int):
+        """
+        base64 이미지 데이터를 받아 height, width 중 긴 쪽을 max_size에 맞추고 다른 쪽을 Ratio에 따라 줄여서 jpeg형식으로 반환
+
+        :param data:
+        :return:
+        """
+        original_img = BytesIO(data)
+        img = pil.open(original_img)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        src_width, src_height = img.size
+        gtr_side = max(src_width, src_height)
+        ratio = float(max_size) / float(gtr_side)
+
+        # 이미지의 가로 혹은 이미지의 세로가 max_size보다 작을 경우
+        # 긴 쪽을 max_size에 맞추고 짧은 쪽을 max_size * ratio
+        # 새 width 와 height를 통해 resize
+        if src_width > max_size or src_height > max_size:
+            if src_width > src_height:
+                dst_width = max_size
+                dst_height = int(src_height * ratio)
+            else:
+                dst_height = max_size
+                dst_width = int(src_width * ratio)
+            img = img.resize((dst_width, dst_height), pil.ANTIALIAS)
+
+        output_img = BytesIO()
+        img.save(output_img, 'JPEG')
+
+        return output_img
+
+    def update_delta_operation_list(self, queryset: QuerySet,
+                                    content: dict, parent_instance):
         """
         전달받은 model에 대해 update, delete create을 실행
 
-        :param queryset:
-        :param content:
-        :param model:
-        :param kwargs:
+        :param queryset: Quill Operation 이 담겨있는 Queryset
+        :param content: request.data의 content
+        :param parent_instance: Quill Operation 와 ForeignKey로 연결되는 parent_instance
         :return:
         """
         assert type(queryset[0]) == self.model
