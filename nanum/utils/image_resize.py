@@ -3,32 +3,8 @@ from io import BytesIO
 from PIL import Image as pil
 
 __all__ = (
-    'user_img_path',
-    'user_thumb_img_200_path',
-    'user_thumb_img_50_path',
-    'user_thumb_img_25_path',
     'rescale',
 )
-
-
-def user_img_path(instance, filename):
-    # 업로드 이미지 file 저장 경로
-    return f'profile/img/{instance.user.__str__()}/{filename}'
-
-
-def user_thumb_img_200_path(instance, filename):
-    # 200 * 200 썸네일 이미지 file 저장 경로
-    return f'profile/thumbnail_img_200/{instance.user.__str__()}/{filename}'
-
-
-def user_thumb_img_50_path(instance, filename):
-    # 50 * 50 썸네일 이미지 file 저장 경로
-    return f'profile/thumbnail_img_50/{instance.user.__str__()}/{filename}'
-
-
-def user_thumb_img_25_path(instance, filename):
-    # 25 * 25 썸네일 이미지 file 저장 경로
-    return f'profile/thumbnail_img_25/{instance.user.__str__()}/{filename}'
 
 
 def rescale(data, width, height, force=True):
@@ -43,11 +19,10 @@ def rescale(data, width, height, force=True):
     max_width = width
     max_height = height
 
-    # input_file = BytesIO(data.read())
-    input_file = BytesIO(data)
-    img = pil.open(input_file)
+    input_image_file = BytesIO(data)
+    img = pil.open(input_image_file)
 
-    # RGBA, A(투명도)를 포함한 PNG와 같은 파일이 올 경우, 이를 변환함
+    # RGBA, A(투명도)를 포함한 PNG와 같은 파일이 올 경우, A를 제거하도록 변환함
     if img.mode != 'RGB':
         img = img.convert('RGB')
 
@@ -72,6 +47,6 @@ def rescale(data, width, height, force=True):
         img = img.crop((x_offset, y_offset, x_offset + int(crop_width), y_offset + int(crop_height)))
         img = img.resize((dst_width, dst_height), pil.ANTIALIAS)
 
-    image_file = BytesIO()
-    img.save(image_file, 'JPEG')
-    return image_file
+    output_image_file = BytesIO()
+    img.save(output_image_file, 'JPEG')
+    return output_image_file
