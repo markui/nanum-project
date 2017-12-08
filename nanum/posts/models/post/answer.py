@@ -46,6 +46,15 @@ class Answer(models.Model):
         content = QuillJSDeltaParser.create_quill_content(delta_operation_list=delta_operation_list)
         return content
 
+    @property
+    def text_content(self):
+        """
+        Answer과 연결된 QuillDeltaOperation set 중 insert_value만 parse해서 반환
+        :return:
+        """
+
+        pass
+
     def save(self, *args, **kwargs):
         super().save()
         CommentPostIntermediate.objects.get_or_create(answer=self)
