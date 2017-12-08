@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from users.apis import ProfileRetrieveUpdateView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
@@ -54,15 +55,12 @@ urlpatterns = [
     # /user/user-follow-relation/1/
     url(r'^user-follow-relation/(?P<pk>\d+)/$', UserFollowRelationDetailView.as_view(),
         name='user-follow-relation-detail'),
-    # /user/1/follower/
+    # /user/1/followers/
     url(r'^(?P<pk>\d+)/followers/$', UserFollowerListView.as_view(),
         name='user-followers'),
-    # /user/1/following/
+    # /user/1/followings/
     url(r'^(?P<pk>\d+)/followings/$', UserFollowingListView.as_view(),
         name='user-followings'),
-    # # /user/multiple-user-follow-relation/
-    # url(r'^user-follow-relation/$', UserFollowRelationCreateView.as_view(),
-    #     name='user-follow-relation'),
 
     # 1-3. FOLLOW-QUESTION
 
@@ -85,5 +83,11 @@ urlpatterns = [
         name='answer-downvote-relation'),
 
     # 3. BOOKMARK
+
+    # Profile
+    # 1. Profile Retrieve / Update
+    # /user/1/profile/
+    url(r'^(?P<pk>\d+)/profile/$', ProfileRetrieveUpdateView.as_view(),
+        name='profile-detail'),
 
 ]

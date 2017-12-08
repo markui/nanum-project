@@ -33,7 +33,6 @@ __all__ = (
 )
 
 
-# Topic Follow
 class InterestFollowRelationCreateView(APIView):
     """
     유저 - 관심분야 주제 팔로우 관계 생성
@@ -45,7 +44,9 @@ class InterestFollowRelationCreateView(APIView):
         serializer = TopicFollowRelationSerializer(data=request.data, context={'request': request, 'type': 'interest'})
         serializer.is_valid(raise_exception=True)
         print(serializer.validated_data)
-        serializer.save(user=request.user)
+        topic_follow_relations = serializer.save(user=request.user)
+        # ListSerializer 사용 (many=True)
+        serializer = TopicFollowRelationSerializer(topic_follow_relations, many=True)
         # 유저 - 관심주제 팔로우 성공했을 경우
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -70,9 +71,13 @@ class ExpertiseFollowRelationCreateView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        print(request.data)
         serializer = TopicFollowRelationSerializer(data=request.data, context={'request': request, 'type': 'expertise'})
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
+        print(serializer.validated_data)
+        topic_follow_relations = serializer.save(user=request.user)
+        # ListSerializer 사용 (many=True)
+        serializer = TopicFollowRelationSerializer(topic_follow_relations, many=True)
         # 유저 - 관심주제 팔로우 성공했을 경우
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -90,22 +95,6 @@ class ExpertiseFollowRelationDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = TopicFollowRelationSerializer
 
 
-class MultipleInterestFollowRelationCreateView(generics.CreateAPIView):
-    """
-    회원가입 직후, "주제 설정 페이지" 에서
-    유저 - 관심분야 주제 다중 팔로우하기
-    """
-    pass
-
-
-class MultipleExpertiseFollowRelationCreateView(generics.CreateAPIView):
-    """
-    회원가입 직후, "주제 설정 페이지" 에서
-    유저 - 전문분야 주제 다중 팔로우하기
-    """
-    pass
-
-
 class FollowingInterestListView(generics.ListAPIView):
     """
     유저가 팔로우하는 관심분야 주제 가져오기
@@ -116,7 +105,7 @@ class FollowingInterestListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs.get('pk'))
-        return user.topic_interests.all()
+        return user.topic_isnterests.all()
 
     def get_serializer_context(self):
         """

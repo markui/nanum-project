@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
@@ -75,15 +74,19 @@ class Profile(models.Model):
     # 유저가 이미지를 업로드 할 시
     # 200 * 200 / 50 * 50 / 25 * 25의 rescale된 썸네일 이미지들 역시 별도의 필드에 저장됨
     def save(self, *args, **kwargs):
+        status = kwargs.pop('status', None)
         if self.image:
-            image_file_byte_data = self.image.read()
-            thumbnail_image_file_200 = rescale(image_file_byte_data, 200, 200, force=True)
-            thumbnail_image_file_50 = rescale(image_file_byte_data, 50, 50, force=True)
-            thumbnail_image_file_25 = rescale(image_file_byte_data, 25, 25, force=True)
+            # ProfileSerializer update에서, image를 제외한 다른
+            # Profile 필드들을 새로 업데이트하는 경우 resizing을 실시하지 않는다
+            if status != 'same-image':
+                image_file_byte_data = self.image.read()
+                thumbnail_image_file_200 = rescale(image_file_byte_data, 200, 200, force=True)
+                thumbnail_image_file_50 = rescale(image_file_byte_data, 50, 50, force=True)
+                thumbnail_image_file_25 = rescale(image_file_byte_data, 25, 25, force=True)
 
-            self.thumbnail_image_200.save(f'{self.image.name}', ContentFile(thumbnail_image_file_200.getvalue()), save=False)
-            self.thumbnail_image_50.save(f'{self.image.name}', ContentFile(thumbnail_image_file_50.getvalue()), save=False)
-            self.thumbnail_image_25.save(f'{self.image.name}', ContentFile(thumbnail_image_file_25.getvalue()), save=False)
+                self.thumbnail_image_200.save(f'{self.image.name}', thumbnail_image_file_200, save=False)
+                self.thumbnail_image_50.save(f'{self.image.name}', thumbnail_image_file_50, save=False)
+                self.thumbnail_image_25.save(f'{self.image.name}', thumbnail_image_file_25, save=False)
 
         super().save(*args, **kwargs)
 

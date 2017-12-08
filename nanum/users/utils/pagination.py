@@ -14,5 +14,5 @@ class FollowingTopicPagination(PageNumberPagination):
     """
     팔로우 하는 Topic에 대한 Pagination Class
     """
-    page_size = 8
+    page_size = 4
     page_size_query_param = 'page_size'

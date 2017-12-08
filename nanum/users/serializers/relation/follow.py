@@ -18,22 +18,26 @@ __all__ = (
 class TopicFollowRelationSerializer(serializers.Serializer):
     """
     주제(관심분야/전문분야) 팔로우를 위한 Serializer
+    List의 형태로 팔로우할 주제를 Client에서 전달
+    ex) {'topics': ['1', '2', '5', ...]}
     """
+    # Serialize (ListSerializer 안의 FollowRelation 인스턴스 serialize)
     follow_relation_pk = serializers.IntegerField(source='pk', read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-    topic = serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all())
-    # topics = serializers.ListField(
-    #     child=serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all(), required=False),
-    #     required=False)
+    topic = serializers.PrimaryKeyRelatedField(read_only=True)
 
-    def validate_topic(self, value):
+    # Deserialize
+    topics = serializers.ListField(child=serializers.PrimaryKeyRelatedField(queryset=Topic.objects.all()),
+                                   write_only=True)
+
+    def validate_topics(self, value):
         """
         이미 팔로우하고 있는 주제인지 확인
         """
         TopicModel = InterestFollowRelation if self.context['type'] == 'interest' else ExpertiseFollowRelation
-
-        if TopicModel.objects.filter(user=self.context['request'].user, topic=value).exists():
-            raise serializers.ValidationError('이미 팔로우하고 있는 주제입니다.')
+        for topic in value:
+            if TopicModel.objects.filter(user=self.context['request'].user, topic=topic).exists():
+                raise serializers.ValidationError('이미 팔로우하고 있는 주제입니다.')
         return value
 
     def create(self, validated_data):
@@ -43,24 +47,27 @@ class TopicFollowRelationSerializer(serializers.Serializer):
         self.context['type']을 받아옴
         """
         if self.context['type'] == 'interest':
+            interest_follow_relations = [
+                InterestFollowRelation(
+                    user=validated_data['user'],
+                    topic=topic
+                )
+                for topic in validated_data['topics']
+            ]
 
-            return InterestFollowRelation.objects.create(
-                user=validated_data['user'],
-                topic=validated_data['topic']
-            )
+            return InterestFollowRelation.objects.bulk_create(interest_follow_relations)
+
 
         elif self.context['type'] == 'expertise':
-            return ExpertiseFollowRelation.objects.create(
-                user=validated_data['user'],
-                topic=validated_data['topic']
-            )
+            expertise_follow_relations = [
+                ExpertiseFollowRelation(
+                    user=validated_data['user'],
+                    topic=topic
+                )
+                for topic in validated_data['topics']
+            ]
 
-
-class MultipleTopicFollowRelationSerializer(serializers.Serializer):
-    """
-    주제 다중 팔로우를 위한 Serializer
-    """
-    topics = serializers.ListField(child=serializers.IntegerField())
+            return ExpertiseFollowRelation.objects.bulk_create(expertise_follow_relations)
 
 
 class FollowingTopicSerializer(serializers.ModelSerializer):
