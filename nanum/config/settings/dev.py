@@ -4,7 +4,8 @@ config_secret = json.loads(open(CONFIG_SECRET_DEV_FILE).read())
 
 # Installed Apps
 INSTALLED_APPS += [
-    'storages'
+    'storages',
+    'corsheaders',
 ]
 
 # Secret Files / AWS
@@ -31,3 +32,12 @@ ALLOWED_HOSTS = [
     '.elasticbeanstalk.com',
     '.siwon.me',
 ]
+
+# CORS
+CORS_ORIGIN_ALLOW_ALL = False
+
+CORS_ORIGIN_WHITELIST = (
+    'localhost:4200',
+    # 'front.localhost:8013',
+    # 'djangstagram.com',
+)
