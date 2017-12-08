@@ -21,6 +21,11 @@ class Answer(models.Model):
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
+    comment_count = models.IntegerField(null=False, default=0)
+
+    def __str__(self):
+        return f'user: {self.user}, content: {self.text_content[:30]}'
+
 
     @property
     def content_first_line(self):
@@ -54,8 +59,8 @@ class Answer(models.Model):
         """
         import unicodedata
 
-        insert_value_qs = self.quill_delta_operation_set.\
-            filter(insert_value__isnull=False).\
+        insert_value_qs = self.quill_delta_operation_set. \
+            filter(insert_value__isnull=False). \
             values_list('insert_value', flat=True)
 
         # qs를 string으로 join

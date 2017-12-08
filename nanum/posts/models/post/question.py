@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+
 from ...models import CommentPostIntermediate
 
 __all__ = (
@@ -22,6 +23,7 @@ class Question(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
     bookmark_count = models.IntegerField(null=False, default=0)
     follow_count = models.IntegerField(null=False, default=0)
+    comment_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
@@ -30,4 +32,3 @@ class Question(models.Model):
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
-
