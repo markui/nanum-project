@@ -90,4 +90,6 @@ urlpatterns = [
     url(r'^(?P<pk>\d+)/profile/$', ProfileRetrieveUpdateView.as_view(),
         name='profile-detail'),
 
+    #
+
 ]

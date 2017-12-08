@@ -2,8 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-
-from nanum.utils import rescale
+from utils import rescale
 from ..utils import (
     user_img_path,
     user_thumb_img_25_path,
@@ -118,10 +117,9 @@ class EmploymentCredentials(models.Model):
     유저 프로필에 들어가는 이력
     """
     user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="employment_credentials")
-    position = models.CharField(max_length=50, blank=True)
     company = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
                                 related_name="company_credentials")
-
+    position = models.CharField(max_length=50, blank=True)
     start_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
     end_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
     working_status = models.BooleanField(default=False)
