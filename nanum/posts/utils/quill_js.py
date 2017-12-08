@@ -243,7 +243,7 @@ class QuillJSDeltaParser:
 
         # Create filename
         rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        filename = f'{fk_field_name}-{fk_field_instance.pk}__{rand_str}.jpeg'
+        filename = f'{fk_field_instance.pk}/{rand_str}.jpeg'
 
         return filename
 
