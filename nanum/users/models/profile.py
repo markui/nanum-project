@@ -2,13 +2,14 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+
+from nanum.utils import rescale
 from ..utils import (
     user_img_path,
     user_thumb_img_25_path,
     user_thumb_img_50_path,
     user_thumb_img_200_path
 )
-from nanum.utils import rescale
 
 __all__ = (
     'Profile',
