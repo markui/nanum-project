@@ -1,35 +1,47 @@
 from rest_framework import generics, permissions
-from rest_framework.pagination import PageNumberPagination
 
 from .models import Topic
 from .serializers import TopicSerializer
-
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 1000
+from .utils.pagination import ListPagination
+from .utils.permissions import IsStaffOrAuthenticatedReadOnly
 
 
 class TopicListCreateView(generics.ListCreateAPIView):
     """
-    토픽 전체 API View
+    Topic ListAPIView 와
+    Topic CreateAPIView
+
+
     """
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
+        permissions.IsAuthenticated,
     )
-    pagination_class = StandardResultsSetPagination
+    pagination_class = ListPagination
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
 
-class TopicDetailView(generics.RetrieveDestroyAPIView):
+class TopicRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
-    토픽 한개 API View
+    Topic RetrieveAPIView
+    Topic UpdateAPIView
+    Topic Destroy APIView
 
+    Retrieve의 경우 authenticated면 볼 수 있으며,
+    Update(PUT, PATCH)와 Destroy의 경우 Staff 일 경우에만 가능
     """
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer
+    permission_classes = (
+        IsStaffOrAuthenticatedReadOnly,
+    )
+
+
+class TopicMergeView(generics.CreateAPIView):
+    """
+
+    """
+    pass
