@@ -3,13 +3,13 @@ from __future__ import unicode_literals
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
 
+from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Answer
 from ..serializers.answer import AnswerUpdateSerializer, AnswerPostSerializer, AnswerGetSerializer
 from ..utils.filters import AnswerFilter
-from ..utils.pagination import CustomPagination
-from ..utils.permissions import IsAuthorOrAuthenticatedReadOnly
+from ..utils.pagination import ListPagination
 
 __all__ = (
     'AnswerListCreateView',
@@ -35,7 +35,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
 
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = AnswerFilter  # utils.filter
-    pagination_class = CustomPagination
+    pagination_class = ListPagination
 
     def filter_queryset(self, queryset):
         """
@@ -51,13 +51,13 @@ class AnswerListCreateView(generics.ListCreateAPIView):
 
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
-            error = {"message": "query parameter가 존재하나 value가 존재하지 않습니다."}
+            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
         if query_params and not query_params <= filter_fields:
-            error = {"message": "존재하지 않는 query_parameter입니다. "
+            error = {"error": "존재하지 않는 query_parameter입니다. "
                                 "필터가 가능한 query_parameter는 다음과 같습니다:"
                                 f"{filter_fields}"}
         if error:
-            raise NotFound(detail=error)
+            raise ParseError(detail=error)
 
         return super().filter_queryset(queryset)
 
@@ -117,7 +117,7 @@ class AnswerMainFeedListView(generics.ListAPIView):
     authentication_classes = (
         permissions.IsAuthenticated,
     )
-    pagination_class = CustomPagination
+    pagination_class = ListPagination
 
     def get_queryset(self):
         """
