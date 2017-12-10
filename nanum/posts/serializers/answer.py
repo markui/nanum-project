@@ -1,3 +1,4 @@
+from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
@@ -65,18 +66,20 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :return:
         """
         content = self.validated_data.pop('content')
-        # request_user를 **kwargs에 추가하여 super().save() 호출
-        answer_instance = super().save(user=self.request_user, **kwargs)
-        if not content:
-            return answer_instance
 
-        # Answer에 대한 content를 Save해주는 함수
-        objs = img_processor.save_delta_operation_list(
-            content=content,
-            parent_instance=answer_instance
-        )
-        if not objs:
-            raise ParseError("")
+        # request_user를 **kwargs에 추가하여 super().save() 호출
+        with atomic():
+            answer_instance = super().save(user=self.request_user, **kwargs)
+            if not content:
+                return answer_instance
+
+            # Answer에 대한 content를 Save해주는 함수
+            objs = img_processor.save_delta_operation_list(
+                content=content,
+                parent_instance=answer_instance
+            )
+            if not objs:
+                raise ParseError("")
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):

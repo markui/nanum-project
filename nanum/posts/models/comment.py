@@ -112,6 +112,12 @@ class Comment(MPTTModel):
         return f'{self.user} - {self.content[:50]}'
 
     def save(self, *args, **kwargs):
+        """
+        Comment가 연결된 Answer 혹은 Question 객체에 대해 comment_count 증가
+        :param args:
+        :param kwargs:
+        :return:
+        """
         model = self.comment_post_intermediate.post.__class__
 
         # race condition 방지
@@ -119,15 +125,18 @@ class Comment(MPTTModel):
             post = model.objects.select_for_update().get(
                 comment_post_intermediate=self.comment_post_intermediate
             )
-            super().save()
-
-            if post.comment_count < 0:
-                post.comment_count = 1
-            else:
-                post.comment_count += 1
+            post.comment_count += 1
             post.save()
+
+            super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        """
+        Comment 가 연결된 Answer 혹은 Question 객체에 대해 comment_count 감소
+        :param args:
+        :param kwargs:
+        :return:
+        """
         model = self.comment_post_intermediate.post.__class__
 
         # race condition 방지
@@ -135,10 +144,7 @@ class Comment(MPTTModel):
             post = model.objects.select_for_update().get(
                 comment_post_intermediate=self.comment_post_intermediate
             )
-            super().delete()
-
-            if post.comment_count > 0:
-                post.comment_count -= 1
-            else:
-                post.comment_count = 0
+            post.comment_count -= 1
             post.save()
+
+            super().delete(*args, **kwargs)

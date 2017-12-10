@@ -4,6 +4,7 @@ from django.db import models
 from django.db.transaction import atomic
 
 from topics.models import Topic
+from ..post.question import Question
 from ...models import CommentPostIntermediate
 from ...utils.quill_js import QuillJSDeltaParser
 
@@ -27,6 +28,10 @@ class Answer(models.Model):
 
     def __str__(self):
         return f'user: {self.user}, content: {self.text_content[:30]}'
+
+    @property
+    def topics(self):
+        return self.question.topics
 
     @property
     def content_first_line(self):
@@ -73,14 +78,34 @@ class Answer(models.Model):
         return text_content
 
     def save(self, *args, **kwargs):
-        super().save()
-        CommentPostIntermediate.objects.get_or_create(answer=self)
-        topics_pk = self.question.topics.values_list('pk', flat=True)
+        # Topic 과 Question의 answer_count increment
+        topics_pk = self.topics.values_list('pk', flat=True)
         with atomic():
             topics = Topic.objects.select_for_update().filter(pk=topics_pk)
             for topic in topics:
                 topic.answer_count += 1
                 topic.save()
+
+            question = Question.objects.select_for_update().filter(pk=self.question)
+            question.answer_count += 1
+            question.save()
+            CommentPostIntermediate.objects.get_or_create(answer=self)
+
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        topics_pk = self.topics.values_list('pk', flat=True)
+        with atomic():
+            topics = Topic.objects.select_for_update().filter(pk=topics_pk)
+            for topic in topics:
+                topic.answer_count -= 1
+                topic.save()
+
+            question = Question.objects.select_for_update().filter(pk=self.question)
+            question.answer_count -= 1
+            question.save()
+
+            super().delete(*args, **kwargs)
 
 
 class QuillDeltaOperation(models.Model):
@@ -94,16 +119,8 @@ class QuillDeltaOperation(models.Model):
     image_insert_value = JSONField(null=True, blank=True)
     attributes_value = JSONField(null=True, blank=True)
 
-    image = models.ImageField(
-        null=True,
-        blank=True,
-        upload_to='answer',
-    )
-    answer = models.ForeignKey(
-        'Answer',
-        on_delete=models.CASCADE,
-        related_name='quill_delta_operation_set',
-    )
+    image = models.ImageField(null=True, blank=True, upload_to='answer')
+    answer = models.ForeignKey('Answer', on_delete=models.CASCADE, related_name='quill_delta_operation_set')
 
     def __str__(self):
         return f'{self.delta_operation}'
