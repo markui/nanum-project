@@ -32,19 +32,20 @@ class Question(models.Model):
 
     def save(self, *args, **kwargs):
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
+            topics_pk = self.topics.values_list('pk', flat=True)
+            super().save(*args, **kwargs)
+            topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
             topics.update(question_count=F('question_count') + 1)
 
-            super().save(*args, **kwargs)
             CommentPostIntermediate.objects.get_or_create(question=self)
 
     #
     def delete(self, *args, **kwargs):
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
-            topics.update(question_count=F('question_count') - 1)
-
+            topics_pk = self.topics.values_list('pk', flat=True)
             super().delete(*args, **kwargs)
+            topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
+            topics.update(question_count=F('question_count') - 1)
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
