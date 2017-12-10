@@ -88,25 +88,20 @@ class QuestionMainFeedListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        queryset = Question.objects.exclude(user=self.request.user)
+        queryset = Question.objects.exclude(user=user)
 
-        # 사용자가 선택한 전문분야 토픽
-        topic_expertise = user.topic_expertise.all()
-        topic_interests = user.topic_interests.all()
-
+        # 사용자가 선택한 전문분야, 관심분야 토픽
+        topic_expertise = user.topic_expertise.values_list('id', flat=True)
+        topic_interests = user.topic_interests.values_list('id', flat=True)
+        # combine
         topics = topic_expertise | topic_interests
+        # 사용자가 팔로우한 유저
+        following_users = user.following.values_list('id', flat=True)
 
-        # Get Follower's Answers
-        following_users = user.following.values_list(flat=True)
-
-        # Filter Answer, order by the most recently modified post
-        queryset = queryset & Question.objects.filter(topic__in=topics) \
-            .filter(user__in=following_users) \
-            .order_by('modified_at')
-
-        if not queryset:
-            queryset = Question.objects.all()
-
+        topics_queryset = queryset & Question.objects.filter(topics__in=topics)
+        following_users_queryset = queryset & Question.objects.filter(user__in=following_users)
+        # queryset
+        queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
         return queryset
 
 
