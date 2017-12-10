@@ -5,8 +5,8 @@ from ..models import Comment, CommentPostIntermediate
 
 __all__ = (
     'CommentCreateSerializer',
-    'CommentUpdateSerializer',
     'CommentGetSerializer',
+    'CommentUpdateSerializer',
 )
 
 
@@ -67,6 +67,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         serializers.py 의 save method override
         validated_data에서 question 과 answer를 통해 comment 연결된 CommentPostIntermediate object를 get,
         해당 값을 넣어 Comment를 저장
+
         :param kwargs:
         :return:
         """
@@ -77,7 +78,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         elif answer:
             comment_post_intermediate = CommentPostIntermediate.objects.get(answer=answer)
         else:
-            raise ParseError(detail="Question, Answer 중 한개의 값은 있어야 합니다.")
+            raise ParseError(detail={"error":"Question, Answer 중 한개의 값은 있어야 합니다."})
 
         super().save(
             user=self.request_user,

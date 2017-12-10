@@ -18,9 +18,24 @@ user_models = [
     CommentDownVoteRelation,
     # relation - follow
     UserFollowRelation,
-    ExpertiseFollowRelation,
-    InterestFollowRelation,
-    QuestionFollowRelation,
+    # ExpertiseFollowRelation,
+    # InterestFollowRelation,
+    # QuestionFollowRelation,
 ]
 
 admin.site.register(user_models)
+
+
+@admin.register(ExpertiseFollowRelation)
+class ExpertiseFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'topic']
+
+
+@admin.register(InterestFollowRelation)
+class InterestFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'topic']
+
+
+@admin.register(QuestionFollowRelation)
+class QuestionFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'created_at']

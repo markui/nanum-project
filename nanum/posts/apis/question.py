@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from posts.models import Question
 from posts.utils.filters import QuestionFilter
-from posts.utils.pagination import CustomPagination, QuestionPagination
+from posts.utils.pagination import CustomPagination
 from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateSerializer
 
 __all__ = (
@@ -91,8 +91,8 @@ class QuestionMainFeedListView(generics.ListAPIView):
         queryset = Question.objects.exclude(user=self.request.user)
 
         # 사용자가 선택한 전문분야 토픽
-        topic_expertise = user.topic_expertise.value_list('id', flat=True)
-        topic_interests = user.topic_interests.value_list('id', flat=True)
+        topic_expertise = user.topic_expertise.all()
+        topic_interests = user.topic_interests.all()
 
         topics = topic_expertise | topic_interests
 

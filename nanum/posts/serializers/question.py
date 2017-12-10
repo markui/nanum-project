@@ -8,7 +8,6 @@ __all__ = (
     'QuestionGetSerializer',
     'QuestionPostSerializer',
     'QuestionUpdateSerializer',
-
 )
 
 # Deserialize
@@ -61,6 +60,11 @@ class QuestionPostSerializer(serializers.ModelSerializer):
             'created_at',
         )
 
+    def validate(self, data):
+        if length(data['content']) < 10:
+            raise serializers.ValidationError("질문이 너무 짧습니다. 10자 이상 작성해주세요.")
+        return data
+
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         topics = ret['topics']
@@ -70,13 +74,6 @@ class QuestionPostSerializer(serializers.ModelSerializer):
             'topics': topics,
         }
         return data
-
-    def validate(self, validated_data):
-        if length(validated_data['content']) < 10:
-            raise serializers.ValidationError("질문이 너무 짧습니다. 10자 이상 작성해주세요.")
-        return validated_data
-
-
 
 
 class QuestionUpdateSerializer(serializers.ModelSerializer):

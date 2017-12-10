@@ -1,3 +1,4 @@
+from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
@@ -64,19 +65,22 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :param kwargs:
         :return:
         """
-        content = self.validated_data.pop('content')
-        # request_user를 **kwargs에 추가하여 super().save() 호출
-        answer_instance = super().save(user=self.request_user, **kwargs)
-        if not content:
-            return answer_instance
+        content = self.validated_data.pop('content', None)
 
-        # Answer에 대한 content를 Save해주는 함수
-        objs = img_processor.save_delta_operation_list(
-            content=content,
-            parent_instance=answer_instance
-        )
-        if not objs:
-            raise ParseError("")
+        # request_user를 **kwargs에 추가하여 super().save() 호출
+        with atomic():
+            answer_instance = super().save(user=self.request_user, **kwargs)
+            if not content:
+                return answer_instance
+
+            # Answer에 대한 content를 Save해주는 함수
+            objs = img_processor.save_delta_operation_list(
+                content=content,
+                parent_instance=answer_instance
+            )
+
+            if not objs:
+                raise ParseError({"error": "content가 잘못된 포맷입니다. "})
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
@@ -109,8 +113,9 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         :return:
         """
         queryset = self.instance.quill_delta_operation_set.all()
-        content = self.validated_data.pop('content')
-
+        content = self.validated_data.pop('content', None)
+        if not content:
+            return
         img_processor.update_delta_operation_list(
             queryset=queryset,
             content=content,
@@ -130,6 +135,7 @@ class AnswerGetSerializer(serializers.ModelSerializer):
             'question',
             'content',
             'upvote_count',
+            'comment_count',
             'user_upvote_relation',
             'user_bookmark_relation',
             'published',
@@ -142,6 +148,7 @@ class AnswerGetSerializer(serializers.ModelSerializer):
             'question',
             'content',
             'upvote_count',
+            'comment_count',
             'user_upvote_relation',
             'user_bookmark_relation',
             'published',
@@ -151,7 +158,11 @@ class AnswerGetSerializer(serializers.ModelSerializer):
 
     @property
     def request_user(self):
-        return self.context['request'].user
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        return user
 
     # Relation ManyToMany로 엮인 값들에 대해서 pk를 반환
     def get_user_upvote_relation(self, obj):
