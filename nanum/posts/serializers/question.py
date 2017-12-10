@@ -1,22 +1,11 @@
 from django.template.defaultfilters import length
 from rest_framework import serializers
-
-from topics.models import Topic
 from ..models import Question
 
 __all__ = (
     'QuestionGetSerializer',
     'QuestionPostSerializer',
-    'QuestionUpdateSerializer',
-)
-
-# Deserialize
-topics = serializers.ListField(
-    # 리스트 내의 object의 유효성 검증에 사용하는 필드 인스턴스
-    child=serializers.PrimaryKeyRelatedField(
-        queryset=Topic.objects.all(),
-        write_only=True,
-    )
+    'QuestionUpdateDestroySerializer',
 )
 
 
@@ -29,13 +18,13 @@ class QuestionGetSerializer(serializers.ModelSerializer):
             'topics',
             'content',
             'created_at',
+            'modified_at',
         )
         read_only_fields = (
             'pk',
             'user',
-            'topics',
-            'content',
             'created_at',
+            'modified_at',
         )
 
     def to_representation(self, instance):
@@ -58,6 +47,13 @@ class QuestionPostSerializer(serializers.ModelSerializer):
             'topics',
             'content',
             'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'created_at',
+            'modified_at',
         )
 
     def validate(self, data):
@@ -76,7 +72,7 @@ class QuestionPostSerializer(serializers.ModelSerializer):
         return data
 
 
-class QuestionUpdateSerializer(serializers.ModelSerializer):
+class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = (
@@ -85,4 +81,11 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
             'topics',
             'content',
             'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'created_at',
+            'modified_at',
         )

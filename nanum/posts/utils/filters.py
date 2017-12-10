@@ -88,4 +88,4 @@ class QuestionFilter(django_filters.FilterSet):
 
     class Meta:
         model = Question
-        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'follow_count']
+        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', ]

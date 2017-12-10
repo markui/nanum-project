@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from posts.models import Question
 from posts.utils.filters import QuestionFilter
 from posts.utils.pagination import CustomPagination
-from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateSerializer
+from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateDestroySerializer
 
 __all__ = (
     'QuestionListCreateView',
@@ -112,7 +112,11 @@ class QuestionMainFeedListView(generics.ListAPIView):
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Question.objects.all()
-    serializer_class = QuestionUpdateSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
     )
+
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.method == 'PUT' or self.request.method == 'PATCH':
+            return QuestionUpdateDestroySerializer
+        return QuestionGetSerializer

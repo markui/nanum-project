@@ -32,8 +32,8 @@ class Question(models.Model):
 
     def save(self, *args, **kwargs):
         with atomic():
-            topics_pk = self.topics.values_list('pk', flat=True)
             super().save(*args, **kwargs)
+            topics_pk = self.topics.values_list('pk', flat=True)
             topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
             topics.update(question_count=F('question_count') + 1)
 
@@ -41,8 +41,8 @@ class Question(models.Model):
 
     def delete(self, *args, **kwargs):
         with atomic():
-            topics_pk = self.topics.values_list('pk', flat=True)
             super().delete(*args, **kwargs)
+            topics_pk = self.topics.values_list('pk', flat=True)
             topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
             topics.update(question_count=F('question_count') - 1)
 
