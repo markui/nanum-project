@@ -112,8 +112,9 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         :return:
         """
         queryset = self.instance.quill_delta_operation_set.all()
-        content = self.validated_data.pop('content')
-
+        content = self.validated_data.pop('content', None)
+        if not content:
+            return
         img_processor.update_delta_operation_list(
             queryset=queryset,
             content=content,
