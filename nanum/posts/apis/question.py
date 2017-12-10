@@ -31,7 +31,7 @@ class QuestionListCreateView(generics.ListCreateAPIView):
     def filter_queryset(self, queryset):
         query_params = self.request.query_params.keys()
         value = self.request.query_params.values()
-        filter_fields = self.filter_class.get_fields().keys() | {'ordering'}
+        filter_fields = self.filter_class.get_fields().keys() | {'ordering', 'page'}
         error = None
 
         if "" in list(value):

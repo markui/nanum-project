@@ -17,6 +17,9 @@ class QuestionGetSerializer(serializers.ModelSerializer):
             'user',
             'topics',
             'content',
+            'bookmark_count',
+            'follow_count',
+            'comment_count',
             'created_at',
             'modified_at',
         )
@@ -89,3 +92,18 @@ class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
             'created_at',
             'modified_at',
         )
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        topics = ret['topics']
+        del ret['topics']
+        data = {
+            'question': ret,
+            'topics': topics,
+        }
+        return data
+
+    def validate(self, data):
+        if length(data['content']) < 10:
+            raise serializers.ValidationError("질문이 너무 짧습니다. 10자 이상 작성해주세요.")
+        return data
