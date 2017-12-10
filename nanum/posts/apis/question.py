@@ -6,31 +6,27 @@ from rest_framework.response import Response
 
 from posts.models import Question
 from posts.utils.filters import QuestionFilter
-from ..serializers.question import QuestionSerializer
+from posts.utils.pagination import CustomPagination, QuestionPagination
+from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateSerializer
 
 __all__ = (
     'QuestionListCreateView',
     'QuestionMainFeedListView',
+    'QuestionRetrieveUpdateDestroyView',
 )
 
 User = get_user_model()
 
 
-#############################################################
-# 1. 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed) [X]
-# 2. 북마크한 질문 리스트, 최신 질문 리스트 [X]
-# 4. 나에게 요청된 질문 리스트 []
-# 5. 답변 중인 질문 리스트 []
-#############################################################
-
+# 해당 유저의 모든 질문, 해당 유저가 답변한 질문, 해당 유저가 팔로우하는 질문, 해당 유저가 북마크하는 질문
 class QuestionListCreateView(generics.ListCreateAPIView):
     queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
     permission_classes = (
-        permissions.IsAuthenticated,
+        permissions.IsAuthenticatedOrReadOnly,
     )
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = QuestionFilter
+    pagination_class = CustomPagination
 
     def filter_queryset(self, queryset):
         query_params = self.request.query_params.keys()
@@ -50,6 +46,16 @@ class QuestionListCreateView(generics.ListCreateAPIView):
                 queryset = backend().filter_queryset(self.request, queryset, self)
 
         return error, queryset
+
+    # POST
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return QuestionGetSerializer
+        else:
+            return QuestionPostSerializer
 
     def list(self, request, *args, **kwargs):
         """
@@ -71,13 +77,10 @@ class QuestionListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
 
 # 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed)
 class QuestionMainFeedListView(generics.ListAPIView):
-    serializer_class = QuestionSerializer
+    serializer_class = QuestionGetSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
     )
@@ -85,20 +88,19 @@ class QuestionMainFeedListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        exclude_user = Question.objects.exclude(user=self.request.user)
-        query_set = Question.objects.none()
+        queryset = Question.objects.exclude(user=self.request.user)
 
         # 사용자가 선택한 전문분야 토픽
-        topic_expertise = user.topic_expertise.value_lists(flat=True)
-        topic_interests = user.topic_interests.value_lists(flat=True)
+        topic_expertise = user.topic_expertise.value_list('id', flat=True)
+        topic_interests = user.topic_interests.value_list('id', flat=True)
 
-        topics = topic_expertise.extend(topic_interests)
+        topics = topic_expertise | topic_interests
 
         # Get Follower's Answers
         following_users = user.following.values_list(flat=True)
 
         # Filter Answer, order by the most recently modified post
-        queryset = Question.objects.filter(topic__in=topics) \
+        queryset = queryset & Question.objects.filter(topic__in=topics) \
             .filter(user__in=following_users) \
             .order_by('modified_at')
 
@@ -110,7 +112,7 @@ class QuestionMainFeedListView(generics.ListAPIView):
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
+    serializer_class = QuestionUpdateSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
     )

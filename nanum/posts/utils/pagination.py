@@ -36,3 +36,8 @@ class CommentPagination(CustomPagination):
             ('next', self.get_next_link()),
             ('previous', self.get_previous_link())
         ]))
+
+class QuestionPagination(PageNumberPagination):
+    page_size = 2
+    page_size_query_param = 'page_size'
+    max_page_size= 100
