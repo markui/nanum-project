@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
+from django.db.transaction import atomic
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -21,7 +23,7 @@ class CommentPostIntermediate(models.Model):
                                   related_name='comment_post_intermediate')
 
     def __str__(self):
-        return f'{self.post} \n{self.parent_comments}'
+        return f'post: {self.post} \ncomment: {self.parent_comments}'
 
     @property
     def post(self):
@@ -31,9 +33,9 @@ class CommentPostIntermediate(models.Model):
         :return:
         """
         if self.question:
-            return f'question - {self.question.pk}'
+            return self.question
         if self.answer:
-            return f'answer - {self.answer.pk}'
+            return self.answer
         raise AssertionError("Neither 'question' or 'answer' set")
 
     @property
@@ -73,7 +75,7 @@ class Comment(MPTTModel):
         Comment 와 엮어 있는 Answer 혹은 Question의 pk를 CommentPostIntermediate 의 to string 방식으로 반환
         :return:
         """
-        return self.comment_post_intermediate.post
+        return f'{self.comment_post_intermediate.post}'
 
     @property
     def immediate_children(self):
@@ -109,3 +111,39 @@ class Comment(MPTTModel):
 
     def __str__(self):
         return f'{self.user} - {self.content[:50]}'
+
+    def save(self, *args, **kwargs):
+        """
+        Comment가 연결된 Answer 혹은 Question 객체에 대해 comment_count 증가
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        model = self.comment_post_intermediate.post.__class__
+
+        # race condition 방지
+        with atomic():
+            post = model.objects.select_for_update().filter(
+                comment_post_intermediate=self.comment_post_intermediate
+            )
+            post.update(comment_count=F('comment_count') + 1)
+
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """
+        Comment 가 연결된 Answer 혹은 Question 객체에 대해 comment_count 감소
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        model = self.comment_post_intermediate.post.__class__
+
+        # race condition 방지
+        with atomic():
+            post = model.objects.select_for_update().filter(
+                comment_post_intermediate=self.comment_post_intermediate
+            )
+            post.update(comment_count=F('comment_count') - 1)
+
+            super().delete(*args, **kwargs)

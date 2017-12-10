@@ -1,5 +1,9 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
+from django.db.transaction import atomic
+
+from topics.models import Topic
 from ...models import CommentPostIntermediate
 
 __all__ = (
@@ -20,14 +24,27 @@ class Question(models.Model):
     topics = models.ManyToManyField('topics.Topic', related_name='questions')
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    answer_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
     follow_count = models.IntegerField(null=False, default=0)
+    comment_count = models.IntegerField(null=False, default=0)
     objects = QuestionManager()
 
     def save(self, *args, **kwargs):
-        super().save()
-        CommentPostIntermediate.objects.get_or_create(question=self)
+        with atomic():
+            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
+            topics.update(question_count=F('question_count') + 1)
+
+            super().save(*args, **kwargs)
+            CommentPostIntermediate.objects.get_or_create(question=self)
+
+    #
+    def delete(self, *args, **kwargs):
+        with atomic():
+            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
+            topics.update(question_count=F('question_count') - 1)
+
+            super().delete(*args, **kwargs)
 
     def __str__(self):
         return f'user: {self.user}, content: {self.content}'
-
