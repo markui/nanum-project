@@ -39,3 +39,33 @@ class TopicSerializer(serializers.ModelSerializer):
             resized_image = utils.rescale(data=image.read(), width=200, height=200)
             filename = f"{self.instance.pk}/{image.name}"
             self.instance.image.save(filename, resized_image)
+
+class TopicGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = (
+            'pk',
+            'creator',
+            'name',
+            'description',
+            'image',
+            'answer_count',
+            'question_count',
+            'expert_count',
+            'interest_count',
+            'created_at',
+            'modified_at',
+        )
+        read_only_fields = (
+            'pk',
+            'creator',
+            'name',
+            'description',
+            'image',
+            'answer_count',
+            'question_count',
+            'expert_count',
+            'interest_count',
+            'created_at',
+            'modified_at',
+        )
