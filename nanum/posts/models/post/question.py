@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
 from django.db.transaction import atomic
 
 from topics.models import Topic
@@ -31,20 +32,17 @@ class Question(models.Model):
 
     def save(self, *args, **kwargs):
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk=self.topics)
-            for topic in topics:
-                topic.question_count += 1
-                topic.save()
-            CommentPostIntermediate.objects.get_or_create(question=self)
+            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
+            topics.update(question_count=F('question_count') + 1)
 
             super().save(*args, **kwargs)
+            CommentPostIntermediate.objects.get_or_create(question=self)
 
+    #
     def delete(self, *args, **kwargs):
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk=self.topics)
-            for topic in topics:
-                topic.question_count -= 1
-                topic.save()
+            topics = Topic.objects.select_for_update().filter(pk__in=self.topics)
+            topics.update(question_count=F('question_count') - 1)
 
             super().delete(*args, **kwargs)
 

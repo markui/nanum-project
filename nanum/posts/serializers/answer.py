@@ -65,7 +65,7 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :param kwargs:
         :return:
         """
-        content = self.validated_data.pop('content')
+        content = self.validated_data.pop('content', None)
 
         # request_user를 **kwargs에 추가하여 super().save() 호출
         with atomic():
@@ -78,8 +78,9 @@ class AnswerPostSerializer(serializers.ModelSerializer):
                 content=content,
                 parent_instance=answer_instance
             )
+
             if not objs:
-                raise ParseError("")
+                raise ParseError({"error": "content가 잘못된 포맷입니다. "})
 
 
 class AnswerUpdateSerializer(serializers.ModelSerializer):
@@ -157,7 +158,11 @@ class AnswerGetSerializer(serializers.ModelSerializer):
 
     @property
     def request_user(self):
-        return self.context['request'].user
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        return user
 
     # Relation ManyToMany로 엮인 값들에 대해서 pk를 반환
     def get_user_upvote_relation(self, obj):

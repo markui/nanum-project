@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
 from django.db.transaction import atomic
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
@@ -122,11 +123,10 @@ class Comment(MPTTModel):
 
         # race condition 방지
         with atomic():
-            post = model.objects.select_for_update().get(
+            post = model.objects.select_for_update().filter(
                 comment_post_intermediate=self.comment_post_intermediate
             )
-            post.comment_count += 1
-            post.save()
+            post.update(comment_count=F('comment_count') + 1)
 
             super().save(*args, **kwargs)
 
@@ -141,10 +141,9 @@ class Comment(MPTTModel):
 
         # race condition 방지
         with atomic():
-            post = model.objects.select_for_update().get(
+            post = model.objects.select_for_update().filter(
                 comment_post_intermediate=self.comment_post_intermediate
             )
-            post.comment_count -= 1
-            post.save()
+            post.update(comment_count=F('comment_count') - 1)
 
             super().delete(*args, **kwargs)

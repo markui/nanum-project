@@ -5,6 +5,8 @@ from .models import Topic
 
 
 class TopicSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=100, required=False)
+
     class Meta:
         model = Topic
         fields = (

@@ -29,7 +29,6 @@ class Topic(models.Model):
         :param kwargs:
         :return:
         """
-        super().save(*args, **kwargs)
         self.expertisefollowrelation_set.get_or_create(user=self.creator, topic=self)
         self.interestfollowrelation_set.get_or_create(user=self.creator, topic=self)
 

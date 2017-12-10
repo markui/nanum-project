@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models import F
 from django.db.transaction import atomic
 
 from topics.models import Topic
@@ -81,29 +82,23 @@ class Answer(models.Model):
         # Topic 과 Question의 answer_count increment
         topics_pk = self.topics.values_list('pk', flat=True)
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk=topics_pk)
-            for topic in topics:
-                topic.answer_count += 1
-                topic.save()
+            topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
+            topics.update(answer_count=F('answer_count') + 1)
 
-            question = Question.objects.select_for_update().filter(pk=self.question)
-            question.answer_count += 1
-            question.save()
-            CommentPostIntermediate.objects.get_or_create(answer=self)
+            question = Question.objects.select_for_update().filter(pk=self.question.pk)
+            question.update(answer_count=F('answer_count') + 1)
 
             super().save(*args, **kwargs)
+            CommentPostIntermediate.objects.get_or_create(answer=self)
 
     def delete(self, *args, **kwargs):
         topics_pk = self.topics.values_list('pk', flat=True)
         with atomic():
-            topics = Topic.objects.select_for_update().filter(pk=topics_pk)
-            for topic in topics:
-                topic.answer_count -= 1
-                topic.save()
+            topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
+            topics.update(answer_count=F('answer_count') + 1)
 
-            question = Question.objects.select_for_update().filter(pk=self.question)
-            question.answer_count -= 1
-            question.save()
+            question = Question.objects.select_for_update().filter(pk=self.question.pk)
+            question.update(answer_count=F('answer_count') - 1)
 
             super().delete(*args, **kwargs)
 
