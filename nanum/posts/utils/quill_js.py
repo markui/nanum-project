@@ -123,11 +123,11 @@ class QuillJSDeltaParser:
         assert type(parent_instance) == self.parent_model, "Instance is not an instance of parent model."
 
         # Bulk Create할 instance를 모아둘 list instantiation
-        # get_delta_operation_list를 통해 content에서 delta operation이 담긴 list 반환
+        # get_delta_operation_list() 를 통해 content에서 delta operation이 담긴 list 반환
+        # 반환받은 list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
+        # django의 bulk_create를 통해 전달된 model의 instance들을 bulk_create
         instances_to_bulk_create = list()
         delta_list = self.get_delta_operation_list(content, iterator=True)
-
-        # delta_list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
         for line_no, quill_delta_operation in enumerate(delta_list, start=1):
             model_instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
@@ -140,13 +140,11 @@ class QuillJSDeltaParser:
                 return None
             instances_to_bulk_create.append(model_instance)
 
-        # django의 bulk_create를 통해 전달된 model의 instance들을 한꺼번에 생성, 생성된 이미지 파일들을 삭제
         return self.model.objects.bulk_create(instances_to_bulk_create)
-        # self._delete_temporary_images(images_to_delete)
 
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
-        kwargs 를 만들어 _instantiate에 전달
+        model 을 instantiate 할 때 필요한 정보를 kwargs로 만들어 전달
 
         :param quill_delta_operation:
         :param line_no:
@@ -155,8 +153,6 @@ class QuillJSDeltaParser:
         """
         insert_value = quill_delta_operation.get('insert')
         attributes = quill_delta_operation.get('attributes')
-
-        # 필드 이름을 갖고와서
         field_name = self._get_related_field()
         kwargs = {
             "insert_value": insert_value,
@@ -188,7 +184,7 @@ class QuillJSDeltaParser:
             image_value = insert_value.get('image')
             try:
                 decoded_data = self._parse_base64(image_base64=image_value)
-                filename = self._generate_filename(format=format, **kwargs)
+                filename = self._generate_filename(**kwargs)
                 image = self._image_process(data=decoded_data, max_size=600)
 
                 instance.image.save(
@@ -231,7 +227,7 @@ class QuillJSDeltaParser:
         decoded_data = base64.b64decode(byte_data_base64)
         return decoded_data
 
-    def _generate_filename(self, format, **kwargs) -> string:
+    def _generate_filename(self, **kwargs) -> string:
         """
         이미지 파일 이름 생성
 
@@ -263,21 +259,19 @@ class QuillJSDeltaParser:
         gtr_side = max(src_width, src_height)
         ratio = float(max_size) / float(gtr_side)
 
-        # 이미지의 가로 혹은 이미지의 세로가 max_size보다 작을 경우
-        # 긴 쪽을 max_size에 맞추고 짧은 쪽을 max_size * ratio
-        # 새 width 와 height를 통해 resize
-        if src_width > max_size or src_height > max_size:
+        # 이미지의 가로 혹은 이미지의 세로가 max_size보다 클 경우
+        # 긴 쪽을 max_size에 맞추고 짧은 쪽을 max_size * ratio 으로 이미지를 resize
+        if gtr_side > max_size:
             if src_width > src_height:
                 dst_width = max_size
                 dst_height = int(src_height * ratio)
             else:
                 dst_height = max_size
                 dst_width = int(src_width * ratio)
-            img = img.resize((dst_width, dst_height), pil.ANTIALIAS)
+            img = img.resize((dst_width, dst_height))
 
         output_img = BytesIO()
         img.save(output_img, 'JPEG')
-
         return output_img
 
     def update_delta_operation_list(self, queryset: QuerySet,
@@ -337,6 +331,7 @@ class QuillJSDeltaParser:
     @atomic
     def _bulk_update_instance(self, to_update, operation_lineno_dict, operation_instance_dict):
         """
+        이미 존재하는 operation에 대해 line number을 업데이트
 
         :param to_update:
         :param operation_lineno_dict:
