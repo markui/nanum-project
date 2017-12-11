@@ -1,10 +1,13 @@
+from itertools import chain
+
+from django.db.models import QuerySet
 from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
 from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
 from ..models import Answer, QuillDeltaOperation
-from ..utils.quill_js import QuillJSDeltaParser
+from ..utils.quill_js import DjangoQuill
 
 __all__ = (
     'AnswerPostSerializer',
@@ -12,7 +15,7 @@ __all__ = (
     'AnswerGetSerializer',
 )
 
-img_processor = QuillJSDeltaParser(model=QuillDeltaOperation, parent_model=Answer)
+django_quill = DjangoQuill(model=QuillDeltaOperation, parent_model=Answer)
 
 
 class AnswerPostSerializer(serializers.ModelSerializer):
@@ -56,7 +59,12 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :return:
         """
         if not data['content'] and data['published']:
-            raise ParseError({"error":"Content가 없는 답변은 Publish가 불가능합니다."})
+            raise ParseError({"error": "Content 가 없는 답변은 Publish가 불가능합니다."})
+        if data.get('content') and not data.get('content_html'):
+            raise ParseError({"error": "Content 가 왔으나 Content_html 이 없습니다."})
+        if data.get('content_html') and not data.get('content'):
+            raise ParseError({"error": "Content_html 이 왔으나 Content 가 없습니다."})
+
         return data
 
     def save(self, **kwargs):
@@ -66,27 +74,53 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :return:
         """
         content = self.validated_data.pop('content', None)
-
+        content_html = self.validated_data.pop('content_html', None)
         # request_user를 **kwargs에 추가하여 super().save() 호출
         with atomic():
             answer_instance = super().save(user=self.request_user, **kwargs)
-            if not content:
+            if not content or not content_html:
                 return answer_instance
-
-            # Answer에 대한 content를 Save해주는 함수
-            objs = img_processor.save_delta_operation_list(
+            self._save_quill_delta_operation(
                 content=content,
-                parent_instance=answer_instance
+                answer_instance=answer_instance
+            )
+            self._save_content_html(
+                content_html=content_html
             )
 
-            if not objs:
-                raise ParseError({"error": "content가 잘못된 포맷입니다. "})
+    def _save_quill_delta_operation(self, content, answer_instance):
+        """
+
+        :param content:
+        :param answer_instance:
+        :return:
+        """
+        instances = django_quill.get_delta_operation_instances(
+            content=content,
+            parent_instance=answer_instance
+        )
+        if not instances:
+            raise ParseError({"error": "content가 잘못된 포맷입니다. "})
+        QuillDeltaOperation.objects.bulk_create(instances)
+
+    def _save_content_html(self, content_html):
+        """
+
+        :param content_html:
+        :return:
+        """
+        img_delta_objs = self.instance.quill_delta_operation_set.exclude(image='').order_by('line_no')
+        html = django_quill.img_base64_to_link(
+            objs=img_delta_objs,
+            html=content_html
+        )
+        self.instance.content_html = html
+        self.instance.save(update_fields=['content_html'])
 
 
-class AnswerUpdateSerializer(serializers.ModelSerializer):
+class AnswerUpdateSerializer(AnswerPostSerializer):
     content = serializers.JSONField(default=None)
 
-    # 해당 유저에 대해서
     class Meta:
         model = Answer
         fields = (
@@ -94,6 +128,7 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content',
+            'content_html',
             'published',
             'created_at',
             'modified_at',
@@ -101,9 +136,8 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'pk',
             'user',
-            'question',
             'created_at',
-            'modified_at',
+            'modified_at'
         )
 
     def save(self, **kwargs):
@@ -114,13 +148,29 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
         """
         queryset = self.instance.quill_delta_operation_set.all()
         content = self.validated_data.pop('content', None)
-        if not content:
+        content_html = self.validated_data.pop('content_html', None)
+        if not content or not content_html:
             return
-        img_processor.update_delta_operation_list(
+        with atomic():
+            self._update_quill_delta_operation(queryset=queryset, content=content)
+            self._save_content_html(content_html=content_html)
+
+    def _update_quill_delta_operation(self, queryset: QuerySet, content: str):
+        """
+
+        :param queryset: self.instance와 연결되어있는 QuillDeltaOperation Queryset
+        :param content: Update할 Content
+        :return:
+        """
+        to_update_list, to_create_list, to_delete_list = django_quill.update_delta_operation_list(
             queryset=queryset,
             content=content,
             parent_instance=self.instance,
         )
+        for inst in chain(to_update_list, to_create_list):
+            inst.save()
+        for inst in to_delete_list:
+            inst.delete()
 
 
 class AnswerGetSerializer(serializers.ModelSerializer):
