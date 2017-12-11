@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.db.transaction import atomic
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
@@ -69,20 +71,25 @@ class TopicMergeView(generics.GenericAPIView):
         # get pk
         to_pk = request.data.get('topic_to')
         if not to_pk:
-            raise ParseError(detail={"error":"topic_to 필드가 비어있습니다."})
+            raise ParseError(detail={"error": "topic_to 필드가 비어있습니다."})
         try:
             to_pk = int(to_pk)
         except ValueError:
-            raise ParseError(detail={"error":"topic_to 필드가 Integer로 변환가능한 필드가 아닙니다."})
+            raise ParseError(detail={"error": "topic_to 필드가 Integer로 변환가능한 필드가 아닙니다."})
 
         # get object
         topic_from_instance = self.get_object()
         topic_to_instance = get_object_or_404(Topic, pk=to_pk)
 
+        serializer_from = {"from": self.get_serializer(topic_from_instance).data}
+        serializer_to = {"to": self.get_serializer(topic_to_instance).data}
+
         # Merge
         instance = self.merge_instances(from_instance=topic_from_instance, to_instance=topic_to_instance)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        serializer = {"result": self.get_serializer(instance).data}
+
+        result = OrderedDict(**serializer_from, **serializer_to, **serializer)
+        return Response(result)
 
     @atomic
     def merge_instances(self, from_instance, to_instance):
