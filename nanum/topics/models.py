@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+
 # Create your models here.
-from django.db.transaction import atomic
 
 
 class Topic(models.Model):
@@ -29,6 +29,7 @@ class Topic(models.Model):
         :param kwargs:
         :return:
         """
+        super().save(*args, **kwargs)
         self.expertisefollowrelation_set.get_or_create(user=self.creator, topic=self)
         self.interestfollowrelation_set.get_or_create(user=self.creator, topic=self)
 
