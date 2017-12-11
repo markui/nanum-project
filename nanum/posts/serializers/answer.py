@@ -20,6 +20,18 @@ django_quill = DjangoQuill(model=QuillDeltaOperation, parent_model=Answer)
 
 class AnswerPostSerializer(serializers.ModelSerializer):
     content = serializers.JSONField(default=None)
+    question = serializers.HyperlinkedIdentityField(
+        view_name='post:question:question-detail',
+        lookup_field='question_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+    user = serializers.HyperlinkedIdentityField(
+        view_name='user:profile-detail',
+        lookup_field='user_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
 
     class Meta:
         model = Answer
@@ -120,6 +132,18 @@ class AnswerPostSerializer(serializers.ModelSerializer):
 
 class AnswerUpdateSerializer(AnswerPostSerializer):
     content = serializers.JSONField(default=None)
+    question = serializers.HyperlinkedIdentityField(
+        view_name='post:question:question-detail',
+        lookup_field='question_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+    user = serializers.HyperlinkedIdentityField(
+        view_name='user:profile-detail',
+        lookup_field='user_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
 
     class Meta:
         model = Answer
@@ -176,6 +200,19 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
 class AnswerGetSerializer(serializers.ModelSerializer):
     user_upvote_relation = serializers.SerializerMethodField()
     user_bookmark_relation = serializers.SerializerMethodField()
+    question = serializers.HyperlinkedIdentityField(
+        view_name='post:question:question-detail',
+        lookup_field='question_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+    user = serializers.HyperlinkedIdentityField(
+        view_name='user:profile-detail',
+        lookup_field='user_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+
 
     class Meta:
         model = Answer

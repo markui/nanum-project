@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Comment
-from ..serializers import CommentGetSerializer, CommentCreateSerializer, CommentUpdateSerializer
+from ..serializers import CommentSerializer, CommentCreateSerializer
 from ..utils.filters import CommentFilter, CommentListFilter
 from ..utils.pagination import CommentPagination, ListPagination
 
@@ -60,7 +60,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             serializer_class = CommentCreateSerializer
         else:
-            serializer_class = CommentGetSerializer
+            serializer_class = CommentSerializer
 
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
@@ -75,6 +75,7 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthorOrAuthenticatedReadOnly,
     )
+    serializer_class = CommentSerializer
     pagination_class = CommentPagination
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = CommentFilter
@@ -103,22 +104,6 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             raise NotFound(detail=error)
 
         return super().filter_queryset(queryset)
-
-    def get_serializer(self, *args, **kwargs):
-        """
-        GenericAPIView get_serializer override
-        PUT, PATCH와 GET요청을 나누어 Serializer 종류를 변경
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        if self.request.method == 'PUT' or self.request.method == 'PATCH':
-            serializer_class = CommentUpdateSerializer
-        else:
-            serializer_class = CommentGetSerializer
-
-        kwargs['context'] = self.get_serializer_context()
-        return serializer_class(*args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         """

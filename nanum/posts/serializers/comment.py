@@ -1,12 +1,11 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
-from ..models import Comment, CommentPostIntermediate
+from ..models import Comment, CommentPostIntermediate, Answer, Question
 
 __all__ = (
     'CommentCreateSerializer',
-    'CommentGetSerializer',
-    'CommentUpdateSerializer',
+    'CommentSerializer',
 )
 
 
@@ -18,6 +17,12 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     """
     question = serializers.IntegerField(required=False)
     answer = serializers.IntegerField(required=False)
+    user = serializers.HyperlinkedIdentityField(
+        view_name='user:profile-detail',
+        lookup_field='user_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
 
     class Meta:
         model = Comment
@@ -38,6 +43,45 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             'created_at',
             'modified_at',
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        post_type = self.initial_data.get('question') or self.initial_data.get('answer')
+        parent = self.initial_data.get('parent', None)
+
+        if post_type == 'question':
+            view_name = 'post:question:question-detail'
+        else:
+            view_name = 'post:answer:answer-detail'
+
+        self.fields['related_post'] = serializers.HyperlinkedIdentityField(
+            view_name=view_name,
+            lookup_field='related_post',
+            lookup_url_kwarg='pk',
+            read_only=True,
+        )
+
+        if parent:
+            self.fields['parent'] = serializers.HyperlinkedIdentityField(
+                view_name='post:comment:comment-detail',
+                lookup_field='parent_id',
+                lookup_url_kwarg='pk',
+                read_only=True,
+            )
+
+    def validate_answer(self, value):
+        try:
+            Answer.objects.get(pk=value)
+        except:
+            raise ParseError({"error": "해당 pk의 답변이 존재하지 않습니다."})
+        return value
+
+    def validate_question(self, value):
+        try:
+            Question.objects.get(pk=value)
+        except:
+            raise ParseError({"error": "해당 pk의 질문이 존재하지 않습니다."})
+        return value
 
     def validate(self, data):
         """
@@ -78,7 +122,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         elif answer:
             comment_post_intermediate = CommentPostIntermediate.objects.get(answer=answer)
         else:
-            raise ParseError(detail={"error":"Question, Answer 중 한개의 값은 있어야 합니다."})
+            raise ParseError(detail={"error": "Question, Answer 중 한개의 값은 있어야 합니다."})
 
         super().save(
             user=self.request_user,
@@ -87,12 +131,19 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         )
 
 
-class CommentGetSerializer(serializers.ModelSerializer):
+
+class CommentSerializer(serializers.ModelSerializer):
     """
     METHOD: GET
     모든 값이 read_only
     all_children_count, 즉 밑에 달린 댓글의 총 개수 또한 반환
     """
+    user = serializers.HyperlinkedIdentityField(
+        view_name='user:profile-detail',
+        lookup_field='user_id',
+        lookup_url_kwarg='pk',
+        read_only=True,
+    )
 
     class Meta:
         model = Comment
@@ -101,7 +152,6 @@ class CommentGetSerializer(serializers.ModelSerializer):
             'user',
             'related_post',
             'parent',
-            'content',
             'created_at',
             'modified_at',
             'upvote_count',
@@ -115,33 +165,39 @@ class CommentGetSerializer(serializers.ModelSerializer):
             'parent',
             'created_at',
             'modified_at',
+            'upvote_count',
+            'downvote_count',
             'all_children_count',
             'content',
         )
 
+    def __init__(self, *args, **kwargs):
+        """
+        Override serializer __init__
+        Serializer가 initialize가 되기전에 동적으로 related_post를 설정
 
-class CommentUpdateSerializer(serializers.ModelSerializer):
-    """
-    METHOD: PUT, PATCH
-    content 만 form에서 받을 수 있도록 설정
-    """
+        :param args:
+        :param kwargs:
+        """
+        comment = args[0]
+        if comment.comment_post_intermediate.post_type == 'question':
+            view_name = 'post:question:question-detail'
+        else:
+            view_name = 'post:answer:answer-detail'
 
-    class Meta:
-        model = Comment
-        fields = (
-            'pk',
-            'user',
-            'related_post',
-            'parent',
-            'content',
-            'created_at',
-            'modified_at',
+        self.fields['related_post'] = serializers.HyperlinkedIdentityField(
+            view_name=view_name,
+            lookup_field='related_post',
+            lookup_url_kwarg='pk',
+            read_only=True,
         )
-        read_only_fields = (
-            'pk',
-            'user',
-            'related_post',
-            'parent',
-            'created_at',
-            'modified_at',
-        )
+
+        if comment.parent:
+            self.fields['parent'] = serializers.HyperlinkedIdentityField(
+                view_name='post:comment:comment-detail',
+                lookup_field='parent_id',
+                lookup_url_kwarg='pk',
+                read_only=True,
+            )
+
+        super().__init__(*args, **kwargs)
