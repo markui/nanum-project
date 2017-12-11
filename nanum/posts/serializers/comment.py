@@ -1,12 +1,26 @@
+from django_filters import rest_framework as filters
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
+from rest_framework.reverse import reverse
 
+from posts.utils.filters import CommentFilter
+from posts.utils.pagination import CommentPagination
 from ..models import Comment, CommentPostIntermediate, Answer, Question
 
 __all__ = (
     'CommentCreateSerializer',
     'CommentSerializer',
 )
+
+
+class PostHyperLinkRelatedField(serializers.HyperlinkedRelatedField):
+    def get_url(self, obj, view_name, request, format):
+        model = obj.__class__.__name__.lower()
+        view_name = view_name.format(model=model)
+        url_kwargs = {
+            'pk': obj.pk
+        }
+        return reverse(view_name, kwargs=url_kwargs, request=request, format=format)
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -17,10 +31,17 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     """
     question = serializers.IntegerField(required=False)
     answer = serializers.IntegerField(required=False)
-    user = serializers.HyperlinkedIdentityField(
+    user = serializers.HyperlinkedRelatedField(
         view_name='user:profile-detail',
-        lookup_field='user_id',
-        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+    related_post = PostHyperLinkRelatedField(
+        lookup_field='related_post_pk',
+        view_name='post:{model}:{model}-detail',
+        read_only=True,
+    )
+    parent = serializers.HyperlinkedRelatedField(
+        view_name='post:comment:comment-detail',
         read_only=True,
     )
 
@@ -43,31 +64,6 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             'created_at',
             'modified_at',
         )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        post_type = self.initial_data.get('question') or self.initial_data.get('answer')
-        parent = self.initial_data.get('parent', None)
-
-        if post_type == 'question':
-            view_name = 'post:question:question-detail'
-        else:
-            view_name = 'post:answer:answer-detail'
-
-        self.fields['related_post'] = serializers.HyperlinkedIdentityField(
-            view_name=view_name,
-            lookup_field='related_post',
-            lookup_url_kwarg='pk',
-            read_only=True,
-        )
-
-        if parent:
-            self.fields['parent'] = serializers.HyperlinkedIdentityField(
-                view_name='post:comment:comment-detail',
-                lookup_field='parent_id',
-                lookup_url_kwarg='pk',
-                read_only=True,
-            )
 
     def validate_answer(self, value):
         try:
@@ -131,17 +127,18 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         )
 
 
-
-class CommentSerializer(serializers.ModelSerializer):
-    """
-    METHOD: GET
-    모든 값이 read_only
-    all_children_count, 즉 밑에 달린 댓글의 총 개수 또한 반환
-    """
-    user = serializers.HyperlinkedIdentityField(
+class CommentGetSerializer(serializers.ModelSerializer):
+    user = serializers.HyperlinkedRelatedField(
         view_name='user:profile-detail',
-        lookup_field='user_id',
-        lookup_url_kwarg='pk',
+        read_only=True,
+    )
+    related_post = PostHyperLinkRelatedField(
+        lookup_field='related_post_pk',
+        view_name='post:{model}:{model}-detail',
+        read_only=True,
+    )
+    parent = serializers.HyperlinkedRelatedField(
+        view_name='post:comment:comment-detail',
         read_only=True,
     )
 
@@ -172,32 +169,86 @@ class CommentSerializer(serializers.ModelSerializer):
         )
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class CommentSerializer(CommentGetSerializer):
+    """
+    METHOD: GET
+    모든 값이 read_only
+    all_children_count, 즉 밑에 달린 댓글의 총 개수 또한 반환
+    """
+    paginator = CommentPagination()
+    filter_backend = filters.DjangoFilterBackend
+    filter_class = CommentFilter
+
+    immediate_children = serializers.SerializerMethodField()
+    all_children = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = (
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'created_at',
+            'modified_at',
+            'upvote_count',
+            'downvote_count',
+            'all_children_count',
+            'immediate_children',
+            'all_children',
+        )
+        read_only_fields = (
+            'pk',
+            'user',
+            'related_post',
+            'parent',
+            'created_at',
+            'modified_at',
+            'upvote_count',
+            'downvote_count',
+            'all_children_count',
+            'content',
+        )
+
+    @property
+    def request(self):
+        return self.context.get('request')
+
+    @property
+    def view(self):
+        return self.context['view']
+
+    # Filter -> Pagniate  -> Serializer -> return
+    def get_immediate_children(self, obj):
+        qs = obj.immediate_children
+        queryset = self.filter_backend().filter_queryset(request=self.request, queryset=qs, view=self.view)
+        page = self.paginator.paginate_queryset(request=self.request, queryset=queryset)
+        children_serializer = CommentGetSerializer(page, many=True, context={'request': self.request})
+        paginated_response = self.paginator.get_paginated_response(children_serializer.data)
+        return paginated_response.data
+
+    def get_all_children(self, obj):
+        qs = obj.all_children
+        queryset = self.filter_backend().filter_queryset(request=self.request, queryset=qs, view=self.view)
+        page = self.paginator.paginate_queryset(request=self.request, queryset=queryset)
+        children_serializer = CommentGetSerializer(page, many=True, context={'request': self.request})
+        paginated_response = self.paginator.get_paginated_response(children_serializer.data)
+        return paginated_response.data
+
+    def __init__(self, *args, **kwargs):
         """
         Override serializer __init__
-        Serializer가 initialize가 되기전에 동적으로 related_post를 설정
+        Serializer가 initialize가 되기전에 동적으로 immediate_children 을 표기할 지 all_children을 표기할지를 결정
 
         :param args:
         :param kwargs:
         """
-        comment = args[0]
-        if comment.comment_post_intermediate.post_type == 'question':
-            view_name = 'post:question:question-detail'
-        else:
-            view_name = 'post:answer:answer-detail'
-
-        self.fields['related_post'] = serializers.HyperlinkedIdentityField(
-            view_name=view_name,
-            lookup_field='related_post',
-            lookup_url_kwarg='pk',
-            read_only=True,
-        )
-
-        if comment.parent:
-            self.fields['parent'] = serializers.HyperlinkedIdentityField(
-                view_name='post:comment:comment-detail',
-                lookup_field='parent_id',
-                lookup_url_kwarg='pk',
-                read_only=True,
-            )
-
+        query_params = kwargs.get('context').get('request').query_params
+        non_query_params = {"immediate_children", "all_children"} - query_params.keys()
+        if non_query_params:
+            for param in non_query_params:
+                self.fields.pop(param)
         super().__init__(*args, **kwargs)

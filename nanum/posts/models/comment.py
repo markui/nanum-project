@@ -83,7 +83,7 @@ class Comment(MPTTModel):
         Comment 와 엮어 있는 Answer 혹은 Question의 pk를 CommentPostIntermediate 의 to string 방식으로 반환
         :return:
         """
-        return self.comment_post_intermediate.post.pk
+        return self.comment_post_intermediate.post
 
     @property
     def immediate_children(self):
