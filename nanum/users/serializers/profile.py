@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from topics.models import Topic
 from users.models import Profile, UserFollowRelation, EmploymentCredential, EducationCredential
 from users.utils import ParameterisedHyperlinkedIdentityField
 
@@ -68,13 +69,26 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class TopicSerializer(serializers.ModelSerializer):
+    """
+    프로필 경력의, 회사(주제)
+    프로필 학력의, 학교(주제), 전공(주제)을
+    Nested Serializer로 보여줄 때 활용할 Model Serializer
+    """
+
+    class Meta:
+        model = Topic
+        fields = ('pk', 'name', 'image')
+
+
 class EmploymentCredentialSerializer(serializers.ModelSerializer):
     """
     프로필 경력 정보 Serializer
     """
     url = ParameterisedHyperlinkedIdentityField(view_name="user:profile-empl-credential-detail", lookup_fields=(
         ('profile.user.pk', 'pk'), ('pk', 'credential_pk')), read_only=True)
-    company_name = serializers.SerializerMethodField()
+    company = TopicSerializer(read_only=True)
+    company_id = serializers.IntegerField(write_only=True, required=False)
     type = serializers.SerializerMethodField()
 
     class Meta:
@@ -83,7 +97,7 @@ class EmploymentCredentialSerializer(serializers.ModelSerializer):
             'pk',
             'url',
             'company',
-            'company_name',
+            'company_id',
             'position',
             'start_year',
             'end_year',
@@ -94,15 +108,9 @@ class EmploymentCredentialSerializer(serializers.ModelSerializer):
     def get_type(self, obj):
         return 'empl'
 
-    def get_company_name(self, obj):
-        if obj.company:
-            return obj.company.name
-        else:
-            return None
-
     def validate(self, data):
         """
-        1. 회사명이나 직위 모두 입력하지 않은 경우, 에러 발생
+        1. 회사 pk나 직위 모두 입력하지 않은 경우, 에러 발생
         2. end_year가 start_year보다 앞선 경우, 에러 발생
         :param data: validated_data
         :return:
@@ -129,13 +137,20 @@ class EducationCredentialSerializer(serializers.ModelSerializer):
         ('profile.user.pk', 'pk'), ('pk', 'credential_pk')), read_only=True)
     type = serializers.SerializerMethodField()
 
+    school = TopicSerializer(read_only=True)
+    school_id = serializers.IntegerField(write_only=True, required=False)
+    concentration = TopicSerializer(read_only=True)
+    concentration_id = serializers.IntegerField(write_only=True, required=False)
+
     class Meta:
         model = EducationCredential
         fields = (
             'pk',
             'url',
             'school',
+            'school_id',
             'concentration',
+            'concentration_id',
             'degree_type',
             'graduation_year',
             'type',
@@ -146,13 +161,11 @@ class EducationCredentialSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        1. 회사명이나 직위 모두 입력하지 않은 경우, 에러 발생
-        2. end_year가 start_year보다 앞선 경우, 에러 발생
+        학교 pk나 전공 pk 모두 입력하지 않은 경우, 에러 발생
         :param data: validated_data
         :return:
         """
-        print(data)
-        if not data.get('school') and not data.get('concentration'):
+        if not data.get('school_id') and not data.get('concentration_id'):
             raise ValidationError({
                 'error': '학교나 전공 중 적어도 하나의 정보를 입력해주세요.'
             })

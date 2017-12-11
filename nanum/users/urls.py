@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from users.apis import ProfileRetrieveUpdateView, EmploymentCredentialListCreateView, EmploymentCredentialDetailView, \
-    ProfileStatsRetrieveView, EducationCredentialListCreateView
+    ProfileStatsRetrieveView, EducationCredentialListCreateView, EducationCredentialDetailView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
@@ -113,7 +113,7 @@ urlpatterns = [
 
     # 6. Profile Education Credential Retrieve, Update, Delete
     # /user/1/profile/edu-credentials/1/
-    url(r'^(?P<pk>\d+)/profile/edu-credentials/(?P<credential_pk>\d+)/$', EmploymentCredentialDetailView.as_view(),
+    url(r'^(?P<pk>\d+)/profile/edu-credentials/(?P<credential_pk>\d+)/$', EducationCredentialDetailView.as_view(),
         name='profile-edu-credential-detail'),
 
 ]

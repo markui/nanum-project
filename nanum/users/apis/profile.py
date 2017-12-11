@@ -2,7 +2,7 @@ from django.http import Http404
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from users.models import Profile, EmploymentCredential
+from users.models import Profile, EmploymentCredential, EducationCredential
 from users.serializers import ProfileSerializer, EmploymentCredentialSerializer, EducationCredentialSerializer
 from users.utils.permissions import IsOwnerOrReadOnly, IsProfileOwnerOrReadOnly
 
@@ -79,10 +79,25 @@ class EducationCredentialListCreateView(generics.ListCreateAPIView):
         except Profile.DoesNotExist:
             raise Http404
         else:
-            return EmploymentCredential.objects.filter(profile=profile)
+            return EducationCredential.objects.filter(profile=profile)
 
     def perform_create(self, serializer):
         serializer.save(profile=self.request.user.profile)
+
+
+class EducationCredentialDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    유저 프로필의 특정 학력 정보 가져오기/수정하기/삭제하기
+    """
+    queryset = EducationCredential.objects.all()
+    lookup_url_kwarg = 'credential_pk'
+    lookup_field = 'pk'
+
+    serializer_class = EducationCredentialSerializer
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsProfileOwnerOrReadOnly,
+    )
 
 
 class ProfileStatsRetrieveView(generics.RetrieveAPIView):
