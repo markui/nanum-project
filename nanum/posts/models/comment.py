@@ -26,6 +26,14 @@ class CommentPostIntermediate(models.Model):
         return f'post: {self.post} \ncomment: {self.parent_comments}'
 
     @property
+    def post_type(self):
+        if self.question:
+            return 'question'
+        if self.answer:
+            return 'answer'
+        raise AssertionError("Neither 'question' or 'answer' set")
+
+    @property
     def post(self):
         """
         해당 post와 연결된 question 혹은 answer와 해당 pk를 반환
@@ -75,7 +83,7 @@ class Comment(MPTTModel):
         Comment 와 엮어 있는 Answer 혹은 Question의 pk를 CommentPostIntermediate 의 to string 방식으로 반환
         :return:
         """
-        return f'{self.comment_post_intermediate.post}'
+        return f'{self.comment_post_intermediate.post_type} - {self.comment_post_intermediate.post.pk}'
 
     @property
     def immediate_children(self):
