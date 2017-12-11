@@ -58,7 +58,7 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :param data:
         :return:
         """
-        if not data['content'] and data['published']:
+        if not data.get('content') and data.get('published'):
             raise ParseError({"error": "Content 가 없는 답변은 Publish가 불가능합니다."})
         if data.get('content') and not data.get('content_html'):
             raise ParseError({"error": "Content 가 왔으나 Content_html 이 없습니다."})
