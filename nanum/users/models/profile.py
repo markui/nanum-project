@@ -12,8 +12,8 @@ from ..utils import (
 
 __all__ = (
     'Profile',
-    'EducationCredentials',
-    'EmploymentCredentials',
+    'EmploymentCredential',
+    'EducationCredential',
 )
 
 User = settings.AUTH_USER_MODEL
@@ -25,9 +25,9 @@ DOCTORATE = 'PHD'
 
 DEGREES = (
     (HIGHSCHOOL, '고등학교'),
-    (BACHELOR, '대학교'),
-    (MASTERS, '석사과정'),
-    (DOCTORATE, '박사과정')
+    (BACHELOR, '학사'),
+    (MASTERS, '석사'),
+    (DOCTORATE, '박사')
 )
 
 # 1900 ~ 현재 연도
@@ -97,11 +97,24 @@ class Profile(models.Model):
         super().save(*args, **kwargs)
 
 
-class EducationCredentials(models.Model):
+class EmploymentCredential(models.Model):
+    """
+    유저 프로필에 들어가는 이력
+    """
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="employment_credentials")
+    company = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
+                                related_name="company_credentials")
+    position = models.CharField(max_length=50, blank=True)
+    start_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
+    end_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
+    working_status = models.BooleanField(default=False)
+
+
+class EducationCredential(models.Model):
     """
     유저 프로필에 들어가는 학력
     """
-    user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="education_credentials")
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="education_credentials")
     school = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
                                related_name="school_credentials")
     # 전공
@@ -110,16 +123,3 @@ class EducationCredentials(models.Model):
     # 학위
     degree_type = models.CharField(choices=DEGREES, max_length=3, blank=True)
     graduation_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
-
-
-class EmploymentCredentials(models.Model):
-    """
-    유저 프로필에 들어가는 이력
-    """
-    user = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name="employment_credentials")
-    company = models.ForeignKey('topics.Topic', on_delete=models.SET_NULL, blank=True, null=True,
-                                related_name="company_credentials")
-    position = models.CharField(max_length=50, blank=True)
-    start_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
-    end_year = models.IntegerField(choices=YEAR_CHOICES, blank=True, null=True)
-    working_status = models.BooleanField(default=False)

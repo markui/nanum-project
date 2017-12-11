@@ -8,8 +8,8 @@ user_models = [
     User,
     # profile.py
     Profile,
-    EducationCredentials,
-    EmploymentCredentials,
+    EducationCredential,
+    EmploymentCredential,
     # relation.py
     # relation - vote
     AnswerUpVoteRelation,
