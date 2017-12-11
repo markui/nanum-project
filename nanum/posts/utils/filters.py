@@ -51,7 +51,7 @@ class AnswerFilter(filters.FilterSet):
         fields = ['user', 'topic', 'bookmarked_by', ]
 
 
-class CommentFilter(AnswerFilter):
+class CommentFilter(filters.FilterSet):
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
@@ -62,6 +62,15 @@ class CommentFilter(AnswerFilter):
     class Meta:
         model = Comment
         fields = []
+
+
+class CommentListFilter(CommentFilter):
+    question = ListFilter(name='comment_post_intermediate__question')
+    answer = ListFilter(name='comment_post_intermediate__answer')
+
+    class Meta:
+        model = Comment
+        fields = ['question', 'answer']
 
 
 # QuestionListFilter

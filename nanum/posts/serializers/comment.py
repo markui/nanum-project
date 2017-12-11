@@ -104,6 +104,8 @@ class CommentGetSerializer(serializers.ModelSerializer):
             'content',
             'created_at',
             'modified_at',
+            'upvote_count',
+            'downvote_count',
             'all_children_count',
         )
         read_only_fields = (
