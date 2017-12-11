@@ -7,7 +7,7 @@ from django.db.transaction import atomic
 from topics.models import Topic
 from ..post.question import Question
 from ...models import CommentPostIntermediate
-from ...utils.quill_js import QuillJSDeltaParser
+from ...utils.quill_js import DjangoQuill
 
 __all__ = (
     'Answer',
@@ -55,7 +55,7 @@ class Answer(models.Model):
         for quill_delta_operation in quill_delta_operation_querydict:
             delta_operation_list.append(quill_delta_operation.delta_operation)
 
-        content = QuillJSDeltaParser.create_quill_content(delta_operation_list=delta_operation_list)
+        content = DjangoQuill.create_quill_content(delta_operation_list=delta_operation_list)
         return content
 
     @property
@@ -146,3 +146,9 @@ class QuillDeltaOperation(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.image:
+            storage, path = self.image.storage, self.image.path
+            storage.delete(path)
+        super().delete(*args, **kwargs)
