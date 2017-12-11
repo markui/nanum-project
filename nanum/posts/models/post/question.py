@@ -39,7 +39,6 @@ class Question(models.Model):
 
             CommentPostIntermediate.objects.get_or_create(question=self)
 
-    #
     def delete(self, *args, **kwargs):
         with atomic():
             topics_pk = self.topics.values_list('pk', flat=True)

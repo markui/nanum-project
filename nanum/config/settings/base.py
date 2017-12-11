@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'mptt',
     'django_filters',
+    'corsheaders',
 
     # 'stream_django',
 
