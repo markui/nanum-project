@@ -24,7 +24,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     """
     유저가 작성한 Answer들을 갖고와주는 ListAPIView 와
     QuillJS Content를 저장해주는 CreateAPIView
-
     Filter Class를 적용하여 Topic, Bookmarked, User에 대한 필터링과
     created_at, modified_at을 이용하여 ordering을 결정할 수 있음
     """
@@ -41,7 +40,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         """
         GenericAPIView의 filter_queryset override
         필터가 가능한 queryset이면 필터를 실시, 그 외의 경우에는 에러 메세지를 반환
-
         :param queryset: View의 queryset
         """
         query_params = self.request.query_params.keys()
@@ -65,7 +63,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
         """
         GenericAPIView의 get_serializer override
         POST요청과 GET요청을 나누어 Serializer 종류를 변경
-
         :param args:
         :param kwargs:
         :return:
@@ -92,7 +89,6 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         """
         GenericAPIView get_serializer override
         PUT, PATCH와 GET요청을 나누어 Serializer 종류를 변경
-
         :param args:
         :param kwargs:
         :return:
@@ -111,7 +107,6 @@ class AnswerMainFeedListView(generics.ListAPIView):
     1. Topic, Follower를 기반으로 개인화된 피드 생성
     2. +추후 Like 정보 추가
     3. +추후 CF Filtering / Content-based Filtering 적용
-
     """
     serializer_class = AnswerGetSerializer
     authentication_classes = (
@@ -123,7 +118,6 @@ class AnswerMainFeedListView(generics.ListAPIView):
         """
         GenericAPIView의 get_queryset override
         Queryset을 필터하여 피드에 들어갈 내용을 반환
-
         :return:
         """
         user = self.request.user

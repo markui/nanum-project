@@ -79,6 +79,8 @@ class QuestionFilter(django_filters.FilterSet):
     followed_by = QuestionListFilter(name='followers', )
     # 해당 유저가 북마크하는 질문
     bookmarked_by = QuestionListFilter(name='who_bookmarked', )
+    # 해당 topic을 포함하는 질문
+    topic = QuestionListFilter(name='topics', )
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
@@ -88,4 +90,4 @@ class QuestionFilter(django_filters.FilterSet):
 
     class Meta:
         model = Question
-        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'follow_count']
+        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'topic']
