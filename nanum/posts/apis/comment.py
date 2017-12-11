@@ -6,12 +6,11 @@ from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
-from posts.serializers.comment import CommentUpdateSerializer
-from posts.utils.filters import CommentFilter
+from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Comment
-from ..serializers import CommentGetSerializer, CommentCreateSerializer
-from ..utils.pagination import CustomPagination, CommentPagination
-from ..utils.permissions import IsAuthorOrAuthenticatedReadOnly
+from ..serializers import CommentGetSerializer, CommentCreateSerializer, CommentUpdateSerializer
+from ..utils.filters import CommentFilter, CommentListFilter
+from ..utils.pagination import CommentPagination, ListPagination
 
 __all__ = (
     'CommentListCreateView',
@@ -24,10 +23,38 @@ class CommentListCreateView(generics.ListCreateAPIView):
     Comment List, Create API View
     Comment가 달린 Answer 혹은 Question의 정보를 string 포맷으로 반환 - "<post_type> - <post_pk>" 형식으로 표현
     """
+    queryset = Comment.objects.filter(parent=None)
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
     )
-    pagination_class = CustomPagination
+    pagination_class = ListPagination
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_class = CommentListFilter
+
+    def filter_queryset(self, queryset):
+        """
+        GenericAPIView의 filter_queryset override
+        필터가 가능한 queryset이면 필터를 실시, 그 외의 경우에는 에러 메세지를 반환
+
+        :param queryset: View의 queryset
+        """
+        query_params = self.request.query_params.keys()
+        values = self.request.query_params.values()
+        filter_fields = self.filter_class.get_fields().keys() | \
+                        {'ordering', 'page', 'user', 'question', 'answer'}
+        error = None
+
+        # 만약 query parameter가 왔는데 value가 오지 않았을 경우
+        if "" in list(values):
+            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
+        if query_params and not query_params <= filter_fields:
+            error = {"error": "존재하지 않는 query_parameter입니다. "
+                              "필터가 가능한 query_parameter는 다음과 같습니다:"
+                              f"{filter_fields}"}
+        if error:
+            raise NotFound(detail=error)
+
+        return super().filter_queryset(queryset)
 
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'POST':
@@ -37,15 +64,6 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
-
-    def get_queryset(self):
-        """
-        generics의 get_queryset 함수 override
-        Comment 중 User가 단 comment queryset 역참조하여 반환
-        :return:
-        """
-        user = self.request.user
-        return user.comment_set.all()
 
 
 class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -59,7 +77,7 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     )
     pagination_class = CommentPagination
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_class = CommentFilter  # utils.filter
+    filter_class = CommentFilter
 
     def filter_queryset(self, queryset):
         """
@@ -76,11 +94,11 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
-            error = {"message": "query parameter가 존재하나 value가 존재하지 않습니다."}
+            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
         if query_params and not query_params <= filter_fields:
-            error = {"message": "존재하지 않는 query_parameter입니다. "
-                                "필터가 가능한 query_parameter는 다음과 같습니다:"
-                                f"{filter_fields}"}
+            error = {"error": "존재하지 않는 query_parameter입니다. "
+                              "필터가 가능한 query_parameter는 다음과 같습니다:"
+                              f"{filter_fields}"}
         if error:
             raise NotFound(detail=error)
 
@@ -90,8 +108,6 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         """
         GenericAPIView get_serializer override
         PUT, PATCH와 GET요청을 나누어 Serializer 종류를 변경
-        GET 요청 중 query parameter에 immediate_children = True 혹은 all_children =True가 올 경우
-            해당 information을 담아서 보내주는 Serializer를 serializer_class로 설정
         :param args:
         :param kwargs:
         :return:
@@ -105,7 +121,15 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return serializer_class(*args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Query parameter에 따라 nested된 filter/pagnating queryset을 추가
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         query_params = self.request.query_params
+
         immediate_children, all_children = query_params.get('immediate_children'), \
                                            query_params.get('all_children')
         instance = self.get_object()

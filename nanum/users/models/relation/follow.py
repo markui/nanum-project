@@ -56,10 +56,42 @@ class ExpertiseFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.topic.expert_count < 0:
+            self.topic.expert_count = 1
+        else:
+            self.topic.expert_count += 1
+        self.topic.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.topic.expert_count > 0:
+            self.topic.expert_count -= 1
+        else:
+            self.topic.expert_count = 0
+        self.topic.save()
+
 
 class InterestFollowRelation(TopicFollowRelation):
     class Meta:
         unique_together = ('user', 'topic')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.topic.interest_count < 0:
+            self.topic.interest_count = 1
+        else:
+            self.topic.interest_count += 1
+        self.topic.save()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.topic.interest_count > 0:
+            self.topic.interest_count -= 1
+        else:
+            self.topic.interest_count = 0
+        self.topic.save()
 
 
 class QuestionFollowRelation(models.Model):
