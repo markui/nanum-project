@@ -44,7 +44,7 @@ class LoginView(APIView):
 
         # 인증에 실패한 경우
         else:
-            ret = {
-                'message': '존재하지 않는 계정입니다.'
+            msg = {
+                'error': '존재하지 않는 계정입니다.'
             }
-            return Response(ret, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(msg, status=status.HTTP_401_UNAUTHORIZED)

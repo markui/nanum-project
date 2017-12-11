@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-from users.apis import ProfileRetrieveUpdateView
+from users.apis import ProfileRetrieveUpdateView, EmploymentCredentialListCreateView, EmploymentCredentialDetailView, \
+    ProfileStatsRetrieveView, EducationCredentialListCreateView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
@@ -85,11 +86,34 @@ urlpatterns = [
     # 3. BOOKMARK
 
     # Profile
-    # 1. Profile Retrieve / Update
-    # /user/1/profile/
-    url(r'^(?P<pk>\d+)/profile/$', ProfileRetrieveUpdateView.as_view(),
-        name='profile-detail'),
+    # 1. Profile Main Detail Retrieve/Update
+    # /user/1/profile/main-profile/
+    url(r'^(?P<pk>\d+)/profile/main-detail/$', ProfileRetrieveUpdateView.as_view(),
+        name='profile-main-detail'),
 
-    #
+    # 2 Profile Stats
+    # /user/1/profile/stats/
+    url(r'^(?P<pk>\d+)/profile/stats/$', ProfileStatsRetrieveView.as_view(),
+        name='profile-stats'),
+
+    # 3. Profile Employment Credential List/Create
+    # /user/1/profile/empl-credentials/
+    url(r'^(?P<pk>\d+)/profile/empl-credentials/$', EmploymentCredentialListCreateView.as_view(),
+        name='profile-empl-credential-list'),
+
+    # 4. Profile Employment Credential Retrieve, Update, Delete
+    # /user/1/profile/empl-credentials/1/
+    url(r'^(?P<pk>\d+)/profile/empl-credentials/(?P<credential_pk>\d+)/$', EmploymentCredentialDetailView.as_view(),
+        name='profile-empl-credential-detail'),
+
+    # 5. Profile Education Credential List/Create
+    # /user/1/profile/edu-credentials/
+    url(r'^(?P<pk>\d+)/profile/edu-credentials/$', EducationCredentialListCreateView.as_view(),
+        name='profile-edu-credential-list'),
+
+    # 6. Profile Education Credential Retrieve, Update, Delete
+    # /user/1/profile/edu-credentials/1/
+    url(r'^(?P<pk>\d+)/profile/edu-credentials/(?P<credential_pk>\d+)/$', EmploymentCredentialDetailView.as_view(),
+        name='profile-edu-credential-detail'),
 
 ]
