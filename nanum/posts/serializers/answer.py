@@ -56,7 +56,7 @@ class AnswerPostSerializer(serializers.ModelSerializer):
         :return:
         """
         if not data['content'] and data['published']:
-            raise serializers.ValidationError("Content가 없는 답변은 Publish가 불가능합니다.")
+            raise ParseError({"error":"Content가 없는 답변은 Publish가 불가능합니다."})
         return data
 
     def save(self, **kwargs):
