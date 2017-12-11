@@ -101,8 +101,6 @@ class TopicMergeView(generics.GenericAPIView):
         :param to_instance:
         :return:
         """
-        assert type(from_instance) == type(to_instance)
-
         # Topic과 연결되어 있는 mtm(Through field로 지정되어 있는 필드는 제외한), mto 필드들을 갖고 옴
         relation_fields = [
             field for field in from_instance._meta.get_fields()
