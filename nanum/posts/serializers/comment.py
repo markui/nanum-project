@@ -26,7 +26,7 @@ class PostHyperLinkRelatedField(serializers.HyperlinkedRelatedField):
 
 class BaseCommentserializer(serializers.HyperlinkedModelSerializer):
     user = serializers.HyperlinkedRelatedField(
-        view_name='user:profile-detail',
+        view_name='user:profile-main-detail',
         read_only=True,
     )
     related_post = PostHyperLinkRelatedField(

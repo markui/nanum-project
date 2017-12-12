@@ -15,7 +15,7 @@ class BaseTopicSerializer(serializers.ModelSerializer):
         required=False,
     )
     creator = serializers.HyperlinkedRelatedField(
-        view_name='user:profile-detail',
+        view_name='user:profile-main-detail',
         read_only=True,
     )
     url = serializers.HyperlinkedIdentityField(
