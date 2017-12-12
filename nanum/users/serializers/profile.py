@@ -69,6 +69,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class ProfileStatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = (
+            'answer_count',
+            'upvote_count',
+            'follower_count',
+            'following_count',
+        )
+
+
 class TopicSerializer(serializers.ModelSerializer):
     """
     프로필 경력의, 회사(주제)
