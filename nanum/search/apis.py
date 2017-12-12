@@ -3,12 +3,12 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
 from topics.models import Topic
-from topics.serializers import TopicGetSerializer
+from topics.serializers import TopicSerializer
 
 
 class TopicSearchAPIView(generics.RetrieveAPIView):
     queryset = Topic.objects.all()
-    serializer_class = TopicGetSerializer
+    serializer_class = TopicSerializer
     authentication_classes = (
         permissions.IsAuthenticated,
     )

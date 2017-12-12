@@ -82,6 +82,7 @@ urlpatterns = [
     # /user/answer-downvote-relation/
     url(r'^answer-downvote-relation/$', AnswerDownVoteRelationCreateView.as_view(),
         name='answer-downvote-relation'),
+    # /user/
 
     # 3. BOOKMARK
 
