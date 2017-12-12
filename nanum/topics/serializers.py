@@ -7,8 +7,6 @@ import utils
 from .models import Topic
 
 
-# from rest_framework.fields import ImageField
-
 class BaseTopicSerializer(serializers.ModelSerializer):
     image = ImageField(
         max_length=None,
