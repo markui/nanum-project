@@ -3,7 +3,8 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from users.models import Profile, EmploymentCredential, EducationCredential
-from users.serializers import ProfileSerializer, EmploymentCredentialSerializer, EducationCredentialSerializer
+from users.serializers import ProfileSerializer, EmploymentCredentialSerializer, EducationCredentialSerializer, \
+    ProfileStatsSerializer
 from users.utils.permissions import IsOwnerOrReadOnly, IsProfileOwnerOrReadOnly
 
 
@@ -104,4 +105,5 @@ class ProfileStatsRetrieveView(generics.RetrieveAPIView):
     """
     유저 프로필의 Activity Stats(활동 통계) 가져오기
     """
-    pass
+    queryset = Profile.objects.all()
+    serializer_class = ProfileStatsSerializer
