@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 
 from utils import rescale
@@ -73,6 +74,14 @@ class Profile(models.Model):
     # relation 에서 가져온 정보 - 누적되는 팔로워/팔로잉 수
     follower_count = models.IntegerField(default=0)
     following_count = models.IntegerField(default=0)
+
+    @property
+    def answer_count(self):
+        return self.user.answer_set.count()
+
+    @property
+    def upvote_count(self):
+        return self.user.answer_set.aggregate(Sum('upvote_count'))['upvote_count__sum']
 
     def __str__(self):
         return f'Profile of {self.user}'
