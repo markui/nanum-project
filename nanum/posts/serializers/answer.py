@@ -4,9 +4,10 @@ from django.db.models import QuerySet
 from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
+from rest_framework.reverse import reverse
 
 from users.models import AnswerUpVoteRelation, AnswerBookmarkRelation
-from ..models import Answer, QuillDeltaOperation
+from ..models import Answer, QuillDeltaOperation, Question
 from ..utils.quill_js import DjangoQuill
 
 __all__ = (
@@ -18,51 +19,94 @@ __all__ = (
 django_quill = DjangoQuill(model=QuillDeltaOperation, parent_model=Answer)
 
 
-class AnswerPostSerializer(serializers.ModelSerializer):
-    content = serializers.JSONField(default=None)
-    question = serializers.HyperlinkedIdentityField(
-        view_name='post:question:question-detail',
-        lookup_field='question_id',
-        lookup_url_kwarg='pk',
-        read_only=True,
-    )
-    user = serializers.HyperlinkedIdentityField(
+class QuestionHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
+    queryset = Question.objects.all()
+    view_name = 'post:question:question-detail'
+
+    def to_internal_value(self, data):
+        return Question.objects.get(pk=data)
+
+
+class BaseAnswerSerializer(serializers.ModelSerializer):
+    question = QuestionHyperlinkedRelatedField()
+    user = serializers.HyperlinkedRelatedField(
         view_name='user:profile-detail',
-        lookup_field='user_id',
-        lookup_url_kwarg='pk',
         read_only=True,
     )
+    user_upvote_relation = serializers.SerializerMethodField()
+    user_bookmark_relation = serializers.SerializerMethodField()
+    content = serializers.JSONField(default=None)
 
     class Meta:
         model = Answer
-        fields = (
+        fields = [
             'pk',
             'user',
             'question',
-            'content',
             'content_html',
+            'content',
+            'upvote_count',
+            'comment_count',
+            'user_upvote_relation',
+            'user_bookmark_relation',
             'published',
             'created_at',
             'modified_at',
-        )
-        read_only_fields = (
-            'pk',
-            'user',
-            'created_at',
-            'modified_at'
-        )
+        ]
+
+    @property
+    def request(self):
+        return self.context.get("request")
 
     @property
     def request_user(self):
         """
-        Request를 보낸 유저를 반환
+        Check if AnonymousUser
         :return:
         """
-        user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            user = request.user
+        if self.request and hasattr(self.request, "user"):
+            user = self.request.user
         return user
+
+    # HyperlinkedRelationField 를 접목
+    # Reuqest.user 가 Answer를 like 했을 경우, 해당 like relation의 링크를 가지고 옴 - 추후 delete 요청을 위함
+    # 만약 like하지 않았을 경우, null값이 반환
+    def get_user_upvote_relation(self, obj):
+        try:
+            relation_pk = AnswerUpVoteRelation.objects.get(user=self.request_user, answer=obj).pk
+            view_name = 'user:answer-upvote-relation-detail'
+            kwargs = {'pk': relation_pk}
+            return reverse(view_name, kwargs=kwargs, request=self.request)
+        except AnswerUpVoteRelation.DoesNotExist:
+            return
+
+    def get_user_bookmark_relation(self, obj):
+        try:
+            relation_pk = AnswerBookmarkRelation.objects.get(user=self.request_user, answer=obj).pk
+            view_name = 'user:answer-bookmark-relation-detaion'
+            kwargs = {'pk': relation_pk}
+            return reverse(view_name, kwargs=kwargs, request=self.request)
+        except AnswerBookmarkRelation.DoesNotExist:
+            return
+
+
+class AnswerGetSerializer(BaseAnswerSerializer):
+    pass
+
+
+class AnswerPostSerializer(BaseAnswerSerializer):
+    content = serializers.JSONField(default=None)
+
+    class Meta(BaseAnswerSerializer.Meta):
+        read_only_fields = [
+            'user',
+            'upvote_count',
+            'comment_count',
+            'user_upvote_relation',
+            'user_bookmark_relation',
+            'created_at',
+            'modified_at'
+        ]
 
     def validate(self, data):
         """
@@ -131,38 +175,8 @@ class AnswerPostSerializer(serializers.ModelSerializer):
 
 
 class AnswerUpdateSerializer(AnswerPostSerializer):
-    content = serializers.JSONField(default=None)
-    question = serializers.HyperlinkedIdentityField(
-        view_name='post:question:question-detail',
-        lookup_field='question_id',
-        lookup_url_kwarg='pk',
-        read_only=True,
-    )
-    user = serializers.HyperlinkedIdentityField(
-        view_name='user:profile-detail',
-        lookup_field='user_id',
-        lookup_url_kwarg='pk',
-        read_only=True,
-    )
-
-    class Meta:
-        model = Answer
-        fields = (
-            'pk',
-            'user',
-            'question',
-            'content',
-            'content_html',
-            'published',
-            'created_at',
-            'modified_at',
-        )
-        read_only_fields = (
-            'pk',
-            'user',
-            'created_at',
-            'modified_at'
-        )
+    class Meta(AnswerPostSerializer.Meta):
+        pass
 
     def save(self, **kwargs):
         """
@@ -195,71 +209,3 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
             inst.save()
         for inst in to_delete_list:
             inst.delete()
-
-
-class AnswerGetSerializer(serializers.ModelSerializer):
-    user_upvote_relation = serializers.SerializerMethodField()
-    user_bookmark_relation = serializers.SerializerMethodField()
-    question = serializers.HyperlinkedIdentityField(
-        view_name='post:question:question-detail',
-        lookup_field='question_id',
-        lookup_url_kwarg='pk',
-        read_only=True,
-    )
-    user = serializers.HyperlinkedIdentityField(
-        view_name='user:profile-detail',
-        lookup_field='user_id',
-        lookup_url_kwarg='pk',
-        read_only=True,
-    )
-
-
-    class Meta:
-        model = Answer
-        fields = (
-            'pk',
-            'user',
-            'question',
-            'content_html',
-            'upvote_count',
-            'comment_count',
-            'user_upvote_relation',
-            'user_bookmark_relation',
-            'published',
-            'created_at',
-            'modified_at',
-        )
-        read_only_fields = (
-            'pk',
-            'user',
-            'question',
-            'content_html',
-            'upvote_count',
-            'comment_count',
-            'user_upvote_relation',
-            'user_bookmark_relation',
-            'published',
-            'created_at',
-            'modified_at',
-        )
-
-    @property
-    def request_user(self):
-        user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            user = request.user
-        return user
-
-    # Relation ManyToMany로 엮인 값들에 대해서 pk를 반환
-    def get_user_upvote_relation(self, obj):
-        try:
-            return AnswerUpVoteRelation.objects.get(user=self.request_user, answer=obj).pk
-        except:
-            return None
-
-    def get_user_bookmark_relation(self, obj):
-        try:
-            return AnswerBookmarkRelation.objects.get(user=self.request_user, answer=obj).pk
-        except:
-            return None

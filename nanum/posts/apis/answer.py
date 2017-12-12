@@ -72,6 +72,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
             serializer_class = AnswerPostSerializer
         else:
             serializer_class = AnswerGetSerializer
+        print(serializer_class().get_fields())
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
