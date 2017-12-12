@@ -34,21 +34,22 @@ class CommentPagination(CustomPagination):
         :param data:
         :return:
         """
-        immediate_children = self.request.query_params.get('immediate_children')
-        if immediate_children:
-            return Response(OrderedDict([
-                ('immediate_cihldren_count', self.page.paginator.count),
-                ('results', data),
-                ('next', self.get_next_link()),
-                ('previous', self.get_previous_link())
-            ]))
+        # immediate_children = self.request.query_params.get('immediate_children')
+        # if immediate_children:
+        #     return Response(OrderedDict([
+        #         ('immediate_cihldren_count', self.page.paginator.count),
+        #         ('results', data),
+        #         ('next', self.get_next_link()),
+        #         ('previous', self.get_previous_link())
+        #     ]))
         return Response(OrderedDict([
             ('results', data),
             ('next', self.get_next_link()),
             ('previous', self.get_previous_link())
         ]))
 
+
 class QuestionPagination(PageNumberPagination):
     page_size = 2
     page_size_query_param = 'page_size'
-    max_page_size= 100
+    max_page_size = 100
