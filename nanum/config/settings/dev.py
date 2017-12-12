@@ -38,6 +38,5 @@ CORS_ORIGIN_ALLOW_ALL = False
 
 CORS_ORIGIN_WHITELIST = (
     'localhost:4200',
-    # 'front.localhost:8013',
-    # 'djangstagram.com',
+    'esdyee.github.io',
 )
