@@ -31,6 +31,10 @@ class Answer(models.Model):
         return f'user: {self.user}, content: {self.text_content[:30]}'
 
     @property
+    def user_profile(self):
+        return self.user.profile.pk
+
+    @property
     def topics(self):
         return self.question.topics
 
@@ -148,6 +152,13 @@ class QuillDeltaOperation(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        """
+        Delta Operation 삭제 시 이미지가 있을 경우 storage에 있는 이미지도 삭제
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         if self.image:
             storage, path = self.image.storage, self.image.path
             storage.delete(path)

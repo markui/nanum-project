@@ -1,14 +1,10 @@
-from collections import OrderedDict
-from itertools import chain
-
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
-from rest_framework.response import Response
 
 from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Comment
-from ..serializers import CommentGetSerializer, CommentCreateSerializer, CommentUpdateSerializer
+from ..serializers import CommentSerializer, CommentCreateSerializer
 from ..utils.filters import CommentFilter, CommentListFilter
 from ..utils.pagination import CommentPagination, ListPagination
 
@@ -60,7 +56,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             serializer_class = CommentCreateSerializer
         else:
-            serializer_class = CommentGetSerializer
+            serializer_class = CommentSerializer
 
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
@@ -75,6 +71,7 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthorOrAuthenticatedReadOnly,
     )
+    serializer_class = CommentSerializer
     pagination_class = CommentPagination
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = CommentFilter
@@ -104,50 +101,34 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         return super().filter_queryset(queryset)
 
-    def get_serializer(self, *args, **kwargs):
-        """
-        GenericAPIView get_serializer override
-        PUT, PATCH와 GET요청을 나누어 Serializer 종류를 변경
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        if self.request.method == 'PUT' or self.request.method == 'PATCH':
-            serializer_class = CommentUpdateSerializer
-        else:
-            serializer_class = CommentGetSerializer
-
-        kwargs['context'] = self.get_serializer_context()
-        return serializer_class(*args, **kwargs)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Query parameter에 따라 nested된 filter/pagnating queryset을 추가
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        query_params = self.request.query_params
-
-        immediate_children, all_children = query_params.get('immediate_children'), \
-                                           query_params.get('all_children')
-        instance = self.get_object()
-        parent_serializer = self.get_serializer(instance)
-
-        if immediate_children:
-            queryset = self.filter_queryset(instance.immediate_children)
-            page = self.paginate_queryset(queryset)
-        elif all_children:
-            queryset = self.filter_queryset(instance.all_children)
-            page = self.paginate_queryset(queryset)
-        else:
-            page = None
-
-        if page is not None:
-            children_serializer = self.get_serializer(page, many=True)
-            paginated_response = self.get_paginated_response(children_serializer.data)
-            data = OrderedDict(chain(parent_serializer.data.items(), paginated_response.data.items()))
-            return Response(data)
-
-        return Response(parent_serializer.data)
+        # def retrieve(self, request, *args, **kwargs):
+        #     """
+        #     Query parameter에 따라 nested된 filter/pagnating queryset을 추가
+        #     :param request:
+        #     :param args:
+        #     :param kwargs:
+        #     :return:
+        #     """
+        #     query_params = self.request.query_params
+        #
+        #     immediate_children, all_children = query_params.get('immediate_children'), \
+        #                                        query_params.get('all_children')
+        #     instance = self.get_object()
+        #     parent_serializer = self.get_serializer(instance)
+        #
+        #     if immediate_children:
+        #         queryset = self.filter_queryset(instance.immediate_children)
+        #         page = self.paginate_queryset(queryset)
+        #     elif all_children:
+        #         queryset = self.filter_queryset(instance.all_children)
+        #         page = self.paginate_queryset(queryset)
+        #     else:
+        #         page = None
+        #
+        #     if page is not None:
+        #         children_serializer = self.get_serializer(page, many=True)
+        #         paginated_response = self.get_paginated_response(children_serializer.data)
+        #         data = OrderedDict(chain(parent_serializer.data.items(), paginated_response.data.items()))
+        #         return Response(data)
+        #
+        #     return Response(parent_serializer.data)
