@@ -75,7 +75,7 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
     @property
     def request_user(self):
         """
-        Check if AnonymousUser
+        Check if user in request
         :return:
         """
         if self.request and hasattr(self.request, "user"):

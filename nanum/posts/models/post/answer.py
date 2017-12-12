@@ -148,9 +148,6 @@ class QuillDeltaOperation(models.Model):
                 "Neither 'text' or 'image' in answer_content. This is an empty instance and should be deleted.")
         return quill_delta_operation
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
     def delete(self, *args, **kwargs):
         """
         Delta Operation 삭제 시 이미지가 있을 경우 storage에 있는 이미지도 삭제

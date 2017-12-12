@@ -11,7 +11,7 @@ class BaseTopicSerializer(serializers.ModelSerializer):
     image = ImageField(
         max_length=None,
         allow_empty_file=False,
-        use_url=False,
+        use_url=True,
         required=False,
     )
     creator = serializers.HyperlinkedRelatedField(
@@ -83,7 +83,7 @@ class TopicSerializer(BaseTopicSerializer):
         )
 
     def validate_name(self, value):
-        topic = Topic.objects.filter(name=value)
+        topic = Topic.objects.filter(name=value).exclude(name=self.instance.name)
         if topic:
             raise ParseError({"error": "이미 존재하는 Topic 이름입니다."})
         return value

@@ -27,3 +27,4 @@ class TopicSearchAPIView(generics.RetrieveAPIView):
         serializer = self.get_serializer(queryset, many=True)
         result = {"result": serializer.data}
         return Response(result)
+
