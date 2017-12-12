@@ -22,7 +22,6 @@ class LoginView(APIView):
     """
 
     def post(self, request):
-        print(request.data)
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # serializer가 valid 하면,
@@ -35,7 +34,7 @@ class LoginView(APIView):
         if user:
             # 토큰 생성/반환
             token = Token.objects.get_or_create(user=user)[0].key
-            print(token)
+            # print(token)
             ret = {
                 'token': token
             }
@@ -48,3 +47,12 @@ class LoginView(APIView):
                 'error': '존재하지 않는 계정입니다.'
             }
             return Response(msg, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class PasswordResetEmailView(APIView):
+    """
+    이메일 가입 유저 - 비밀번호 재설정 이메일 보내기
+    Celery + Redis를 활용
+    """
+
+    pass
