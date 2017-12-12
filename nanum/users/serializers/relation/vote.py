@@ -9,7 +9,7 @@ __all__ = (
 
 class AnswerVoteRelationSerializer(serializers.ModelSerializer):
     """
-    답변 추천을 위한 Serializer
+    답변 추천/비추천을 위한 Serializer
     """
 
     follow_relation_pk = serializers.IntegerField(source='pk', read_only=True)
