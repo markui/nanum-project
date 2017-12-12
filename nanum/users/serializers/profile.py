@@ -37,12 +37,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         해당 페이지에 있는 "유저 팔로우 버튼"이 어떻게 표시되는지를 결정한다
         """
         user = self.context.get('request').user
-        try:
-            user_follow_relation = user.following_relations.get(target=obj.user.pk)
-        except UserFollowRelation.DoesNotExist:
-            return None
+        if user:
+            try:
+                user_follow_relation = user.following_relations.get(target=obj.user.pk)
+            except UserFollowRelation.DoesNotExist:
+                return None
+            else:
+                return user_follow_relation.pk
         else:
-            return user_follow_relation.pk
+            return None
 
     def update(self, instance, validated_data):
         """

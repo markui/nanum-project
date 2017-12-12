@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from users.apis import ProfileRetrieveUpdateView, EmploymentCredentialListCreateView, EmploymentCredentialDetailView, \
-    ProfileStatsRetrieveView, EducationCredentialListCreateView, EducationCredentialDetailView
+    ProfileStatsRetrieveView, EducationCredentialListCreateView, EducationCredentialDetailView, PasswordResetEmailView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
@@ -18,6 +18,8 @@ urlpatterns = [
     # /user/signup/verify-email/
     # url(r'^signup/verify-email/$', VerfiyEmailView.as_view(), name='verify_email'),
     url(r'^login/$', LoginView.as_view(), name='login'),
+
+    url(r'^send-reset-password-email/$', PasswordResetEmailView.as_view(), name='password-reset'),
 
     # SOCIAL_AUTH
 
