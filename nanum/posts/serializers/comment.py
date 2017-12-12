@@ -24,7 +24,7 @@ class PostHyperLinkRelatedField(serializers.HyperlinkedRelatedField):
         return reverse(view_name, kwargs=url_kwargs, request=request, format=format)
 
 
-class BaseCommentserializer(serializers.ModelSerializer):
+class BaseCommentserializer(serializers.HyperlinkedModelSerializer):
     user = serializers.HyperlinkedRelatedField(
         view_name='user:profile-detail',
         read_only=True,
@@ -40,11 +40,16 @@ class BaseCommentserializer(serializers.ModelSerializer):
     )
     user_upvote_relation = serializers.SerializerMethodField()
     user_downvote_relation = serializers.SerializerMethodField()
+    url = serializers.HyperlinkedIdentityField(
+        view_name='post:comment:comment-detail',
+        read_only=True,
+    )
 
     class Meta:
         model = Comment
         fields = [
             'pk',
+            'url',
             'user',
             'related_post',
             'parent',
@@ -58,7 +63,6 @@ class BaseCommentserializer(serializers.ModelSerializer):
             'all_children_count',
         ]
         read_only_fields = [
-            'pk',
             'user',
             'related_post',
             'parent',

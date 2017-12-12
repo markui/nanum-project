@@ -36,11 +36,16 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
     user_upvote_relation = serializers.SerializerMethodField()
     user_bookmark_relation = serializers.SerializerMethodField()
     content = serializers.JSONField(default=None)
+    url = serializers.HyperlinkedIdentityField(
+        view_name='post:answer:answer-detail',
+        read_only=True,
+    )
 
     class Meta:
         model = Answer
         fields = [
             'pk',
+            'url',
             'user',
             'question',
             'content_html',
@@ -52,6 +57,15 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
             'published',
             'created_at',
             'modified_at',
+        ]
+        read_only_fields = [
+            'user',
+            'upvote_count',
+            'comment_count',
+            'user_upvote_relation',
+            'user_bookmark_relation',
+            'created_at',
+            'modified_at'
         ]
 
     @property
@@ -98,15 +112,7 @@ class AnswerPostSerializer(BaseAnswerSerializer):
     content = serializers.JSONField(default=None)
 
     class Meta(BaseAnswerSerializer.Meta):
-        read_only_fields = [
-            'user',
-            'upvote_count',
-            'comment_count',
-            'user_upvote_relation',
-            'user_bookmark_relation',
-            'created_at',
-            'modified_at'
-        ]
+        pass
 
     def validate(self, data):
         """
