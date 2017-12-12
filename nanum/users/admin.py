@@ -8,8 +8,8 @@ user_models = [
     User,
     # profile.py
     Profile,
-    EducationCredentials,
-    EmploymentCredentials,
+    EducationCredential,
+    EmploymentCredential,
     # relation.py
     # relation - vote
     AnswerUpVoteRelation,
@@ -17,10 +17,30 @@ user_models = [
     CommentUpVoteRelation,
     CommentDownVoteRelation,
     # relation - follow
-    UserFollowRelation,
-    ExpertiseFollowRelation,
-    InterestFollowRelation,
-    QuestionFollowRelation,
+    # UserFollowRelation,
+    # ExpertiseFollowRelation,
+    # InterestFollowRelation,
+    # QuestionFollowRelation,
 ]
 
 admin.site.register(user_models)
+
+
+@admin.register(ExpertiseFollowRelation)
+class ExpertiseFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'topic']
+
+
+@admin.register(InterestFollowRelation)
+class InterestFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'topic']
+
+
+@admin.register(QuestionFollowRelation)
+class QuestionFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'created_at']
+
+
+@admin.register(UserFollowRelation)
+class UserFollowRelationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'target']

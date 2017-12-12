@@ -51,7 +51,7 @@ class AnswerFilter(filters.FilterSet):
         fields = ['user', 'topic', 'bookmarked_by', ]
 
 
-class CommentFilter(AnswerFilter):
+class CommentFilter(filters.FilterSet):
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
@@ -62,6 +62,15 @@ class CommentFilter(AnswerFilter):
     class Meta:
         model = Comment
         fields = []
+
+
+class CommentListFilter(CommentFilter):
+    question = ListFilter(name='comment_post_intermediate__question')
+    answer = ListFilter(name='comment_post_intermediate__answer')
+
+    class Meta:
+        model = Comment
+        fields = ['question', 'answer']
 
 
 # QuestionListFilter
@@ -79,6 +88,8 @@ class QuestionFilter(django_filters.FilterSet):
     followed_by = QuestionListFilter(name='followers', )
     # 해당 유저가 북마크하는 질문
     bookmarked_by = QuestionListFilter(name='who_bookmarked', )
+    # 해당 topic을 포함하는 질문
+    topic = QuestionListFilter(name='topics', )
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
@@ -88,4 +99,4 @@ class QuestionFilter(django_filters.FilterSet):
 
     class Meta:
         model = Question
-        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'follow_count']
+        fields = ['user', 'answered_by', 'bookmarked_by', 'followed_by', 'topic']

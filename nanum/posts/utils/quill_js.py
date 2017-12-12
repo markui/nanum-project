@@ -1,29 +1,30 @@
 import base64
 import json
-import os
 import random
 import re
 import string
 from collections import OrderedDict
+from io import BytesIO
 
+from PIL import Image as pil
+from bs4 import BeautifulSoup
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.db.models.base import ModelBase
-from django.db.transaction import atomic
+from django.db.models.query import QuerySet
 
 __all__ = (
-    'QuillJSDeltaParser',
+    'DjangoQuill',
 )
 
 
-class QuillJSDeltaParser:
+class DjangoQuill:
     """
     QuillJSDelta가 저장되는 model과 ForeignKey로 연결되어있는 parent_model을 Parsing 해주는 Class
     """
 
     def __init__(self, model=None, parent_model=None):
-        self.model = model
-        self.parent_model = parent_model
+        self.model: QuerySet = model
+        self.parent_model: QuerySet = parent_model
 
         self._validate()
 
@@ -108,7 +109,7 @@ class QuillJSDeltaParser:
             return json.dumps(content)
         return content
 
-    def save_delta_operation_list(self, content, parent_instance):
+    def get_delta_operation_instances(self, content, parent_instance):
         """
         self.model에 대해 bulk_create를 통해 content를 저장
 
@@ -121,11 +122,10 @@ class QuillJSDeltaParser:
         assert type(parent_instance) == self.parent_model, "Instance is not an instance of parent model."
 
         # Bulk Create할 instance를 모아둘 list instantiation
-        # get_delta_operation_list를 통해 content에서 delta operation이 담긴 list 반환
-        instances_to_bulk_create = list()
-        delta_list = self.get_delta_operation_list(content, iterator=True)
+        # get_delta_operation_list() 를 통해 content에서 delta operation이 담긴 list 반환
+        # 반환받은 list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
 
-        # delta_list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
+        delta_list = self.get_delta_operation_list(content, iterator=True)
         for line_no, quill_delta_operation in enumerate(delta_list, start=1):
             model_instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
@@ -136,15 +136,11 @@ class QuillJSDeltaParser:
             # 이미지에 문제가 있어 self.model의 instance가 생성되지 않았을 경우
             if type(model_instance) != self.model:
                 return None
-            instances_to_bulk_create.append(model_instance)
-
-        # django의 bulk_create를 통해 전달된 model의 instance들을 한꺼번에 생성, 생성된 이미지 파일들을 삭제
-        return self.model.objects.bulk_create(instances_to_bulk_create)
-        # self._delete_temporary_images(images_to_delete)
+            yield model_instance
 
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
-        kwargs 를 만들어 _instantiate에 전달
+        model 을 instantiate 할 때 필요한 정보를 kwargs로 만들어 전달
 
         :param quill_delta_operation:
         :param line_no:
@@ -153,8 +149,6 @@ class QuillJSDeltaParser:
         """
         insert_value = quill_delta_operation.get('insert')
         attributes = quill_delta_operation.get('attributes')
-
-        # 필드 이름을 갖고와서
         field_name = self._get_related_field()
         kwargs = {
             "insert_value": insert_value,
@@ -181,28 +175,29 @@ class QuillJSDeltaParser:
         instance = self.model(**kwargs)
 
         # insert 안에 image가 있을 경우
+        # image 가 base64인 경우 instance에 이미지 추가
         try:
             image_value = insert_value.get('image')
-            # image 가 base64인 경우 instance에 이미지 추가
             try:
-                format, decoded_data = self._parse_base64(image_base64=image_value)
-                filename = self._generate_filename(format=format, **kwargs)
+                decoded_data = self._parse_base64(image_base64=image_value)
+                filename = self._generate_filename(**kwargs)
+                image = self._image_process(data=decoded_data, max_size=600)
 
                 instance.image.save(
                     filename,
-                    ContentFile(decoded_data),
+                    image,
                     save=False
                 )
                 instance.image_insert_value = {"image": f"{instance.image.url}"}
 
             # image 가 base64가 아닌 경우
+            # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
+            # image 가 base64도 아니고 link도 아닌 잘못된 형식일 경우 ValueError
             except AttributeError:
-                # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
                 if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
-                # image 가 base64도 아니고 link도 아닌 잘못된 형식일 경우
                 else:
-                    return
+                    raise ValueError("올바른 형태의 이미지가 아닙니다.")
 
         # insert 안에 Text만 있을 경우
         except AttributeError:
@@ -215,27 +210,24 @@ class QuillJSDeltaParser:
         :param image_base64: base64 형태의 이미지 데이터 string
         :return:
         """
-        data = re.match(r'\w+:image\/(\w+);\w+,(.+)', image_base64)
+        data = re.match(r'\w+:image\/\w+;\w+,(.+)', image_base64)
 
         # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
-        format, byte_data_string = data.group(1), data.group(2)
+        byte_data_string = data.group(1)
 
         # image_data_string 파싱에 실패 했을 경우
-        if not format or not byte_data_string:
+        if not byte_data_string:
             raise AttributeError
 
         byte_data_base64 = bytes(byte_data_string, 'utf-8')
         decoded_data = base64.b64decode(byte_data_base64)
-        return format, decoded_data
+        return decoded_data
 
-    def _generate_filename(self, format, **kwargs) -> string:
+    def _generate_filename(self, **kwargs) -> string:
         """
         이미지 파일 이름 생성
 
-        :param image_type:
-        :param decoded_data:
-        :param post:
-        :param classname:
+        :param format: 파일 형태 format
         :return:
         """
         fk_field_name = self._get_related_field()
@@ -243,22 +235,66 @@ class QuillJSDeltaParser:
 
         # Create filename
         rand_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        filename = f'{fk_field_name}-{fk_field_instance.pk}__{rand_str}.{format}'
+        filename = f'{fk_field_instance.pk}/{rand_str}.jpeg'
 
         return filename
 
-    def update_delta_operation_list(self, queryset, content, parent_instance):
+    def _image_process(self, data: base64, max_size: int):
+        """
+        base64 이미지 데이터를 받아 height, width 중 긴 쪽을 max_size에 맞추고 다른 쪽을 Ratio에 따라 줄여서 jpeg형식으로 반환
+
+        :param data:
+        :return:
+        """
+        original_img = BytesIO(data)
+        img = pil.open(original_img)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        src_width, src_height = img.size
+        gtr_side = max(src_width, src_height)
+        ratio = float(max_size) / float(gtr_side)
+
+        # 이미지의 가로 혹은 이미지의 세로가 max_size보다 클 경우
+        # 긴 쪽을 max_size에 맞추고 짧은 쪽을 max_size * ratio 으로 이미지를 resize
+        if gtr_side > max_size:
+            if src_width > src_height:
+                dst_width = max_size
+                dst_height = int(src_height * ratio)
+            else:
+                dst_height = max_size
+                dst_width = int(src_width * ratio)
+            img = img.resize((dst_width, dst_height))
+
+        output_img = BytesIO()
+        img.save(output_img, 'JPEG')
+        return output_img
+
+    def img_base64_to_link(self, objs: QuerySet, html: str):
+        """
+        HTML String의 Base64 이미지들을 objs의 Queryset에 있는 이미지 url로 replace하여 새 HTML String을 반환
+        :param objs:
+        :param html:
+        :return:
+        """
+        soup = BeautifulSoup(html, 'html.parser')
+        img_tags = soup.find_all("img")
+        for obj, img_tag in zip(objs, img_tags):
+            img_link = obj.image.url
+            new_img_tag = soup.new_tag('img', src=img_link)
+            img_tag.replace_with(new_img_tag)
+        return str(soup)
+
+    def update_delta_operation_list(self, queryset: QuerySet,
+                                    content: dict, parent_instance):
         """
         전달받은 model에 대해 update, delete create을 실행
 
-        :param queryset:
-        :param content:
-        :param model:
-        :param kwargs:
+        :param queryset: Quill Operation 이 담겨있는 Queryset
+        :param content: request.data의 content
+        :param parent_instance: Quill Operation 와 ForeignKey로 연결되는 parent_instance
         :return:
         """
-        assert type(queryset[0]) == self.model
-        assert type(parent_instance) == self.parent_model
 
         # Queryset 에서 {Quill operation : instance, ...} 형식의 dict 생성
         # Quill operation 은 json dumps를 통한 string 형태
@@ -286,24 +322,25 @@ class QuillJSDeltaParser:
         to_create = request_delta_set - instance_delta_set
         to_delete = instance_delta_set - request_delta_set
 
-        self._bulk_update_instance(
+        to_update_list = self._get_instantces_to_update(
             to_update=to_update,
             operation_lineno_dict=operation_lineno_dict,
             operation_instance_dict=operation_instance_dict
         )
-        self._bulk_create_instance(
+        to_create_list = self._get_instantces_to_create(
             to_create=to_create,
             operation_lineno_dict=operation_lineno_dict,
             parent_instance=parent_instance
         )
-        self._bulk_delete_instance(
+        to_delete_list = self._get_instantces_to_delete(
             to_delete=to_delete,
             operation_instance_dict=operation_instance_dict
         )
+        return to_update_list, to_create_list, to_delete_list
 
-    @atomic
-    def _bulk_update_instance(self, to_update, operation_lineno_dict, operation_instance_dict):
+    def _get_instantces_to_update(self, to_update, operation_lineno_dict, operation_instance_dict):
         """
+        이미 존재하는 operation에 대해 line number을 업데이트
 
         :param to_update:
         :param operation_lineno_dict:
@@ -317,10 +354,9 @@ class QuillJSDeltaParser:
             dt_instance = operation_instance_dict[delta_operation]
 
             dt_instance.line_no = new_line_no
-            dt_instance.save()
+            yield dt_instance
 
-    @atomic
-    def _bulk_create_instance(self, to_create, operation_lineno_dict, parent_instance):
+    def _get_instantces_to_create(self, to_create, operation_lineno_dict, parent_instance):
         """
 
         :param to_create:
@@ -330,26 +366,20 @@ class QuillJSDeltaParser:
         """
         # create
         # create instance with request line_no
-        instances_to_bulk_create = list()
         for delta_operation_str in to_create:
             # Get line_no
-            line_no = operation_lineno_dict[delta_operation_str]
-
             # Get delta_operation
-            quill_delta_operation = json.loads(json.loads((json.dumps(delta_operation_str))))
-
             # instantiate model for bulk create
-            object = self._instantiate_model(
+            line_no = operation_lineno_dict[delta_operation_str]
+            quill_delta_operation = json.loads(json.loads((json.dumps(delta_operation_str))))
+            instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
                 line_no=line_no,
                 parent_instance=parent_instance
             )
-            instances_to_bulk_create.append(object)
+            yield instance
 
-        self.model.objects.bulk_create(instances_to_bulk_create)
-
-    @atomic
-    def _bulk_delete_instance(self, to_delete, operation_instance_dict):
+    def _get_instantces_to_delete(self, to_delete, operation_instance_dict):
         """
 
         :param to_delete:
@@ -360,20 +390,4 @@ class QuillJSDeltaParser:
         # delete instance with delta op value
         for delta_operation in to_delete:
             instance = operation_instance_dict[delta_operation]
-            instance.delete()
-
-    def _delete_temporary_images(self, *args, **kwargs):
-        """
-        Deprecated
-
-        :param list:
-        :return:
-        """
-        assert (len(kwargs) + len(args)) < 2, "Only one keyword argument accepted"
-        data = args[0] if args else list(kwargs.keys())[0]
-        try:
-            # 내부에 생성되었던 Image 파일들을 삭제
-            for imagefile in data:
-                os.remove(imagefile)
-        except:
-            os.remove(data)
+            yield instance
