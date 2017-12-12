@@ -27,7 +27,7 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     Filter Class를 적용하여 Topic, Bookmarked, User에 대한 필터링과
     created_at, modified_at을 이용하여 ordering을 결정할 수 있음
     """
-    queryset = Answer.objects.all()
+    queryset = Answer.objects.filter(published=True)
     permission_classes = (
         permissions.IsAuthenticated,
     )
@@ -134,11 +134,11 @@ class AnswerMainFeedListView(generics.ListAPIView):
         following_users = user.following.values_list(flat=True)
 
         # Filter Answer, order by the most recently modified post
-        queryset = Answer.objects.filter(topic__in=answer_topic) \
-            .filter(user__in=following_users) \
+        queryset = Answer.objects.filter(published=True, topic__in=answer_topic) \
+            .filter(published=True, user__in=following_users) \
             .order_by('modified_at')
 
         if not queryset:
-            queryset = Answer.objects.all()
+            queryset = Answer.objects.filter(published=True)
 
         return queryset

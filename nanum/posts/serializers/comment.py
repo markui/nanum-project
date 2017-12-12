@@ -29,8 +29,8 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     user, parent, question, answer, content를 데이터로 받음
     CommentPostIntermediate을 통해 question / answer과 연결되며, related_post로 해당 정보를 보여줌
     """
-    question = serializers.IntegerField(required=False)
-    answer = serializers.IntegerField(required=False)
+    question = serializers.IntegerField(required=False, write_only=True)
+    answer = serializers.IntegerField(required=False, write_only=True)
     user = serializers.HyperlinkedRelatedField(
         view_name='user:profile-detail',
         read_only=True,
