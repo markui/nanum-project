@@ -9,21 +9,27 @@ from .models import Topic
 
 # from rest_framework.fields import ImageField
 
-
-class TopicSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=100, required=False)
-    image = ImageField(max_length=None, allow_empty_file=False, use_url=False, required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        method = self.context.get('request').method
-        if method == 'POST':
-            self.fields['name'] = serializers.CharField(max_length=100, required=True)
+class BaseTopicSerializer(serializers.ModelSerializer):
+    image = ImageField(
+        max_length=None,
+        allow_empty_file=False,
+        use_url=False,
+        required=False,
+    )
+    creator = serializers.HyperlinkedRelatedField(
+        view_name='user:profile-detail',
+        read_only=True,
+    )
+    url = serializers.HyperlinkedIdentityField(
+        view_name='topic:topic-detail',
+        read_only=True,
+    )
 
     class Meta:
         model = Topic
         fields = (
             'pk',
+            'url',
             'creator',
             'name',
             'description',
@@ -38,12 +44,44 @@ class TopicSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'pk',
             'creator',
-            'created_at'
-            'modified_at',
+            'name',
+            'description',
+            'image',
             'answer_count',
             'question_count',
             'expert_count',
             'interest_count',
+            'created_at',
+            'modified_at',
+        )
+
+
+class TopicSerializer(BaseTopicSerializer):
+    """
+    METHODS: GET, POST, PUT, PATCH
+    """
+    name = serializers.CharField(max_length=100, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        method = self.context.get('request').method
+        if method == 'POST':
+            self.fields['name'] = serializers.CharField(max_length=100, required=True)
+
+    class Meta(BaseTopicSerializer.Meta):
+        """
+        fields = __all__ + name
+        read_only_fields = __all - name - image - description
+        """
+        read_only_fields = (
+            'pk',
+            'creator',
+            'answer_count',
+            'question_count',
+            'expert_count',
+            'interest_count',
+            'created_at',
+            'modified_at',
         )
 
     def validate_name(self, value):
@@ -70,36 +108,3 @@ class TopicSerializer(serializers.ModelSerializer):
                 self.instance.image.save(filename, resized_image, save=False)
             except:
                 raise ParseError({"error": "이미지 저장에 실패했습니다."})
-
-
-class TopicGetSerializer(serializers.ModelSerializer):
-    image = ImageField(max_length=None, allow_empty_file=False, use_url=False)
-
-    class Meta:
-        model = Topic
-        fields = (
-            'pk',
-            'creator',
-            'name',
-            'description',
-            'image',
-            'answer_count',
-            'question_count',
-            'expert_count',
-            'interest_count',
-            'created_at',
-            'modified_at',
-        )
-        read_only_fields = (
-            'pk',
-            'creator',
-            'name',
-            'description',
-            'image',
-            'answer_count',
-            'question_count',
-            'expert_count',
-            'interest_count',
-            'created_at',
-            'modified_at',
-        )
