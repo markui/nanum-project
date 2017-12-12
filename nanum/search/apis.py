@@ -19,8 +19,8 @@ class TopicSearchAPIView(generics.RetrieveAPIView):
         if not topic_name:
             raise ParseError(detail={"error": "name 필드가 비어있습니다."})
         try:
-            instance = Topic.objects.get(name=topic_name)
-            serializer = self.get_serializer(instance)
+            queryset = Topic.objects.filter(name__contains=topic_name)
+            serializer = self.get_serializer(queryset, many=True)
             result = {"result": serializer.data}
             return Response(result)
         except Topic.DoesNotExist:
