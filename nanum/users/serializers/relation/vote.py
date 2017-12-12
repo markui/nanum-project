@@ -28,15 +28,15 @@ class AnswerVoteRelationSerializer(serializers.ModelSerializer):
 
     def validate_answer(self, value):
         """
-        이미 추천/비추천한 질문인지 확인
+        이미 추천/비추천한 답변인지 확인
         """
         if self.context['vote_type'] == 'upvote':
             if AnswerUpVoteRelation.objects.filter(user=self.context['request'].user, answer=value).exists():
-                raise serializers.ValidationError('이미 추천한 질문입니다.')
+                raise serializers.ValidationError('이미 추천한 답변입니다.')
             return value
         elif self.context['vote_type'] == 'downvote':
             if AnswerDownVoteRelation.objects.filter(user=self.context['request'].user, answer=value).exists():
-                raise serializers.ValidationError('이미 비추천한 질문입니다.')
+                raise serializers.ValidationError('이미 비추천한 답변입니다.')
             return value
 
     def create(self, validated_data):
