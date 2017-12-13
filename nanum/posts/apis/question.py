@@ -101,7 +101,8 @@ class QuestionMainFeedListView(generics.ListAPIView):
         topics_queryset = queryset & Question.objects.filter(topics__in=topics)
         following_users_queryset = queryset & Question.objects.filter(user__in=following_users)
         # queryset
-        queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
+        queryset = (topics_queryset | following_users_queryset).distinct()
+        # queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
         return queryset
 
 
