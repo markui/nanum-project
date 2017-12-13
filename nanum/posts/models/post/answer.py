@@ -89,8 +89,6 @@ class Answer(models.Model):
 
             super().save(*args, **kwargs)
             CommentPostIntermediate.objects.get_or_create(answer=self)
-        print("AFTER ANSWER IS SAVED")
-        print(self.text_content)
 
     def delete(self, *args, **kwargs):
         topics_pk = self.topics.values_list('pk', flat=True)
