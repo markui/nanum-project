@@ -83,7 +83,7 @@ class TopicSerializer(BaseTopicSerializer):
         )
 
     def validate_name(self, value):
-        topic = Topic.objects.filter(name=value).exclude(name=self.instance.name)
+        topic = Topic.objects.filter(name=value)
         if topic:
             raise ParseError({"error": "이미 존재하는 Topic 이름입니다."})
         return value
@@ -103,6 +103,6 @@ class TopicSerializer(BaseTopicSerializer):
                 super().save(**kwargs)
                 resized_image = utils.rescale(data=image.read(), width=200, height=200)
                 filename = f"{self.instance.pk}/{image.name}"
-                self.instance.image.save(filename, resized_image, save=False)
+                self.instance.image.save(filename, resized_image, save=True)
             except:
                 raise ParseError({"error": "이미지 저장에 실패했습니다."})
