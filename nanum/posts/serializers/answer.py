@@ -30,7 +30,7 @@ class QuestionHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
 class BaseAnswerSerializer(serializers.ModelSerializer):
     question = QuestionHyperlinkedRelatedField()
     user = serializers.HyperlinkedRelatedField(
-        view_name='user:profile-detail',
+        view_name='user:profile-main-detail',
         read_only=True,
     )
     user_upvote_relation = serializers.SerializerMethodField()

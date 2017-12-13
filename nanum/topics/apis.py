@@ -7,7 +7,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
 from .models import Topic
-from .serializers import TopicSerializer, TopicGetSerializer
+from .serializers import TopicSerializer
 from .utils.pagination import ListPagination
 from .utils.permissions import IsAdminUserOrAuthenticatedReadOnly
 
@@ -52,7 +52,7 @@ class TopicMergeView(generics.GenericAPIView):
     Topic 2 = to
     """
     queryset = Topic.objects.all()
-    serializer_class = TopicGetSerializer
+    serializer_class = TopicSerializer
     permission_classes = (
         permissions.IsAdminUser,
     )

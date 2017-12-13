@@ -3,12 +3,12 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
 from topics.models import Topic
-from topics.serializers import TopicGetSerializer
+from topics.serializers import TopicSerializer
 
 
 class TopicSearchAPIView(generics.RetrieveAPIView):
     queryset = Topic.objects.all()
-    serializer_class = TopicGetSerializer
+    serializer_class = TopicSerializer
     authentication_classes = (
         permissions.IsAuthenticated,
     )
@@ -18,10 +18,12 @@ class TopicSearchAPIView(generics.RetrieveAPIView):
         topic_name = query_params.get("name", None)
         if not topic_name:
             raise ParseError(detail={"error": "name 필드가 비어있습니다."})
-        try:
-            instance = Topic.objects.get(name=topic_name)
-            serializer = self.get_serializer(instance)
-            result = {"result": serializer.data}
-            return Response(result)
-        except Topic.DoesNotExist:
+
+        queryset = Topic.objects.filter(name__contains=topic_name)
+
+        if not queryset:
             return Response({"result": "결과가 없습니다."})
+
+        serializer = self.get_serializer(queryset, many=True)
+        result = {"result": serializer.data}
+        return Response(result)

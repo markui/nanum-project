@@ -10,10 +10,31 @@ __all__ = (
 
 
 class QuestionGetSerializer(serializers.ModelSerializer):
+    # 해당 질문의 detail 페이지
+    url = serializers.HyperlinkedIdentityField(
+        lookup_field='pk',
+        read_only=True,
+        view_name='post:question:question-detail',
+    )
+    # 해당 유저의 프로필 페이지
+    user = serializers.HyperlinkedRelatedField(
+        lookup_field='pk',
+        read_only=True,
+        view_name='user:profile-main-detail',
+    )
+    # 해당 질문이 속하는 토픽들의 detail 페이지
+    topics = serializers.HyperlinkedRelatedField(
+        lookup_field='pk',
+        many=True,
+        read_only=True,
+        view_name='topic:topic-detail',
+    )
+
     class Meta:
         model = Question
         fields = (
             'pk',
+            'url',
             'user',
             'topics',
             'content',
@@ -42,6 +63,7 @@ class QuestionGetSerializer(serializers.ModelSerializer):
 
 
 class QuestionPostSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Question
         fields = (
@@ -76,10 +98,12 @@ class QuestionPostSerializer(serializers.ModelSerializer):
 
 
 class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Question
         fields = (
             'pk',
+            'url',
             'user',
             'topics',
             'content',
