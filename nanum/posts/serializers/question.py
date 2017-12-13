@@ -102,7 +102,6 @@ class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
         model = Question
         fields = (
             'pk',
-            'url',
             'user',
             'topics',
             'content',
