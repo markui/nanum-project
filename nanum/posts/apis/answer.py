@@ -72,7 +72,6 @@ class AnswerListCreateView(generics.ListCreateAPIView):
             serializer_class = AnswerPostSerializer
         else:
             serializer_class = AnswerGetSerializer
-        print(serializer_class().get_fields())
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
@@ -103,7 +102,7 @@ class AnswerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return serializer_class(*args, **kwargs)
 
 
-class AnswerMainFeedListView(generics.ListAPIView):
+class AnswerMainFeedListView(generics.ListCreateAPIView):
     """
     유저를 위한 주 답변 Feed
     1. Topic, Follower를 기반으로 개인화된 피드 생성
@@ -111,7 +110,7 @@ class AnswerMainFeedListView(generics.ListAPIView):
     3. +추후 CF Filtering / Content-based Filtering 적용
     """
     serializer_class = AnswerGetSerializer
-    authentication_classes = (
+    permission_classes = (
         permissions.IsAuthenticated,
     )
     pagination_class = ListPagination
@@ -124,18 +123,17 @@ class AnswerMainFeedListView(generics.ListAPIView):
         """
         user = self.request.user
 
-        # Get all Topics that user is following
+        # 유저가 팔로우 하고 있는 토픽들의 목록
         answer_topic_interest = user.topic_interests.values_list('id', flat=True)
         answer_topic_expertise = user.topic_expertise.values_list('id', flat=True)
+        following_topics = answer_topic_interest | answer_topic_expertise
 
-        # Combine both
-        answer_topic = answer_topic_interest | answer_topic_expertise
+        # 유저가 팔로우 하고 있는 사람들의 목록
+        following_users = user.following.values_list('id', flat=True)
 
-        # Get Follower's Answers
-        following_users = user.following.values_list(flat=True)
-
-        # Filter Answer, order by the most recently modified post
-        queryset = Answer.objects.filter(published=True, topic__in=answer_topic) \
+        # 팔로우하고 있는 사람들이 작성한 글과 팔로우 하고 있는 토픽에 쓰여있는 글들을 최신순으로 정렬
+        queryset = Answer.objects.exclude(user=user)\
+            .filter(published=True, question__topics__in=following_topics)\
             .filter(published=True, user__in=following_users) \
             .order_by('modified_at')
 

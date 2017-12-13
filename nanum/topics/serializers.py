@@ -11,7 +11,7 @@ class BaseTopicSerializer(serializers.ModelSerializer):
     image = ImageField(
         max_length=None,
         allow_empty_file=False,
-        use_url=False,
+        use_url=True,
         required=False,
     )
     creator = serializers.HyperlinkedRelatedField(
@@ -103,6 +103,6 @@ class TopicSerializer(BaseTopicSerializer):
                 super().save(**kwargs)
                 resized_image = utils.rescale(data=image.read(), width=200, height=200)
                 filename = f"{self.instance.pk}/{image.name}"
-                self.instance.image.save(filename, resized_image, save=False)
+                self.instance.image.save(filename, resized_image, save=True)
             except:
                 raise ParseError({"error": "이미지 저장에 실패했습니다."})
