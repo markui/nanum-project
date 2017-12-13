@@ -116,6 +116,7 @@ class QuillDeltaOperation(models.Model):
 
     insert_value = models.TextField(null=True, blank=True)
     image_insert_value = JSONField(null=True, blank=True)
+    video_insert_value = JSONField(null=True, blank=True)
     attributes_value = JSONField(null=True, blank=True)
 
     image = models.ImageField(null=True, blank=True, upload_to='answer')
@@ -143,6 +144,8 @@ class QuillDeltaOperation(models.Model):
             quill_delta_operation['insert'] = self.insert_value
         elif self.image_insert_value:
             quill_delta_operation['insert'] = self.image_insert_value
+        elif self.video_insert_value:
+            quill_delta_operation['insert'] = self.video_insert_value
         else:
             raise AssertionError(
                 "Neither 'text' or 'image' in answer_content. This is an empty instance and should be deleted.")

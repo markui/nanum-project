@@ -20,6 +20,7 @@ __all__ = (
 class DjangoQuill:
     """
     QuillJSDelta가 저장되는 model과 ForeignKey로 연결되어있는 parent_model을 Parsing 해주는 Class
+    custom field -
     """
 
     def __init__(self, model=None, parent_model=None):
@@ -149,10 +150,12 @@ class DjangoQuill:
         """
         insert_value = quill_delta_operation.get('insert')
         attributes = quill_delta_operation.get('attributes')
+        video = quill_delta_operation.get('video')
         field_name = self._get_related_field()
         kwargs = {
             "insert_value": insert_value,
             "attributes_value": attributes,
+            "video_insert_value": video,
             "line_no": line_no,
             field_name: parent_instance
         }
@@ -200,7 +203,7 @@ class DjangoQuill:
                     raise ValueError("올바른 형태의 이미지가 아닙니다.")
 
         # insert 안에 Text만 있을 경우
-        except AttributeError:
+        except:
             instance.insert_value = insert_value
         return instance
 
