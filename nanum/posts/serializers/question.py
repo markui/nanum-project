@@ -63,7 +63,6 @@ class QuestionGetSerializer(serializers.ModelSerializer):
 
 
 class QuestionPostSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Question
         fields = (
@@ -98,7 +97,6 @@ class QuestionPostSerializer(serializers.ModelSerializer):
 
 
 class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Question
         fields = (
