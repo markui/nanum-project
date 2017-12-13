@@ -24,7 +24,11 @@ class QuestionHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
     view_name = 'post:question:question-detail'
 
     def to_internal_value(self, data):
-        return Question.objects.get(pk=data)
+        try:
+            question = Question.objects.get(pk=data)
+            return question
+        except Question.DoesNotExist:
+            raise ParseError({"error": "질문이 존재하지 않습니다."})
 
 
 class BaseAnswerSerializer(serializers.ModelSerializer):
@@ -75,7 +79,7 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
     @property
     def request_user(self):
         """
-        Check if AnonymousUser
+        Check if user in request
         :return:
         """
         if self.request and hasattr(self.request, "user"):
@@ -167,7 +171,7 @@ class AnswerPostSerializer(BaseAnswerSerializer):
 
     def _save_content_html(self, content_html):
         """
-
+        html 업데이트
         :param content_html:
         :return:
         """

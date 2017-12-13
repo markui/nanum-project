@@ -1,5 +1,6 @@
 from django.template.defaultfilters import length
 from rest_framework import serializers
+
 from ..models import Question
 
 __all__ = (
@@ -63,7 +64,6 @@ class QuestionGetSerializer(serializers.ModelSerializer):
 
 
 class QuestionPostSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Question
         fields = (
@@ -98,7 +98,6 @@ class QuestionPostSerializer(serializers.ModelSerializer):
 
 
 class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Question
         fields = (

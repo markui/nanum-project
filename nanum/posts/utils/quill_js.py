@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
+from w3lib.url import url_query_cleaner
 
 __all__ = (
     'DjangoQuill',
@@ -20,6 +21,7 @@ __all__ = (
 class DjangoQuill:
     """
     QuillJSDelta가 저장되는 model과 ForeignKey로 연결되어있는 parent_model을 Parsing 해주는 Class
+    custom field -
     """
 
     def __init__(self, model=None, parent_model=None):
@@ -149,10 +151,12 @@ class DjangoQuill:
         """
         insert_value = quill_delta_operation.get('insert')
         attributes = quill_delta_operation.get('attributes')
+        video = quill_delta_operation.get('video')
         field_name = self._get_related_field()
         kwargs = {
             "insert_value": insert_value,
             "attributes_value": attributes,
+            "video_insert_value": video,
             "line_no": line_no,
             field_name: parent_instance
         }
@@ -188,7 +192,8 @@ class DjangoQuill:
                     image,
                     save=False
                 )
-                instance.image_insert_value = {"image": f"{instance.image.url}"}
+                url = url_query_cleaner(instance.image.url)
+                instance.image_insert_value = {"image": f"{url}"}
 
             # image 가 base64가 아닌 경우
             # url 주소일 경유 담겨있을 경우 image_insert_value에 url 추가
@@ -200,7 +205,7 @@ class DjangoQuill:
                     raise ValueError("올바른 형태의 이미지가 아닙니다.")
 
         # insert 안에 Text만 있을 경우
-        except AttributeError:
+        except:
             instance.insert_value = insert_value
         return instance
 
@@ -280,8 +285,8 @@ class DjangoQuill:
         soup = BeautifulSoup(html, 'html.parser')
         img_tags = soup.find_all("img")
         for obj, img_tag in zip(objs, img_tags):
-            img_link = obj.image.url
-            new_img_tag = soup.new_tag('img', src=img_link)
+            url = url_query_cleaner(obj.image.url)
+            new_img_tag = soup.new_tag('img', src=url)
             img_tag.replace_with(new_img_tag)
         return str(soup)
 

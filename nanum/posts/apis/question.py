@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
-
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
@@ -101,7 +100,8 @@ class QuestionMainFeedListView(generics.ListAPIView):
         topics_queryset = queryset & Question.objects.filter(topics__in=topics)
         following_users_queryset = queryset & Question.objects.filter(user__in=following_users)
         # queryset
-        queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
+        queryset = (topics_queryset | following_users_queryset).distinct()
+        # queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
         return queryset
 
 
