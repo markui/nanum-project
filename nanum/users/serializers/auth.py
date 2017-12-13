@@ -71,3 +71,20 @@ class LoginSerializer(serializers.ModelSerializer):
             'email',
             'password',
         )
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    """
+    비밀번호 재설성 링크를 담은 이메일을 보낼 <user input email> 을
+    받는 Serializer
+    """
+    email = serializers.EmailField(max_length=254)
+
+    def validate_email(self, value):
+        """
+        존재하는 이메일 유저인지 확인하기
+        """
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('해당 이메일로 가입된 계정이 존재하지 않습니다')
+        else:
+            return value
