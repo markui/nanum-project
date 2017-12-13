@@ -24,7 +24,11 @@ class QuestionHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
     view_name = 'post:question:question-detail'
 
     def to_internal_value(self, data):
-        return Question.objects.get(pk=data)
+        try:
+            question = Question.objects.get(pk=data)
+            return question
+        except Question.DoesNotExist:
+            raise ParseError({"error": "질문이 존재하지 않습니다."})
 
 
 class BaseAnswerSerializer(serializers.ModelSerializer):
