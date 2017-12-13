@@ -171,7 +171,7 @@ class AnswerPostSerializer(BaseAnswerSerializer):
 
     def _save_content_html(self, content_html):
         """
-
+        html 업데이트
         :param content_html:
         :return:
         """

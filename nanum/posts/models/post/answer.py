@@ -68,18 +68,13 @@ class Answer(models.Model):
         Answer과 연결된 QuillDeltaOperation set 중 insert_value만 parse해서 반환
         :return:
         """
-        import unicodedata
-
         insert_value_qs = self.quill_delta_operation_set. \
             filter(insert_value__isnull=False). \
             values_list('insert_value', flat=True)
 
         # qs를 string으로 join
         insert_value_string = "".join(insert_value_qs)
-
-        # \xa0와 \n을 " " 로 변경
-        insert_value_string = unicodedata.normalize("NFKD", insert_value_string)
-        text_content = insert_value_string.replace('\n', " ")
+        text_content = insert_value_string.replace('\n', " ").replace('\xa0', ' ')
         return text_content
 
     def save(self, *args, **kwargs):
@@ -94,6 +89,8 @@ class Answer(models.Model):
 
             super().save(*args, **kwargs)
             CommentPostIntermediate.objects.get_or_create(answer=self)
+        print("AFTER ANSWER IS SAVED")
+        print(self.text_content)
 
     def delete(self, *args, **kwargs):
         topics_pk = self.topics.values_list('pk', flat=True)
