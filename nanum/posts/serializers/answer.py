@@ -181,7 +181,7 @@ class AnswerPostSerializer(BaseAnswerSerializer):
             objs=img_delta_objs,
             html=content_html
         )
-        preview_html = django_quill.html_preview_parse(html=html, length=200)
+        preview_html = django_quill.html_preview_parse(html=html, preview_len=200)
         self.instance.content_html, self.instance.content_preview_html = html, preview_html
         self.instance.save(update_fields=['content_html', 'content_preview_html'])
 

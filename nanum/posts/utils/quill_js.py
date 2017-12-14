@@ -9,7 +9,6 @@ from io import BytesIO
 from PIL import Image as pil
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from w3lib.url import url_query_cleaner
 
@@ -292,18 +291,19 @@ class DjangoQuill:
 
     def html_preview_parse(self, html: str, preview_len: int):
         soup = BeautifulSoup(html, 'html.parser')
-        contents = soup.contents[0]
         tgt_text = soup.get_text()[:preview_len]
+        if len(tgt_text) < preview_len:
+            return str(soup)
+
         char_len = 0
-        for content in contents:
-            if char_len > preview_len:
-                content.decompose()
+        for content in soup.contents[0]:
             content_text = content.get_text()
             if content_text not in tgt_text:
                 length = preview_len - char_len
                 content.string = content_text[:length] + "..."
-            char_len += len(content_text)
-        soup.contents[0] = contents
+                for i, content in enumerate(content.find_all_next()):
+                    if i > 0:
+                        content.decompose()
         return str(soup)
 
     def update_delta_operation_list(self, queryset: QuerySet,
