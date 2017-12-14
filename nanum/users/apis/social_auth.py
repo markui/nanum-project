@@ -113,7 +113,6 @@ class FacebookLoginView(APIView):
         # access token을 바탕으로, Graph API에 유저정보 요청해서 가져오기
         response = requests.get(url_graph_user_info, params_graph_user_info)
         graph_user_info = response.json()
-        print(facebook_user_id)
         # Facebook Custom Backend Authentication
         user = authenticate(facebook_user_id=facebook_user_id)
         # 가입하지 않은 유저인 경우
