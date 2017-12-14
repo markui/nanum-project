@@ -7,7 +7,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from users.serializers import PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordResetSendMailSerializer
+from users.serializers import PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordResetSendMailSerializer, \
+    EmailUserSerializer
 from ..serializers import SignupSerializer, LoginSerializer
 from ..tasks import send_password_reset_email
 
@@ -41,6 +42,7 @@ class LoginView(APIView):
             token = Token.objects.get_or_create(user=user)[0].key
             # print(token)
             ret = {
+                'user': EmailUserSerializer(user).data,
                 'token': token
             }
             return Response(ret, status=status.HTTP_200_OK)
@@ -140,8 +142,7 @@ class PasswordResetView(APIView):
     pk, token, password1, password2를 request.data로 받아
     Token 인증을 마친 후, 해당 유저의 비밀번호를 재설정한다
     """
+
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-
