@@ -114,15 +114,15 @@ class PasswordResetConfirmView(APIView):
         try:
             # 유저의 pk + 토큰을 decode_value로 복호화
             decode_value = signing.loads(code, max_age=86400)
-        except signing.BadSignature:
-            msg = {
-                'error': '잘못된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
-                'type': 'bad-signature'
-            }
         except signing.SignatureExpired:
             msg = {
                 'error': '1일이 지나, 만료된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
                 'type': 'expired-signature'
+            }
+        except signing.BadSignature:
+            msg = {
+                'error': '잘못된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
+                'type': 'bad-signature'
             }
         else:
             pk = decode_value['pk']

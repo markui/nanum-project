@@ -118,7 +118,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True)
 
 
-class PasswordResetSerializer(serializers.ModelSerializer):
+class PasswordResetSerializer(serializers.Serializer):
     """
     비밀번호 재설정을 위한 Serializer
     """
