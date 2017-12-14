@@ -53,6 +53,7 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
             'user',
             'question',
             'content_html',
+            'content_preview_html',
             'content',
             'upvote_count',
             'comment_count',
@@ -180,8 +181,9 @@ class AnswerPostSerializer(BaseAnswerSerializer):
             objs=img_delta_objs,
             html=content_html
         )
-        self.instance.content_html = html
-        self.instance.save(update_fields=['content_html'])
+        preview_html = django_quill.html_preview_parse(html=html, length=200)
+        self.instance.content_html, self.instance.content_preview_html = html, preview_html
+        self.instance.save(update_fields=['content_html', 'content_preview_html'])
 
 
 class AnswerUpdateSerializer(AnswerPostSerializer):
@@ -219,3 +221,9 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
             inst.save()
         for inst in to_delete_list:
             inst.delete()
+
+            # class AnswerFeedFilterSerializer(serializers.Serializer):
+            #     main_feed = serializers.Hyperlink(
+            #         view_name=''
+            #     )
+            #     pass
