@@ -82,7 +82,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = [
     'users.backends.FacebookBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'users.backends.EmailBackend',
 ]
 
 REST_FRAMEWORK = {
