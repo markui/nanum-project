@@ -125,7 +125,8 @@ class CommentCreateSerializer(BaseCommentserializer):
         read_only_fields = __all__ - parent
         """
         fields = BaseCommentserializer.Meta.fields.copy()
-        fields.extend(['question', 'answer'])
+        fields.append('question')
+        fields.append('answer')
 
         read_only_fields = BaseCommentserializer.Meta.read_only_fields.copy()
         read_only_fields.remove('parent')
