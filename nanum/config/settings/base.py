@@ -50,9 +50,9 @@ FACEBOOK_SCOPE = [
 ]
 
 # Email
-EMAIL_HOST = 'smtp.sendgrid.com'
-***REMOVED***
-***REMOVED***
+EMAIL_HOST = config_secret_common['email']['host']
+EMAIL_HOST_USER = config_secret_common['email']['host_user']
+EMAIL_HOST_PASSWORD = config_secret_common['email']['host_password']
 EMAIL_MAIN = 'nanumfc@gmail.com'
 EMAIL_PORT = 587
 EMAIL_USER_TLS = True
