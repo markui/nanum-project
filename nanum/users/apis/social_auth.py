@@ -7,6 +7,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from users.serializers import FacebookUserSerializer
 from ..serializers import FacebookLoginSerializer
 
 User = get_user_model()
@@ -113,6 +114,7 @@ class FacebookLoginView(APIView):
         # access token을 바탕으로, Graph API에 유저정보 요청해서 가져오기
         response = requests.get(url_graph_user_info, params_graph_user_info)
         graph_user_info = response.json()
+        print(graph_user_info)
         # Facebook Custom Backend Authentication
         user = authenticate(facebook_user_id=facebook_user_id)
         # 가입하지 않은 유저인 경우
@@ -122,11 +124,12 @@ class FacebookLoginView(APIView):
                 user_type='FB',
                 name=graph_user_info['name'] or '',
             )
-            # user.profile.profile_image = graph_user_info['picture']['data']['url']
+            # user.profile.image = graph_user_info['picture']['data']['url'] or ''
             user.profile.gender = graph_user_info['gender'] or ''
             user.profile.save()
 
         ret = {
+            'user': FacebookUserSerializer(user).data,
             'token': Token.objects.get_or_create(user=user)[0].key
         }
         return Response(ret, status=status.HTTP_200_OK)
