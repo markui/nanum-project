@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 
 User = get_user_model()
 
@@ -116,6 +117,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     Serializer
     """
     code = serializers.CharField(write_only=True)
+    uid = serializers.CharField(write_only=True)
+
 
 
 class PasswordResetSerializer(serializers.Serializer):
@@ -129,8 +132,27 @@ class PasswordResetSerializer(serializers.Serializer):
 
     def validate(self, data):
         """
+<<<<<<< HEAD
+        1. password1, password2가 일치하는지 확인
+        2. 올바른 토큰 + pk 인지 확인
+           - 실제 존재하는 토큰인지
+           - 토큰의 유저 pk와 전달된 pk가 일치하는지
+        """
+        if data['password1'] != data['password2']:
+            raise serializers.ValidationError('비밀번호가 일치하지 않습니다')
+        try:
+            token = Token.objects.get(key=data['token'])
+        except Token.DoesNotExist:
+            raise serializers.ValidationError('해당 토큰을 가진 유저가 존재하지 않습니다')
+        else:
+            if token.user.pk != data['pk']:
+                raise serializers.ValidationError('해당 토큰을 가진 유저의 pk와 전달된 pk가 일치하지 않습니다')
+            data.update({'token_model': token})
+            return data
+=======
         password1, password2가 일치하는지 확인
         """
         if data['password1'] != data['password2']:
             raise serializers.ValidationError('비밀번호가 일치하지 않습니다')
         return data
+>>>>>>> 0d61c1ed7ed082835200d395c39351e7603a5beb
