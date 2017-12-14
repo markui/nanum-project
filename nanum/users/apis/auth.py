@@ -92,6 +92,7 @@ class PasswordResetSendMailView(APIView):
                 'url': 'localhost:8000/settings/reset_password',
                 'code': encode_value,
                 'uid': uid
+
             }
         )
         # 이메일 미리보기에 보여질 text 내용
@@ -116,6 +117,7 @@ class PasswordResetConfirmView(APIView):
         - 재발급받아서 지난 코드가 유효하지 않게 된 경우
     2) 복호화는 성공했으나 유효하지 않은 경우 (expired-signature)
         - 암호화된 지 1일이 지난 code인 경우
+<<<<<<< HEAD
     """
 
     def post(self, request):
