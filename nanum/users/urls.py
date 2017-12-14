@@ -16,8 +16,6 @@ urlpatterns = [
 
     # /user/signup/
     url(r'^signup/$', SignupView.as_view(), name='signup'),
-    # /user/signup/verify-email/
-    # url(r'^signup/verify-email/$', VerfiyEmailView.as_view(), name='verify_email'),
     url(r'^login/$', LoginView.as_view(), name='login'),
 
     # /user/password-reset/send-mail/
