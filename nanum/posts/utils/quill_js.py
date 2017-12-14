@@ -9,7 +9,6 @@ from io import BytesIO
 from PIL import Image as pil
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.db.models.base import ModelBase
 from django.db.models.query import QuerySet
 from w3lib.url import url_query_cleaner
 
@@ -28,39 +27,39 @@ class DjangoQuill:
         self.model: QuerySet = model
         self.parent_model: QuerySet = parent_model
 
-        self._validate()
-
-    def _validate(self):
-        self._validate_django_model()
-        self._validate_model_fields()
-        self._validate_line_no_in_model()
-
-    def _validate_django_model(self):
-        """
-        model과 parent_model이 Django 모델인지 확인
-        :return:
-        """
-        assert type(self.model) == ModelBase, "Initialized model is not an instance of Django's ModelBase."
-        assert type(
-            self.parent_model) == ModelBase, "Initialized parent model is not an instance of Django's ModelBase."
-
-    def _validate_model_fields(self):
-        """
-        model이 parent_model에 ForeignKey 관계를 갖는지 확인
-        :return:
-        """
-        foreignkey_field = self._get_related_field()
-        if not foreignkey_field:
-            raise AttributeError("self.model and self.parent_model are not related.")
-
-    def _validate_line_no_in_model(self):
-        """
-        model에 line_no 라는 이름의 필드가 존재하는지 확인하며 Integer필드인지 확인
-        :return:
-        """
-        field_names = [field.name for field in self.model._meta.fields]
-        if "line_no" not in field_names:
-            raise AttributeError("line_no not in self.model")
+    #     self._validate()
+    #
+    # def _validate(self):
+    #     self._validate_django_model()
+    #     self._validate_model_fields()
+    #     self._validate_line_no_in_model()
+    #
+    # def _validate_django_model(self):
+    #     """
+    #     model과 parent_model이 Django 모델인지 확인
+    #     :return:
+    #     """
+    #     assert type(self.model) == ModelBase, "Initialized model is not an instance of Django's ModelBase."
+    #     assert type(
+    #         self.parent_model) == ModelBase, "Initialized parent model is not an instance of Django's ModelBase."
+    #
+    # def _validate_model_fields(self):
+    #     """
+    #     model이 parent_model에 ForeignKey 관계를 갖는지 확인
+    #     :return:
+    #     """
+    #     foreignkey_field = self._get_related_field()
+    #     if not foreignkey_field:
+    #         raise AttributeError("self.model and self.parent_model are not related.")
+    #
+    # def _validate_line_no_in_model(self):
+    #     """
+    #     model에 line_no 라는 이름의 필드가 존재하는지 확인하며 Integer필드인지 확인
+    #     :return:
+    #     """
+    #     field_names = [field.name for field in self.model._meta.fields]
+    #     if "line_no" not in field_names:
+    #         raise AttributeError("line_no not in self.model")
 
     def _get_related_field(self):
         """
@@ -288,6 +287,23 @@ class DjangoQuill:
             url = url_query_cleaner(obj.image.url)
             new_img_tag = soup.new_tag('img', src=url)
             img_tag.replace_with(new_img_tag)
+        return str(soup)
+
+    def html_preview_parse(self, html: str, preview_len: int):
+        soup = BeautifulSoup(html, 'html.parser')
+        tgt_text = soup.get_text()[:preview_len]
+        if len(tgt_text) < preview_len:
+            return str(soup)
+
+        char_len = 0
+        for content in soup.contents[0]:
+            content_text = content.get_text()
+            if content_text not in tgt_text:
+                length = preview_len - char_len
+                content.string = content_text[:length] + "..."
+                for i, content in enumerate(content.find_all_next()):
+                    if i > 0:
+                        content.decompose()
         return str(soup)
 
     def update_delta_operation_list(self, queryset: QuerySet,
