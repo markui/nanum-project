@@ -22,6 +22,7 @@ class Answer(models.Model):
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     content_html = models.TextField(null=False, blank=True)
+    content_preview_html = models.TextField(null=False, blank=True)
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)

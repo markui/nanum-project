@@ -98,18 +98,21 @@ def create(sender: Answer, instance: Answer, created: bool = True, **kwargs):
     :return:
     """
     index = Index("answer")
-    if not index.exists():
-        AnswerIndex("answer").create()
-    obj = AnswerDocument(
-        meta={'id': instance.id},
-        user=instance.user.name,
-        question=instance.question.content,
-        text_content=instance.text_content,
-        created_at=instance.created_at,
-        modified_at=instance.modified_at,
-    )
-    obj.save()
-    return obj.to_dict(include_meta=True)
+    try:
+        if not index.exists():
+            AnswerIndex("answer").create()
+        obj = AnswerDocument(
+            meta={'id': instance.id},
+            user=instance.user.name,
+            question=instance.question.content,
+            text_content=instance.text_content,
+            created_at=instance.created_at,
+            modified_at=instance.modified_at,
+        )
+        obj.save()
+        return obj.to_dict(include_meta=True)
+    except elasticsearch.exceptions.ConnectionError:
+        return
 
 
 @receiver(post_delete, sender=Answer, )
@@ -123,5 +126,5 @@ def delete(sender: Answer, instance: Answer, **kwargs):
     try:
         doc = AnswerDocument.get(id=instance.pk)
         doc.delete()
-    except elasticsearch.exceptions.NotFoundError:
+    except:
         pass
