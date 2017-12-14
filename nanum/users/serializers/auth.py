@@ -4,6 +4,24 @@ from rest_framework import serializers
 User = get_user_model()
 
 
+class EmailUserSerializer(serializers.ModelSerializer):
+    """
+    이메일 유저 정보를 보여주기 위한 Serializer
+    """
+    thumbnail_image_25 = serializers.ImageField(source='profile.thumbnail_image_25')
+    thumbnail_image_50 = serializers.ImageField(source='profile.thumbnail_image_50')
+
+    class Meta:
+        model = User
+        fields = (
+            'pk',
+            'email',
+            'name',
+            'thumbnail_image_25',
+            'thumbnail_image_50',
+        )
+
+
 class SignupSerializer(serializers.ModelSerializer):
     """
     이메일 회원가입을 위한 Serializer
@@ -15,6 +33,7 @@ class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
+            'pk',
             'email',
             'name',
             'password1',
@@ -50,9 +69,9 @@ class SignupSerializer(serializers.ModelSerializer):
         # serialize 될 형태를 결정
         # token과 User info를 분리하여
         # 클라이언트에게 전달
-        ret = super().to_representation(instance)
+        # ret = super().to_representation(instance)
         data = {
-            'user': ret,
+            'user': EmailUserSerializer(instance).data,
             'token': instance.token,
         }
         # 마지막에는 serializer.data를 출력했을 때 반환될 값을 반환해줘야 함

@@ -15,6 +15,7 @@ __all__ = (
     'AnswerListCreateView',
     'AnswerRetrieveUpdateDestroyView',
     'AnswerMainFeedListView',
+    # 'AnswerFeedFilterView',
 )
 
 User = get_user_model()
@@ -132,8 +133,8 @@ class AnswerMainFeedListView(generics.ListCreateAPIView):
         following_users = user.following.values_list('id', flat=True)
 
         # 팔로우하고 있는 사람들이 작성한 글과 팔로우 하고 있는 토픽에 쓰여있는 글들을 최신순으로 정렬
-        queryset = Answer.objects.exclude(user=user)\
-            .filter(published=True, question__topics__in=following_topics)\
+        queryset = Answer.objects.exclude(user=user) \
+            .filter(published=True, question__topics__in=following_topics) \
             .filter(published=True, user__in=following_users) \
             .order_by('modified_at')
 
@@ -141,3 +142,11 @@ class AnswerMainFeedListView(generics.ListCreateAPIView):
             queryset = Answer.objects.filter(published=True)
 
         return queryset
+
+# class AnswerFeedFilterView(APIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#
+#     def get(self, request, format=None):
+#         user = request.user
+#
+#
