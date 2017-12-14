@@ -1,9 +1,11 @@
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from topics.models import Topic
 from topics.serializers import TopicSerializer
+from . import search
 
 
 class TopicSearchAPIView(generics.RetrieveAPIView):
@@ -28,3 +30,17 @@ class TopicSearchAPIView(generics.RetrieveAPIView):
         result = {"result": serializer.data}
         return Response(result)
 
+
+class SearchAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        """
+        Return a list of all users.
+        """
+        query_params = self.request.query_params
+        query = query_params.get("query", None)
+        if not query:
+            raise ParseError({"error": "query 필드가 비어있습니다."})
+        result = search.search(query)
+        return Response(result)

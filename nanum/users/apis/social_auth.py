@@ -7,6 +7,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from users.serializers import FacebookUserSerializer
 from ..serializers import FacebookLoginSerializer
 
 User = get_user_model()
@@ -78,6 +79,9 @@ class FacebookLoginView(APIView):
         # request.data로 전달된 access_token값을 페이스북API쪽에 debug요청, 결과를 받아옴
         # 웹 액세스 토큰 만기 확인: 수명 약 2시간
         debug_token_info = get_debug_token_info(access_token)
+        print(debug_token_info)
+        if debug_token_info.get('error'):
+            raise APIException(debug_token_info.get('error').get('message'))
 
         if not debug_token_info['data']['is_valid']:
             raise APIException('페이스북 토큰이 유효하지 않음')
@@ -110,7 +114,7 @@ class FacebookLoginView(APIView):
         # access token을 바탕으로, Graph API에 유저정보 요청해서 가져오기
         response = requests.get(url_graph_user_info, params_graph_user_info)
         graph_user_info = response.json()
-        print(facebook_user_id)
+        print(graph_user_info)
         # Facebook Custom Backend Authentication
         user = authenticate(facebook_user_id=facebook_user_id)
         # 가입하지 않은 유저인 경우
@@ -120,11 +124,12 @@ class FacebookLoginView(APIView):
                 user_type='FB',
                 name=graph_user_info['name'] or '',
             )
-            # user.profile.profile_image = graph_user_info['picture']['data']['url']
+            # user.profile.image = graph_user_info['picture']['data']['url'] or ''
             user.profile.gender = graph_user_info['gender'] or ''
             user.profile.save()
 
         ret = {
+            'user': FacebookUserSerializer(user).data,
             'token': Token.objects.get_or_create(user=user)[0].key
         }
         return Response(ret, status=status.HTTP_200_OK)

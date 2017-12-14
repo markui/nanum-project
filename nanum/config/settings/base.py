@@ -49,6 +49,24 @@ FACEBOOK_SCOPE = [
     'email',
 ]
 
+# Email
+EMAIL_HOST = config_secret_common['email']['host']
+EMAIL_HOST_USER = config_secret_common['email']['host_user']
+EMAIL_HOST_PASSWORD = config_secret_common['email']['host_password']
+EMAIL_MAIN = 'nanumfc@gmail.com'
+EMAIL_PORT = 587
+<<<<<<< HEAD
+EMAIL_USE_TLS = True
+=======
+EMAIL_USER_TLS = True
+
+"""
+from django.conf import settings
+from django.core.mail import send_mail
+send_mail('Subject', 'here is the message', settings.EMAIL_MAIN, ['viking617617@gmail.com'], fail_silently=False)
+"""
+>>>>>>> 0d61c1ed7ed082835200d395c39351e7603a5beb
+
 # Auth
 AUTH_USER_MODEL = 'users.User'
 AUTH_PASSWORD_VALIDATORS = [
@@ -67,8 +85,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
     'users.backends.FacebookBackend',
+    'users.backends.EmailBackend',
 ]
 
 REST_FRAMEWORK = {
@@ -143,6 +161,9 @@ TEMPLATES = [
     },
 ]
 
+# Celery
+CELERY_BROKER_URL = 'amqp://localhost'
+
 # CORS
 CORS_ORIGIN_ALLOW_ALL = False
 
@@ -157,3 +178,4 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 DEBUG = True
+

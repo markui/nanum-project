@@ -89,6 +89,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 이름
     name = models.CharField(_('full name'), max_length=30)
 
+    # 비밀번호 재설정을 위한 validation Salt - One Time Link를 위해서
+    password_reset_salt = models.CharField(max_length=200, blank=True)
+
     # 다대다 관계
     # 1. 유저 팔로우
     # 내가 팔로우 하는 유저들

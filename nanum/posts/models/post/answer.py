@@ -22,6 +22,7 @@ class Answer(models.Model):
     created_at = models.DateField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     content_html = models.TextField(null=False, blank=True)
+    content_preview_html = models.TextField(null=False, blank=True)
     upvote_count = models.IntegerField(null=False, default=0)
     downvote_count = models.IntegerField(null=False, default=0)
     bookmark_count = models.IntegerField(null=False, default=0)
@@ -68,18 +69,13 @@ class Answer(models.Model):
         Answer과 연결된 QuillDeltaOperation set 중 insert_value만 parse해서 반환
         :return:
         """
-        import unicodedata
-
         insert_value_qs = self.quill_delta_operation_set. \
             filter(insert_value__isnull=False). \
             values_list('insert_value', flat=True)
 
         # qs를 string으로 join
         insert_value_string = "".join(insert_value_qs)
-
-        # \xa0와 \n을 " " 로 변경
-        insert_value_string = unicodedata.normalize("NFKD", insert_value_string)
-        text_content = insert_value_string.replace('\n', " ")
+        text_content = insert_value_string.replace('\n', " ").replace('\xa0', ' ')
         return text_content
 
     def save(self, *args, **kwargs):
