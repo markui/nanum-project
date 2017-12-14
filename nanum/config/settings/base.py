@@ -49,6 +49,20 @@ FACEBOOK_SCOPE = [
     'email',
 ]
 
+# Email
+EMAIL_HOST = 'smtp.sendgrid.com'
+EMAIL_HOST_USER = 'markkim'
+EMAIL_HOST_PASSWORD = 'sg6909sg'
+EMAIL_MAIN = 'nanumfc@gmail.com'
+EMAIL_PORT = 587
+EMAIL_USER_TLS = True
+
+"""
+from django.conf import settings
+from django.core.mail import send_mail
+send_mail('Subject', 'here is the message', settings.EMAIL_MAIN, ['viking617617@gmail.com'], fail_silently=False)
+"""
+
 # Auth
 AUTH_USER_MODEL = 'users.User'
 AUTH_PASSWORD_VALIDATORS = [
@@ -67,8 +81,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
     'users.backends.FacebookBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 REST_FRAMEWORK = {
@@ -142,6 +156,9 @@ TEMPLATES = [
         },
     },
 ]
+
+# Celery
+CELERY_BROKER_URL = 'amqp://localhost'
 
 # CORS
 CORS_ORIGIN_ALLOW_ALL = False

@@ -78,6 +78,9 @@ class FacebookLoginView(APIView):
         # request.data로 전달된 access_token값을 페이스북API쪽에 debug요청, 결과를 받아옴
         # 웹 액세스 토큰 만기 확인: 수명 약 2시간
         debug_token_info = get_debug_token_info(access_token)
+        print(debug_token_info)
+        if debug_token_info.get('error'):
+            raise APIException(debug_token_info.get('error').get('message'))
 
         if not debug_token_info['data']['is_valid']:
             raise APIException('페이스북 토큰이 유효하지 않음')

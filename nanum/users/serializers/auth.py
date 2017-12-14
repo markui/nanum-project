@@ -73,7 +73,7 @@ class LoginSerializer(serializers.ModelSerializer):
         )
 
 
-class PasswordResetSerializer(serializers.Serializer):
+class PasswordResetSendMailSerializer(serializers.Serializer):
     """
     비밀번호 재설성 링크를 담은 이메일을 보낼 <user input email> 을
     받는 Serializer
@@ -88,3 +88,30 @@ class PasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError('해당 이메일로 가입된 계정이 존재하지 않습니다')
         else:
             return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    비밀번호 재설성 링크에 담긴 유저의 암호화된 pk + 토큰 을 받고,
+    복호화된 pk + 토큰을 돌려주는
+    Serializer
+    """
+    code = serializers.CharField(write_only=True)
+
+
+class PasswordResetSerializer(serializers.ModelSerializer):
+    """
+    비밀번호 재설정을 위한 Serializer
+    """
+    pk = serializers.IntegerField(write_only=True)
+    token = serializers.CharField(write_only=True)
+    password1 = serializers.CharField(write_only=True, max_length=128)
+    password2 = serializers.CharField(write_only=True, max_length=128)
+
+    def validate(self, data):
+        """
+        password1, password2가 일치하는지 확인
+        """
+        if data['password1'] != data['password2']:
+            raise serializers.ValidationError('비밀번호가 일치하지 않습니다')
+        return data
