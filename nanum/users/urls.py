@@ -1,8 +1,8 @@
 from django.conf.urls import url
-from django.contrib.auth.views import PasswordResetConfirmView
 
 from users.apis import ProfileRetrieveUpdateView, EmploymentCredentialListCreateView, EmploymentCredentialDetailView, \
-    ProfileStatsRetrieveView, EducationCredentialListCreateView, EducationCredentialDetailView, PasswordResetView
+    ProfileStatsRetrieveView, EducationCredentialListCreateView, EducationCredentialDetailView, \
+    PasswordResetSendMailView, PasswordResetConfirmView, PasswordResetView
 from users.apis.relation.follow import UserFollowRelationCreateView, UserFollowRelationDetailView, \
     QuestionFollowRelationCreateView, QuestionFollowRelationDetailView, UserFollowerListView, UserFollowingListView, \
     FollowingInterestListView, FollowingExpertiseListView
@@ -20,8 +20,12 @@ urlpatterns = [
     # url(r'^signup/verify-email/$', VerfiyEmailView.as_view(), name='verify_email'),
     url(r'^login/$', LoginView.as_view(), name='login'),
 
-    url(r'^password/reset/$', PasswordResetView.as_view(), name='password-reset'),
-    url(r'^password/reset/confirm/$', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    # /user/password-reset/send-mail/
+    url(r'^password-reset/send-mail/$', PasswordResetSendMailView.as_view(), name='password-reset-send-mail'),
+    # /user/password-reset/confirm/
+    url(r'^password-reset/confirm/$', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    # /user/password-reset/
+    url(r'^password-reset/$', PasswordResetView.as_view(), name='password-reset'),
 
     # SOCIAL_AUTH
 
