@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 class QuestionListCreateViewTest(APILiveServerTestCase):
-    URL_API_QUESTION_CREATE_NAME = 'post:question:question-list'
+    URL_API_QUESTION_CREATE_NAME = 'post:question:list'
     URL_API_QUESTION_CREATE = '/post/question/'
     VIEW_CLASS = QuestionListCreateView
 
