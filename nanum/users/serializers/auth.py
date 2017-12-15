@@ -148,4 +148,3 @@ class PasswordResetSerializer(serializers.Serializer):
                 raise serializers.ValidationError('해당 토큰을 가진 유저의 pk와 전달된 pk가 일치하지 않습니다')
             data.update({'token_model': token})
             return data
-

@@ -55,13 +55,8 @@ EMAIL_HOST_USER = config_secret_common['email']['host_user']
 EMAIL_HOST_PASSWORD = config_secret_common['email']['host_password']
 EMAIL_MAIN = 'nanumfc@gmail.com'
 EMAIL_PORT = 587
-EMAIL_USER_TLS = True
+EMAIL_USE_TLS = True
 
-"""
-from django.conf import settings
-from django.core.mail import send_mail
-send_mail('Subject', 'here is the message', settings.EMAIL_MAIN, ['viking617617@gmail.com'], fail_silently=False)
-"""
 # Auth
 AUTH_USER_MODEL = 'users.User'
 AUTH_PASSWORD_VALIDATORS = [
@@ -173,4 +168,3 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 DEBUG = True
-
