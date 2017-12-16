@@ -24,6 +24,10 @@ RUN             ln -sf /etc/nginx/sites-available/app.conf \
 # uWSGI
 RUN             mkdir -p /var/log/uwsgi/app
 
+# RabbitMQ
+RUN             apt-get -y update
+RUN             apt-get install -y rabbitmq-server
+
 # manage.py
 WORKDIR         /srv/app/nanum
 RUN             /root/.pyenv/versions/app/bin/python manage.py collectstatic --noinput

@@ -81,7 +81,7 @@ class PasswordResetSendMailView(APIView):
         # 유저의 pk + 토큰을 encode_value로 암호화
         # signing 모듈 + json serialization을 활용 (TimestampSigner 사용)
         uid = signing.dumps({'pk': user.pk})
-        encode_value = signing.dumps({'token': token, 'pk': user.pk}, salt=random_password_salt)
+        encode_value = signing.dumps({'token': token}, salt=random_password_salt)
 
         # 이메일에 보낼 html 내용
         html_content = render_to_string(
@@ -117,7 +117,6 @@ class PasswordResetConfirmView(APIView):
         - 재발급받아서 지난 코드가 유효하지 않게 된 경우
     2) 복호화는 성공했으나 유효하지 않은 경우 (expired-signature)
         - 암호화된 지 1일이 지난 code인 경우
-<<<<<<< HEAD
     """
 
     def post(self, request):
@@ -125,12 +124,11 @@ class PasswordResetConfirmView(APIView):
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data['code']
         uid = serializer.validated_data['uid']
-        print(code)
-        print(uid)
         try:
-            # 유저의 pk + 토큰을 decode_value로 복호화
+            # 해당 유저의 password_reset_salt 가져오기
             pk = signing.loads(uid, max_age=86400).get('pk')
             salt = User.objects.get(pk=pk).password_reset_salt
+            # 해당 salt로 유저 토큰 복호화
             decode_value = signing.loads(code, salt=salt, max_age=86400)
         except signing.SignatureExpired:
             msg = {
@@ -143,7 +141,6 @@ class PasswordResetConfirmView(APIView):
                 'type': 'bad-signature'
             }
         else:
-            pk = decode_value['pk']
             token = decode_value['token']
             serializer = PasswordResetConfirmSerializer
             msg = {
@@ -152,7 +149,7 @@ class PasswordResetConfirmView(APIView):
                 'type': 'success'
             }
 
-        return Response(msg)
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetView(APIView):
