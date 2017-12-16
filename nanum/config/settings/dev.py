@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '.elasticbeanstalk.com',
     '.siwon.me',
+    '172.31.16.135',
 ]
 
 # CORS

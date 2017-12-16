@@ -21,8 +21,13 @@ RUN             rm -rf /etc/nginx/sites-enabled/*
 RUN             ln -sf /etc/nginx/sites-available/app.conf \
                         /etc/nginx/sites-enabled/app.conf
 
-# uWSGI
+# logdir
 RUN             mkdir -p /var/log/uwsgi/app
+RUN             mkdir -p /var/log/celery/app
+
+# RabbitMQ
+RUN             apt-get -y update
+RUN             apt-get install -y rabbitmq-server
 
 # manage.py
 WORKDIR         /srv/app/nanum
