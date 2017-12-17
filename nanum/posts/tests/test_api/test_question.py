@@ -1,4 +1,4 @@
-import string
+from pprint import pprint
 from random import randrange
 
 from django.contrib.auth import get_user_model
@@ -8,6 +8,7 @@ from rest_framework.test import APILiveServerTestCase
 
 from posts.apis import QuestionListCreateView
 from posts.models import Question
+from topics.models import Topic
 
 User = get_user_model()
 
@@ -38,19 +39,30 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         self.assertEqual(resolve_match.func.view_class,
                          self.VIEW_CLASS.as_view().view_class)
 
-    # 임의의 유저로 question objects 생성
-    def test_get_question_list(self):
+    # 임의의 유저로 question objects 생성 및 확인
+    def test_get_post_question_list(self):
         user = User.objects.create_user(email='siwon@siwon.com')
+        topic1 = Topic.objects.create(creator=user, name='토픽1')
+        topic2 = Topic.objects.create(creator=user, name='토픽2')
+        topic3 = Topic.objects.create(creator=user, name='토픽3')
         num = randrange(20)
-        for i in range(num):
+        for index, i in enumerate(range(num)):
             question = Question.objects.create(
                 user=user,
-                topics='topic',
-                content='content',
+                content=f'{index+1}번째 content',
             )
-            print(f'topic : {question.topics}, content : {question.content}')
+            question.topics.add(topic1)
+            question.topics.add(topic2)
+            question.topics.add(topic3)
+            print(f'{index+1}번째\n content : {question.content}\n')
+
         url = reverse(self.URL_API_QUESTION_CREATE_NAME)
+        print(f'url : {url}')
         response = self.client.get(url)
+        # status code가 200인지 확인
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual((Question.objects.count(), num))
-        self.assertEqual(len(response.data), num)
+        # 객체의 수가 num과 같은지 확인
+        # json리스트의 길이로 비교하게 되면 count, previous, next, result 무조건 4가 출력된다.
+        counted_objects = response.data.get('count')
+        print(f'response.data.get(\'count\') : {counted_objects}')
+        self.assertEqual(counted_objects, num)
