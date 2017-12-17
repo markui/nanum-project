@@ -1,5 +1,5 @@
 from itertools import count
-from random import randrange
+from random import randrange, randint
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve
@@ -130,12 +130,20 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
             print(f'result_index : {result_index}')
             result_index += 1
 
-    # def test_get_question_list_exclude_user_is_none(self):
-    #     """
-    #     user가 None인 Question가 QuestionList get 요청에서 제외되는지 테스트
-    #     :return:
-    #     """
-    #     user = User.objects.create_user(
-    #         email='siwon@siwon.com',
-    #         password='dltldnjs'
-    #     )
+    def test_get_question_list_exclude_user_is_none(self):
+        """
+        user가 None인 Question가 QuestionList get 요청에서 제외되는지 테스트
+        :return:
+        """
+        user = self.create_user()
+        num_user_none_questions = randint(1, 10)
+        num_questions = randint(11, 20)
+        for i in range(num_user_none_questions):
+            self.create_question()
+        for i in range(num_questions):
+            self.create_question(user=user)
+
+        response = self.client.get(self.URL_API_QUESTION_CREATE)
+        counted_question = response.data.get('count')
+        # user가 없는 Question객체는 response에 포함되지 않는지 확인
+        self.assertEqual(counted_question, num_questions)
