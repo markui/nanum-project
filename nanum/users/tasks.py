@@ -8,7 +8,7 @@ def send_password_reset_email(email, html_content, text_content):
     send_mail('비밀번호 재설정',
               text_content,
               settings.EMAIL_MAIN,
-              ['viking617617@gmail.com'],
+              [email],
               html_message=html_content,
               fail_silently=False,
               )
