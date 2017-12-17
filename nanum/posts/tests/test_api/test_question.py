@@ -18,6 +18,21 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
     URL_API_QUESTION_CREATE = '/post/question/'
     VIEW_CLASS = QuestionListCreateView
 
+    @staticmethod
+    def create_user(email='siwon@siwon.com', password='dltldnjs'):
+        return User.objects.create_user(email=email, password=password)
+
+    @staticmethod
+    def create_topic(creator=None, name='temp_topic'):
+        return Topic.objects.create(creator=creator, name=name)
+
+    @staticmethod
+    def create_question(user=None, content='임시 컨텐츠 입니다.'):
+        return Question.objects.create(
+            user=user,
+            content=content,
+        )
+
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
     def test_question_create_url_name_reverse(self):
         url = reverse(self.URL_API_QUESTION_CREATE_NAME)
@@ -40,21 +55,25 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
                          self.VIEW_CLASS.as_view().view_class)
 
     # 임의의 유저로 question objects 생성 및 확인
-    def test_get_post_question_list(self):
-        user = User.objects.create_user(email='siwon@siwon.com')
-        topic1 = Topic.objects.create(creator=user, name='토픽1')
-        topic2 = Topic.objects.create(creator=user, name='토픽2')
-        topic3 = Topic.objects.create(creator=user, name='토픽3')
+    def test_get_question_list(self):
+        # user = User.objects.create_user(
+        #     email='siwon@siwon.com',
+        #     password='dltldnjs'
+        # )
+        user = self.create_user()
+        topic1 = self.create_topic(creator=user, name='토픽1')
+        topic2 = self.create_topic(creator=user, name='토픽2')
+        topic3 = self.create_topic(creator=user, name='토픽3')
         num = randrange(10, 30)
         for index, i in enumerate(range(num)):
-            question = Question.objects.create(
+            question = self.create_question(
                 user=user,
-                content=f'{index+1}번째 content',
+                content=f'{index+1}번째 컨텐츠 입니다.',
             )
             question.topics.add(topic1)
             question.topics.add(topic2)
             question.topics.add(topic3)
-            print(f'{index+1}번째\n content : {question.content}\n')
+            print(f'question.content : {question.content}')
 
         url = reverse(self.URL_API_QUESTION_CREATE_NAME)
         # page
@@ -109,5 +128,14 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
             self.assertIn('modified_at', cur_question_data)
 
             print(f'result_index : {result_index}')
-            print('\n')
             result_index += 1
+
+    # def test_get_question_list_exclude_user_is_none(self):
+    #     """
+    #     user가 None인 Question가 QuestionList get 요청에서 제외되는지 테스트
+    #     :return:
+    #     """
+    #     user = User.objects.create_user(
+    #         email='siwon@siwon.com',
+    #         password='dltldnjs'
+    #     )
