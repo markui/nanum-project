@@ -1,4 +1,4 @@
-from pprint import pprint
+from itertools import count
 from random import randrange
 
 from django.contrib.auth import get_user_model
@@ -45,7 +45,7 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         topic1 = Topic.objects.create(creator=user, name='토픽1')
         topic2 = Topic.objects.create(creator=user, name='토픽2')
         topic3 = Topic.objects.create(creator=user, name='토픽3')
-        num = randrange(20)
+        num = randrange(10, 30)
         for index, i in enumerate(range(num)):
             question = Question.objects.create(
                 user=user,
@@ -57,12 +57,57 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
             print(f'{index+1}번째\n content : {question.content}\n')
 
         url = reverse(self.URL_API_QUESTION_CREATE_NAME)
+        # page
+        page = 1
+        url += f'?page={page}'
         print(f'url : {url}')
         response = self.client.get(url)
         # status code가 200인지 확인
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # objects.count 결과가 num과 같은지 확인
+        self.assertEqual(Question.objects.count(), num)
         # 객체의 수가 num과 같은지 확인
-        # json리스트의 길이로 비교하게 되면 count, previous, next, result 무조건 4가 출력된다.
+        # json리스트의 길이로 비교하게 되면 count, previous, next, results 무조건 4 출력
         counted_objects = response.data.get('count')
         print(f'response.data.get(\'count\') : {counted_objects}')
         self.assertEqual(counted_objects, num)
+
+        # response로 돌아온 객체들이 각각 count, next, previous, results키를 가지고 있는지 확인
+        cur_data = response.data
+        self.assertIn('count', cur_data)
+        self.assertIn('next', cur_data)
+        self.assertIn('previous', cur_data)
+        self.assertIn('results', cur_data)
+
+        # page별로 request url을 다르게 주어 response.data 각각 확인
+        result_index = 0
+        for index, i in enumerate(range(num)):
+            if result_index == 5:
+                url = response.data.get('next')
+                response = self.client.get(url)
+                print(url)
+                cur_data = response.data
+                result_index = 0
+            print(f'index : {index}')
+
+            # results가 question, topics키를 가지고 있는지 확인
+            cur_results_data = cur_data.get('results')[result_index]
+            self.assertIn('question', cur_results_data)
+            self.assertIn('topics', cur_results_data)
+            # question이 아래의 키들을 가지고 있는지 확인
+            cur_question_data = cur_results_data.get('question')
+            # pk = cur_question_data.get('pk')
+            # print(f'pk : {pk}')
+            self.assertIn('pk', cur_question_data)
+            self.assertIn('url', cur_question_data)
+            self.assertIn('user', cur_question_data)
+            self.assertIn('content', cur_question_data)
+            self.assertIn('bookmark_count', cur_question_data)
+            self.assertIn('follow_count', cur_question_data)
+            self.assertIn('comment_count', cur_question_data)
+            self.assertIn('created_at', cur_question_data)
+            self.assertIn('modified_at', cur_question_data)
+
+            print(f'result_index : {result_index}')
+            print('\n')
+            result_index += 1
