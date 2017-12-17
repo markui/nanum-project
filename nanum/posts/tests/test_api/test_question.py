@@ -40,7 +40,12 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         self.assertEqual(url, self.URL_API_QUESTION_CREATE)
 
     # URL이 실제 URL name을 참조하고 있는지 검사
-    def test_question_create_url_name_resolve(self):
+    def test_question_create_url_name_resolve_view_class(self):
+        """
+        posts.apis.question뷰에 대해
+        URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
+        :return:
+        """
         resolve_match = resolve(self.URL_API_QUESTION_CREATE)
         print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
         self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name, self.URL_API_QUESTION_CREATE_NAME)
@@ -49,6 +54,11 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
     # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
     # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
     def test_question_create_url_resolve_view_class(self):
+        """
+        posts.apis.question뷰에 대해
+        URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
+        :return:
+        """
         resolve_match = resolve(self.URL_API_QUESTION_CREATE)
         print(f'view class test : {resolve_match.func.view_class}')
         self.assertEqual(resolve_match.func.view_class,
@@ -56,6 +66,11 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
 
     # 임의의 유저로 question objects 생성 및 확인
     def test_get_question_list(self):
+        """
+        QuestionList의 Get요청 (Post목록)에 대한 테스트
+        임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
+        :return:
+        """
         # user = User.objects.create_user(
         #     email='siwon@siwon.com',
         #     password='dltldnjs'
@@ -138,6 +153,7 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         user = self.create_user()
         num_user_none_questions = randint(1, 10)
         num_questions = randint(11, 20)
+        # default user는 None
         for i in range(num_user_none_questions):
             self.create_question()
         for i in range(num_questions):
