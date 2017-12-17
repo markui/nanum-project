@@ -1,6 +1,8 @@
 from django.template.defaultfilters import length
 from rest_framework import serializers
+from six import BytesIO
 
+from topics.models import Topic
 from ..models import Question
 
 __all__ = (
@@ -15,10 +17,10 @@ class QuestionGetSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         lookup_field='pk',
         read_only=True,
-        view_name='post:question:question-detail',
+        view_name='post:question:detail',
     )
     # 해당 유저의 프로필 페이지
-    user = serializers.HyperlinkedRelatedField(
+    user = serializers.HyperlinkedIdentityField(
         lookup_field='pk',
         read_only=True,
         view_name='user:profile-main-detail',
@@ -63,6 +65,29 @@ class QuestionGetSerializer(serializers.ModelSerializer):
         return data
 
 
+class QuestionFilterGetSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        lookup_field='pk',
+        read_only=True,
+        view_name='topic:topic-detail',
+    )
+
+    class Meta:
+        model = Topic
+        fields = (
+            'pk',
+            'url',
+            'name',
+        )
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        data = {
+            'topics': ret,
+        }
+        return data
+
+
 class QuestionPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -102,7 +127,6 @@ class QuestionUpdateDestroySerializer(serializers.ModelSerializer):
         model = Question
         fields = (
             'pk',
-            'url',
             'user',
             'topics',
             'content',
