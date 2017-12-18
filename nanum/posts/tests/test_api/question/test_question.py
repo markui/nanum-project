@@ -3,7 +3,6 @@ from random import randrange, randint
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve
 from rest_framework import status
-from rest_framework.test import APILiveServerTestCase
 
 from posts.apis import (
     QuestionListCreateView,
@@ -19,7 +18,6 @@ User = get_user_model()
 
 
 class QuestionListCreateViewTest(QuestionBaseTest):
-
     VIEW_CLASS = QuestionListCreateView
 
     @staticmethod
@@ -165,23 +163,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
 
 class QuestionMainFeedListViewTest(QuestionBaseTest):
-
     VIEW_CLASS = QuestionMainFeedListView
-
-    @staticmethod
-    def create_user(email='siwon@siwon.com', password='dltldnjs'):
-        return User.objects.create_user(email=email, password=password)
-
-    @staticmethod
-    def create_topic(creator=None, name='temp_topic'):
-        return Topic.objects.create(creator=creator, name=name)
-
-    @staticmethod
-    def create_question(user=None, content='임시 컨텐츠 입니다.'):
-        return Question.objects.create(
-            user=user,
-            content=content,
-        )
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
     def test_question_create_url_name_reverse(self):
