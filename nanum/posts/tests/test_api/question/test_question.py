@@ -1,4 +1,3 @@
-from itertools import count
 from random import randrange, randint
 
 from django.contrib.auth import get_user_model
@@ -6,16 +5,21 @@ from django.urls import reverse, resolve
 from rest_framework import status
 from rest_framework.test import APILiveServerTestCase
 
-from posts.apis import QuestionListCreateView
+from posts.apis import (
+    QuestionListCreateView,
+    QuestionMainFeedListView,
+    QuestionRetrieveUpdateDestroyView,
+    QuestionFilterListView,
+)
 from posts.models import Question
+from posts.tests.test_api.question.base import QuestionBaseTest
 from topics.models import Topic
 
 User = get_user_model()
 
 
-class QuestionListCreateViewTest(APILiveServerTestCase):
-    URL_API_QUESTION_CREATE_NAME = 'post:question:list'
-    URL_API_QUESTION_CREATE = '/post/question/'
+class QuestionListCreateViewTest(QuestionBaseTest):
+
     VIEW_CLASS = QuestionListCreateView
 
     @staticmethod
@@ -35,20 +39,15 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
     def test_question_create_url_name_reverse(self):
-        url = reverse(self.URL_API_QUESTION_CREATE_NAME)
+        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         print(f'reverse test : {url}')
-        self.assertEqual(url, self.URL_API_QUESTION_CREATE)
+        self.assertEqual(url, self.URL_API_QUESTION_LIST_CREATE)
 
     # URL이 실제 URL name을 참조하고 있는지 검사
-    def test_question_create_url_name_resolve_view_class(self):
-        """
-        posts.apis.question뷰에 대해
-        URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
-        :return:
-        """
-        resolve_match = resolve(self.URL_API_QUESTION_CREATE)
+    def test_question_create_url_name_resolve(self):
+        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
         print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
-        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name, self.URL_API_QUESTION_CREATE_NAME)
+        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name, self.URL_API_QUESTION_LIST_CREATE_NAME)
 
     # 같은 view의 class인지 검사
     # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
@@ -59,7 +58,7 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
         :return:
         """
-        resolve_match = resolve(self.URL_API_QUESTION_CREATE)
+        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
         print(f'view class test : {resolve_match.func.view_class}')
         self.assertEqual(resolve_match.func.view_class,
                          self.VIEW_CLASS.as_view().view_class)
@@ -90,7 +89,7 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
             question.topics.add(topic3)
             print(f'question.content : {question.content}')
 
-        url = reverse(self.URL_API_QUESTION_CREATE_NAME)
+        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         # page
         page = 1
         url += f'?page={page}'
@@ -159,7 +158,40 @@ class QuestionListCreateViewTest(APILiveServerTestCase):
         for i in range(num_questions):
             self.create_question(user=user)
 
-        response = self.client.get(self.URL_API_QUESTION_CREATE)
+        response = self.client.get(self.URL_API_QUESTION_LIST_CREATE)
         counted_question = response.data.get('count')
         # user가 없는 Question객체는 response에 포함되지 않는지 확인
         self.assertEqual(counted_question, num_questions)
+
+
+class QuestionMainFeedListViewTest(QuestionBaseTest):
+
+    VIEW_CLASS = QuestionMainFeedListView
+
+    @staticmethod
+    def create_user(email='siwon@siwon.com', password='dltldnjs'):
+        return User.objects.create_user(email=email, password=password)
+
+    @staticmethod
+    def create_topic(creator=None, name='temp_topic'):
+        return Topic.objects.create(creator=creator, name=name)
+
+    @staticmethod
+    def create_question(user=None, content='임시 컨텐츠 입니다.'):
+        return Question.objects.create(
+            user=user,
+            content=content,
+        )
+
+    # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
+    def test_question_create_url_name_reverse(self):
+        url = reverse(self.URL_API_QUESTION_MAIN_FEED_LIST_NAME)
+        print(f'reverse test : {url}')
+        self.assertEqual(url, self.URL_API_QUESTION_MAIN_FEED_LIST)
+
+    # URL이 실제 URL name을 참조하고 있는지 검사
+    def test_question_create_url_name_resolve(self):
+        resolve_match = resolve(self.URL_API_QUESTION_MAIN_FEED_LIST)
+        print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
+        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name,
+                         self.URL_API_QUESTION_MAIN_FEED_LIST_NAME)
