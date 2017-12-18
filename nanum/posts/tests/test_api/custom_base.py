@@ -41,11 +41,8 @@ class AnswerBaseTest(APITestCase):
     with open(img_path, 'rb') as image:
         data = image.read()
     data = base64.b64encode(data)
-    print(data)
     data_decode = base64.b64decode(data)
-    print(data_decode)
     IMAGE_BASE64 = base64.b64decode(data_decode)
-    print(IMAGE_BASE64)
 
 
     content = "{question} - {user}의 답변"

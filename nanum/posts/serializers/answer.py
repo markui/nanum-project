@@ -145,14 +145,19 @@ class AnswerPostSerializer(BaseAnswerSerializer):
         # request_user를 **kwargs에 추가하여 super().save() 호출
         with atomic():
             answer_instance = super().save(user=self.request_user, **kwargs)
+            # answer_instance = task_obj.result()
+
             if not content or not content_html:
                 return answer_instance
+
             self._save_quill_delta_operation(
                 content=content,
                 answer_instance=answer_instance
             )
+
             self._save_content_html(
-                content_html=content_html
+                content_html=content_html,
+                answer_instance=answer_instance
             )
 
     def _save_quill_delta_operation(self, content, answer_instance):
@@ -170,7 +175,7 @@ class AnswerPostSerializer(BaseAnswerSerializer):
             raise ParseError({"error": "content가 잘못된 포맷입니다. "})
         QuillDeltaOperation.objects.bulk_create(instances)
 
-    def _save_content_html(self, content_html):
+    def _save_content_html(self, content_html, answer_instance):
         """
         html 업데이트
         :param content_html:
@@ -182,8 +187,12 @@ class AnswerPostSerializer(BaseAnswerSerializer):
             html=content_html
         )
         preview_html = django_quill.html_preview_parse(html=html, preview_len=200)
-        self.instance.content_html, self.instance.content_preview_html = html, preview_html
-        self.instance.save(update_fields=['content_html', 'content_preview_html'])
+        # Django Bug - Updating an instance during save method will not result in a properly serialized object
+        Answer.objects.select_for_update(). \
+            filter(pk=answer_instance.pk). \
+            update(content_html=html, content_preview_html=preview_html)
+        answer_instance.content_html = html
+        answer_instance.content_preview_html = preview_html
 
 
 class AnswerUpdateSerializer(AnswerPostSerializer):
@@ -205,7 +214,7 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
             self._update_quill_delta_operation(queryset=queryset, content=content)
             self._save_content_html(content_html=content_html)
 
-    def _update_quill_delta_operation(self, queryset: QuerySet, content: str):
+    def _update_quill_delta_operation(self, queryset: QuerySet, content: dict):
         """
 
         :param queryset: self.instance와 연결되어있는 QuillDeltaOperation Queryset

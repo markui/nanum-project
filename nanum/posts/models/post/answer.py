@@ -33,7 +33,7 @@ class Answer(models.Model):
 
     @property
     def user_profile(self):
-        return self.user.profile.pk
+        return self.user.profile_id
 
     @property
     def topics(self):
@@ -81,6 +81,7 @@ class Answer(models.Model):
     def save(self, *args, **kwargs):
         # Topic 과 Question의 answer_count increment
         topics_pk = self.topics.values_list('pk', flat=True)
+
         with atomic():
             topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
             topics.update(answer_count=F('answer_count') + 1)
@@ -89,7 +90,8 @@ class Answer(models.Model):
             question.update(answer_count=F('answer_count') + 1)
 
             super().save(*args, **kwargs)
-            CommentPostIntermediate.objects.get_or_create(answer=self)
+            if not CommentPostIntermediate.objects.filter(answer=self).exists():
+                CommentPostIntermediate.objects.create(answer=self)
 
     def delete(self, *args, **kwargs):
         topics_pk = self.topics.values_list('pk', flat=True)

@@ -26,6 +26,7 @@ class DjangoQuill:
     def __init__(self, model=None, parent_model=None):
         self.model: QuerySet = model
         self.parent_model: QuerySet = parent_model
+        self.parent_instance = None
 
     #     self._validate()
     #
@@ -120,24 +121,28 @@ class DjangoQuill:
         :return: 반환값은 없으며 bulk_create와 이미지 삭제 함수를 실행
         """
         # Instance가 parent_model의 instance인지 확인
-        assert type(parent_instance) == self.parent_model, "Instance is not an instance of parent model."
-
+        self.parent_instance = parent_instance
         # Bulk Create할 instance를 모아둘 list instantiation
         # get_delta_operation_list() 를 통해 content에서 delta operation이 담긴 list 반환
         # 반환받은 list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
-
         delta_list = self.get_delta_operation_list(content, iterator=True)
+
         for line_no, quill_delta_operation in enumerate(delta_list, start=1):
             model_instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
                 line_no=line_no,
                 parent_instance=parent_instance
             )
-
-            # 이미지에 문제가 있어 self.model의 instance가 생성되지 않았을 경우
-            if type(model_instance) != self.model:
-                return None
             yield model_instance
+
+    # def _get_delta_operation_instance(self, tup: tuple):
+    #     line_no = tup[0]
+    #     quill_delta_operation = tup[1]
+    #     return self._instantiate_model(
+    #         quill_delta_operation=quill_delta_operation,
+    #         line_no=line_no,
+    #         parent_instance=self.parent_instance,
+    #     )
 
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
@@ -284,6 +289,7 @@ class DjangoQuill:
         soup = BeautifulSoup(html, 'html.parser')
         img_tags = soup.find_all("img")
         for obj, img_tag in zip(objs, img_tags):
+            # Get rid of Amazon Token
             url = url_query_cleaner(obj.image.url)
             new_img_tag = soup.new_tag('img', src=url)
             img_tag.replace_with(new_img_tag)
@@ -305,6 +311,7 @@ class DjangoQuill:
                     if i > 0:
                         content.decompose()
         return str(soup)
+
 
     def update_delta_operation_list(self, queryset: QuerySet,
                                     content: dict, parent_instance):
