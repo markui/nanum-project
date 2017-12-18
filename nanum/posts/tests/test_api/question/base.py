@@ -19,7 +19,10 @@ class QuestionBaseTest(APITestCase):
     URL_API_QUESTION_FILTER_LIST = '/post/question/filter/'
     # QuestionRetrieveUpdateDestroyView
     URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
-    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = '/post/question/{pk}/'
+    temp_user = User.objects.create_user(email='siwon@siwon.com', password='dltldnjs')
+    temp_question = Question.objects.create(user=temp_user, content='임시 컨텐츠입니다.')
+    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = f'/post/question/{temp_question}/'
+
     # query parameters
     query_params = [
         'user',
@@ -40,8 +43,10 @@ class QuestionBaseTest(APITestCase):
         return Topic.objects.create(creator=creator, name=name)
 
     @staticmethod
-    def create_question(user=None, content='임시 컨텐츠 입니다.'):
+    def create_question(user=None, content='default : 임시 컨텐츠 입니다.'):
         return Question.objects.create(
             user=user,
             content=content,
         )
+
+

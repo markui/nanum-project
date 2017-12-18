@@ -157,7 +157,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
         # 하나의 query parameter에 대해 검사
         for query_param in self.query_params:
-            url = url + f'?{query_param}=1'
+            url += f'?{query_param}=1'
             response = self.client.get(url)
             # status code가 200인지 확인
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -166,7 +166,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
         # 연속적인 query parameters에 대해서 검사
         num_of_query_params = randint(1, len(self.query_params))
-
+        # query_params 중 임의의 값을 1부터 len(query_params) 사이의 임의의 값 만큼 순회하여 확인
         for i in range(num_of_query_params):
             random_of_query_params = random.choice(self.query_params)
             print(random_of_query_params)
@@ -215,6 +215,34 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
 class QuestionRetrieveUpdateDestroyViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionRetrieveUpdateDestroyView
 
+    # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
+    def test_question_main_feed_create_url_name_reverse(self):
+        url = reverse(self.URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME)
+        print(f'reverse test : {url}')
+        self.assertEqual(url, self.URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY)
+
+    # URL이 실제 URL name을 참조하고 있는지 검사
+    def test_question_main_feed_create_url_name_resolve(self):
+        resolve_match = resolve(self.URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY)
+        print(f'resolve test(url name) : '
+              f'{resolve_match.namespace + ":" + resolve_match.url_name}')
+        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name,
+                         self.URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME)
+
 
 class QuestionFilterListViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionFilterListView
+
+    # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
+    def test_question_main_feed_create_url_name_reverse(self):
+        url = reverse(self.URL_API_QUESTION_FILTER_LIST_NAME)
+        print(f'reverse test : {url}')
+        self.assertEqual(url, self.URL_API_QUESTION_FILTER_LIST)
+
+    # URL이 실제 URL name을 참조하고 있는지 검사
+    def test_question_main_feed_create_url_name_resolve(self):
+        resolve_match = resolve(self.URL_API_QUESTION_FILTER_LIST)
+        print(f'resolve test(url name) : '
+              f'{resolve_match.namespace + ":" + resolve_match.url_name}')
+        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name,
+                         self.URL_API_QUESTION_FILTER_LIST_NAME)
