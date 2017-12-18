@@ -37,7 +37,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
     # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
     def test_question_create_url_resolve_view_class(self):
         """
-        posts.apis.question뷰에 대해
+        posts.apis.question.QuestionListCreateView 뷰에 대해
         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
         :return:
         """
@@ -168,7 +168,7 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
     # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
     def test_question_create_url_resolve_view_class(self):
         """
-        posts.apis.question뷰에 대해
+        posts.apis.question. QuestionMainFeedListView뷰에 대해
         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
         :return:
         """
