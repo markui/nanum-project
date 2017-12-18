@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from rest_framework.test import APILiveServerTestCase
+from rest_framework.test import APITestCase
 
 from posts.models import Question
 from topics.models import Topic
@@ -7,7 +7,7 @@ from topics.models import Topic
 User = get_user_model()
 
 
-class QuestionBaseTest(APILiveServerTestCase):
+class QuestionBaseTest(APITestCase):
     # QuestionListCreateView
     URL_API_QUESTION_LIST_CREATE_NAME = 'post:question:list'
     URL_API_QUESTION_LIST_CREATE = '/post/question/'

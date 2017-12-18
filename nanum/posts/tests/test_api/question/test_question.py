@@ -12,7 +12,6 @@ from posts.apis import (
 )
 from posts.models import Question
 from posts.tests.test_api.question.base import QuestionBaseTest
-from topics.models import Topic
 
 User = get_user_model()
 
@@ -129,7 +128,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
     def test_get_question_list_exclude_user_is_none(self):
         """
-        user가 None인 Question가 QuestionList get 요청에서 제외되는지 테스트
+        user가 None인 Question이 QuestionList get 요청에서 제외되는지 테스트
         :return:
         """
         user = self.create_user()
@@ -151,22 +150,23 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionMainFeedListView
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
-    def test_question_create_url_name_reverse(self):
+    def test_question_main_feed_create_url_name_reverse(self):
         url = reverse(self.URL_API_QUESTION_MAIN_FEED_LIST_NAME)
         print(f'reverse test : {url}')
         self.assertEqual(url, self.URL_API_QUESTION_MAIN_FEED_LIST)
 
     # URL이 실제 URL name을 참조하고 있는지 검사
-    def test_question_create_url_name_resolve(self):
+    def test_question_main_feed_create_url_name_resolve(self):
         resolve_match = resolve(self.URL_API_QUESTION_MAIN_FEED_LIST)
-        print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
+        print(f'resolve test(url name) : '
+              f'{resolve_match.namespace + ":" + resolve_match.url_name}')
         self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name,
                          self.URL_API_QUESTION_MAIN_FEED_LIST_NAME)
 
     # 같은 view의 class인지 검사
     # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
     # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
-    def test_question_create_url_resolve_view_class(self):
+    def test_question_main_feed_create_url_resolve_view_class(self):
         """
         posts.apis.question. QuestionMainFeedListView뷰에 대해
         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
@@ -177,10 +177,33 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
         self.assertEqual(resolve_match.func.view_class,
                          self.VIEW_CLASS.as_view().view_class)
 
+    # main-feed
+    def test_get_question_main_feed_list(self):
+        """
+        내 질문을 제외한 전문분야, 관심분야 질문 리스트의 수와 같은지 확인
+        :return:
+        """
+        user1 = self.create_user()
+        num_user_my_questions = randint(1, 10)
+        user2 = self.create_user()
+        num_user_other_questions = randint(11, 20)
+
+        for i in range(num_user_my_questions):
+            topic = self.create_topic(name=f'토픽 : {i}')
+            user1.ExpertiseFollowRelation.add(topic)
+            question = self.create_question(user=user1, content=f'{i}번째 컨텐츠')
+            question.topics.add(topic)
+
+        for i in range(num_user_other_questions):
+            self.create_question(user=user2, content=f'{i}번째 컨텐츠')
+
+            response = self.client.get(self.URL_API_QUESTION_LIST_CREATE)
+            response.data.get('count')
+
 
 class QuestionRetrieveUpdateDestroyViewTest(QuestionBaseTest):
-    pass
+    VIEW_CLASS = QuestionRetrieveUpdateDestroyView
 
 
 class QuestionFilterListViewTest(QuestionBaseTest):
-    pass
+    VIEW_CLASS = QuestionFilterListView
