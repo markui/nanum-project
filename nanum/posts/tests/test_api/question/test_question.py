@@ -176,3 +176,11 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
         print(f'view class test : {resolve_match.func.view_class}')
         self.assertEqual(resolve_match.func.view_class,
                          self.VIEW_CLASS.as_view().view_class)
+
+
+class QuestionRetrieveUpdateDestroyViewTest(QuestionBaseTest):
+    pass
+
+
+class QuestionFilterListViewTest(QuestionBaseTest):
+    pass

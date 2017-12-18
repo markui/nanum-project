@@ -8,12 +8,18 @@ User = get_user_model()
 
 
 class QuestionBaseTest(APILiveServerTestCase):
-    #
+    # QuestionListCreateView
     URL_API_QUESTION_LIST_CREATE_NAME = 'post:question:list'
     URL_API_QUESTION_LIST_CREATE = '/post/question/'
-
+    # QuestionMainFeedListView
     URL_API_QUESTION_MAIN_FEED_LIST_NAME = 'post:question:main-feed'
     URL_API_QUESTION_MAIN_FEED_LIST = '/post/question/main_feed/'
+    # QuestionFilterListView
+    URL_API_QUESTION_FILTER_LIST_NAME = 'post:question:topics-filter'
+    URL_API_QUESTION_FILTER_LIST = '/post/question/filter/'
+    # QuestionRetrieveUpdateDestroyView
+    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
+    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = '/post/question/{pk}/'
 
     @staticmethod
     def create_user(email='siwon@siwon.com', password='dltldnjs'):
