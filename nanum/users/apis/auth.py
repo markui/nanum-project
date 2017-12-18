@@ -1,3 +1,5 @@
+import crypt
+
 from django.contrib.auth import get_user_model, authenticate
 from django.core import signing
 from django.template.loader import render_to_string
@@ -60,6 +62,9 @@ class PasswordResetSendMailView(APIView):
     """
     이메일 가입 유저에게 비밀번호 재설정 링크를 담은 이메일 보내기
     Celery + Redis를 활용
+
+    암호화: Django Signing + User Model DB에 password_reset_salt를 저장해,
+    One-Time-Expire-Link 생성
     """
 
     def post(self, request):
@@ -69,9 +74,14 @@ class PasswordResetSendMailView(APIView):
         user = User.objects.get(email=email)
         # 유저의 토큰
         token = Token.objects.get_or_create(user=user)[0].key
+        # Random Salt 생성 및 저장- One-Time-Expire-Link 를 위해
+        random_password_salt = crypt.mksalt(crypt.METHOD_SHA512)
+        user.password_reset_salt = random_password_salt
+        user.save()
         # 유저의 pk + 토큰을 encode_value로 암호화
         # signing 모듈 + json serialization을 활용 (TimestampSigner 사용)
-        encode_value = signing.dumps({'token': token, 'pk': user.pk})
+        uid = signing.dumps({'pk': user.pk})
+        encode_value = signing.dumps({'token': token}, salt=random_password_salt)
 
         # 이메일에 보낼 html 내용
         html_content = render_to_string(
@@ -80,7 +90,9 @@ class PasswordResetSendMailView(APIView):
                 'email': email,
                 'username': user.name,
                 'url': 'localhost:8000/settings/reset_password',
-                'code': encode_value
+                'code': encode_value,
+                'uid': uid
+
             }
         )
         # 이메일 미리보기에 보여질 text 내용
@@ -111,21 +123,24 @@ class PasswordResetConfirmView(APIView):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data['code']
+        uid = serializer.validated_data['uid']
         try:
-            # 유저의 pk + 토큰을 decode_value로 복호화
-            decode_value = signing.loads(code, max_age=86400)
-        except signing.BadSignature:
-            msg = {
-                'error': '잘못된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
-                'type': 'bad-signature'
-            }
+            # 해당 유저의 password_reset_salt 가져오기
+            pk = signing.loads(uid, max_age=86400).get('pk')
+            salt = User.objects.get(pk=pk).password_reset_salt
+            # 해당 salt로 유저 토큰 복호화
+            decode_value = signing.loads(code, salt=salt, max_age=86400)
         except signing.SignatureExpired:
             msg = {
                 'error': '1일이 지나, 만료된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
                 'type': 'expired-signature'
             }
+        except signing.BadSignature:
+            msg = {
+                'error': '잘못된 링크입니다. 비밀번호 재설정 이메일을 다시 받아주세요.',
+                'type': 'bad-signature'
+            }
         else:
-            pk = decode_value['pk']
             token = decode_value['token']
             serializer = PasswordResetConfirmSerializer
             msg = {
@@ -134,7 +149,7 @@ class PasswordResetConfirmView(APIView):
                 'type': 'success'
             }
 
-        return Response(msg)
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetView(APIView):
@@ -146,3 +161,13 @@ class PasswordResetView(APIView):
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # 해당 토큰을 가진 유저 가져오기
+        user = serializer.validated_data['token_model'].user
+        # 유저의 비밀번호 업데이트하기 (hashing 하기)
+        user.set_password(serializer.validated_data['password1'])
+        user.save()
+        msg = {
+            'msg': '비밀번호 재설정에 성공하였습니다',
+            'type': 'success'
+        }
+        return Response(msg)

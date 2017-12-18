@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import json
 import os
 
+import raven
+
 # Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -50,18 +52,12 @@ FACEBOOK_SCOPE = [
 ]
 
 # Email
-EMAIL_HOST = 'smtp.sendgrid.com'
-EMAIL_HOST_USER = 'markkim'
-EMAIL_HOST_PASSWORD = 'sg6909sg'
-EMAIL_MAIN = 'nanumfc@gmail.com'
+EMAIL_HOST = config_secret_common['email']['host']
+EMAIL_HOST_USER = config_secret_common['email']['host_user']
+EMAIL_HOST_PASSWORD = config_secret_common['email']['host_password']
+EMAIL_MAIN = 'NANUM'
 EMAIL_PORT = 587
-EMAIL_USER_TLS = True
-
-"""
-from django.conf import settings
-from django.core.mail import send_mail
-send_mail('Subject', 'here is the message', settings.EMAIL_MAIN, ['viking617617@gmail.com'], fail_silently=False)
-"""
+EMAIL_USE_TLS = True
 
 # Auth
 AUTH_USER_MODEL = 'users.User'
@@ -113,6 +109,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 3rd-party
+    'raven.contrib.django.raven_compat',
     'rest_framework',
     'rest_framework.authtoken',
     'mptt',
@@ -157,8 +154,16 @@ TEMPLATES = [
     },
 ]
 
+# Sentry
+# RAVEN_CONFIG = {
+#     'dsn': config_secret_common['sentry']['raven_dsn'],
+#     # If you are using git, you can also automatically configure the
+#     # release based on the git info.
+#     'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
+# }
+
 # Celery
-CELERY_BROKER_URL = 'amqp://localhost'
+# CELERY_BROKER_URL = 'amqp://localhost'
 
 # CORS
 CORS_ORIGIN_ALLOW_ALL = False
