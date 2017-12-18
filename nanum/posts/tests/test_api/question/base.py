@@ -20,6 +20,16 @@ class QuestionBaseTest(APITestCase):
     # QuestionRetrieveUpdateDestroyView
     URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
     URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = '/post/question/{pk}/'
+    # query parameters
+    query_params = [
+        'user',
+        'answered_by',
+        'bookmarked_by',
+        'followed_by',
+        'topic',
+        'ordering',
+        'page',
+    ]
 
     @staticmethod
     def create_user(email='siwon@siwon.com', password='dltldnjs'):

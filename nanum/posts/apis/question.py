@@ -81,6 +81,9 @@ class QuestionListCreateView(generics.ListCreateAPIView):
 
 # 해당 유저가 전문분야 설정에서 선택한 토픽들
 class QuestionFilterListView(generics.ListAPIView):
+    """
+    queryset을 해당 유저가 전문분야 설정에서 선택한 토픽들을 리턴하는 queryset으로 재정의합니다.
+    """
     queryset = Question.objects.all()
     serializer_class = QuestionFilterGetSerializer
     permission_classes = (
@@ -97,6 +100,9 @@ class QuestionFilterListView(generics.ListAPIView):
 
 # 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed)
 class QuestionMainFeedListView(generics.ListAPIView):
+    """
+    queryset을 내 질문을 제외한 전문분야, 관심분야 질문 리스트를 리턴하는 queryset으로 재정의합니다.
+    """
     serializer_class = QuestionGetSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
@@ -124,6 +130,10 @@ class QuestionMainFeedListView(generics.ListAPIView):
 
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    질문에 대한 pk값으로 Question 객체 하나를 가져오거나 업데이트하거나 삭제하는 기능을 합니다.
+    업데이트는 전체 input값을 모두 업데이트하는 PUT과 부분만 업데이트하는 PATCH를 지원합니다.
+    """
     queryset = Question.objects.all()
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,

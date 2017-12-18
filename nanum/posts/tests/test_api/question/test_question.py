@@ -127,6 +127,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
             print(f'result_index : {result_index}')
             result_index += 1
 
+    # user가 None이면 제외되는지 확인
     def test_get_question_list_exclude_user_is_none(self):
         """
         user가 None인 Question이 QuestionList get 요청에서 제외되는지 테스트
@@ -146,23 +147,16 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         # user가 없는 Question객체는 response에 포함되지 않는지 확인
         self.assertEqual(counted_question, num_questions)
 
+    # query parameters 필터링 확인
     def test_get_question_list_filter_is_working(self):
         """
         query_params로의 필터링이 잘 작동하는지 확인
         :return:
         """
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
-        query_params = [
-            'user',
-            'answered_by',
-            'bookmarked_by',
-            'followed_by',
-            'topic',
-            'ordering',
-            'page',
-        ]
+
         # 하나의 query parameter에 대해 검사
-        for query_param in query_params:
+        for query_param in self.query_params:
             url = url + f'?{query_param}=1'
             response = self.client.get(url)
             # status code가 200인지 확인
@@ -171,10 +165,10 @@ class QuestionListCreateViewTest(QuestionBaseTest):
             url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
 
         # 연속적인 query parameters에 대해서 검사
-        num_of_query_params = randint(1, len(query_params))
+        num_of_query_params = randint(1, len(self.query_params))
 
         for i in range(num_of_query_params):
-            random_of_query_params = random.choice(query_params)
+            random_of_query_params = random.choice(self.query_params)
             print(random_of_query_params)
             url += f'?{random_of_query_params}=1'
             print(f'url : {url}')
