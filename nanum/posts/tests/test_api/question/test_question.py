@@ -1,4 +1,5 @@
 from random import randrange, randint
+import random
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve
@@ -145,6 +146,41 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         # user가 없는 Question객체는 response에 포함되지 않는지 확인
         self.assertEqual(counted_question, num_questions)
 
+    def test_get_question_list_filter_is_working(self):
+        """
+        query_params로의 필터링이 잘 작동하는지 확인
+        :return:
+        """
+        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
+        query_params = [
+            'user',
+            'answered_by',
+            'bookmarked_by',
+            'followed_by',
+            'topic',
+            'ordering',
+            'page',
+        ]
+        # 하나의 query parameter에 대해 검사
+        for query_param in query_params:
+            url = url + f'?{query_param}=1'
+            response = self.client.get(url)
+            # status code가 200인지 확인
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # print(f'url : {url}')
+            url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
+
+        # 연속적인 query parameters에 대해서 검사
+        num_of_query_params = randint(1, len(query_params))
+
+        for i in range(num_of_query_params):
+            random_of_query_params = random.choice(query_params)
+            print(random_of_query_params)
+            url += f'?{random_of_query_params}=1'
+            print(f'url : {url}')
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 class QuestionMainFeedListViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionMainFeedListView
@@ -179,26 +215,7 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
 
     # main-feed
     def test_get_question_main_feed_list(self):
-        """
-        내 질문을 제외한 전문분야, 관심분야 질문 리스트의 수와 같은지 확인
-        :return:
-        """
-        user1 = self.create_user()
-        num_user_my_questions = randint(1, 10)
-        user2 = self.create_user()
-        num_user_other_questions = randint(11, 20)
-
-        for i in range(num_user_my_questions):
-            topic = self.create_topic(name=f'토픽 : {i}')
-            user1.ExpertiseFollowRelation.add(topic)
-            question = self.create_question(user=user1, content=f'{i}번째 컨텐츠')
-            question.topics.add(topic)
-
-        for i in range(num_user_other_questions):
-            self.create_question(user=user2, content=f'{i}번째 컨텐츠')
-
-            response = self.client.get(self.URL_API_QUESTION_LIST_CREATE)
-            response.data.get('count')
+        pass
 
 
 class QuestionRetrieveUpdateDestroyViewTest(QuestionBaseTest):
