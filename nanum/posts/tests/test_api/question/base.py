@@ -17,11 +17,9 @@ class QuestionBaseTest(APITestCase):
     # QuestionFilterListView
     URL_API_QUESTION_FILTER_LIST_NAME = 'post:question:topics-filter'
     URL_API_QUESTION_FILTER_LIST = '/post/question/filter/'
-    # QuestionRetrieveUpdateDestroyView
-    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
-    temp_user = User.objects.create_user(email='siwon@siwon.com', password='dltldnjs')
-    temp_question = Question.objects.create(user=temp_user, content='임시 컨텐츠입니다.')
-    URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = f'/post/question/{temp_question}/'
+    # # QuestionRetrieveUpdateDestroyView
+    # URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
+    # URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = '/post/question/1'
 
     # query parameters
     query_params = [
