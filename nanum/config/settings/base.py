@@ -155,12 +155,17 @@ TEMPLATES = [
 ]
 
 # Sentry
-# RAVEN_CONFIG = {
-#     'dsn': config_secret_common['sentry']['raven_dsn'],
-#     # If you are using git, you can also automatically configure the
-#     # release based on the git info.
-#     'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
-# }
+
+RAVEN_CONFIG = {
+    'dsn': config_secret_common['sentry']['raven_dsn'],
+    # If you are using git, you can also automatically configure the
+    # release based on the git info.
+    'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
+}
+# Getstream
+STREAM_API_KEY = config_secret_common['getstream']['api_key']
+STREAM_API_SECRET = config_secret_common['getstream']['api_secret']
+
 
 # Celery
 # CELERY_BROKER_URL = 'amqp://localhost'

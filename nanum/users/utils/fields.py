@@ -1,9 +1,35 @@
+from django.conf import settings
+from django.db.models.fields.files import ImageFieldFile, ImageField
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 __all__ = (
     'ParameterisedHyperlinkedIdentityField',
 )
+
+
+class DefaultStaticImageFieldFile(ImageFieldFile):
+    @property
+    def url(self):
+        try:
+            self._require_file()
+            return super().url
+        # ImageFieldFile에 파일이 존재하지 않을 경우, DefaultStaticImageField에서 인자로 받은
+        # static_image_path를 name으로 가지는 staticfilestorage url을 돌려준다
+        except ValueError:
+            from django.contrib.staticfiles.storage import staticfiles_storage
+            return staticfiles_storage.url(self.field.static_image_path)
+
+
+class DefaultStaticImageField(ImageField):
+    attr_class = DefaultStaticImageFieldFile
+
+    def __init__(self, *args, **kwargs):
+        self.static_image_path = kwargs.pop(
+            'default_image_path',
+            getattr(settings, 'DEFAULT_IMAGE_PATH', 'images/default_image.png'))
+        super().__init__(*args, **kwargs)
+
 
 class ParameterisedHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
     """
