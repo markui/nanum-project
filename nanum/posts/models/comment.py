@@ -128,14 +128,12 @@ class Comment(MPTTModel):
         :return:
         """
         model = self.comment_post_intermediate.post.__class__
-
         # race condition 방지
         with atomic():
             post = model.objects.select_for_update().filter(
                 comment_post_intermediate=self.comment_post_intermediate
             )
             post.update(comment_count=F('comment_count') + 1)
-
             super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -152,6 +150,6 @@ class Comment(MPTTModel):
             post = model.objects.select_for_update().filter(
                 comment_post_intermediate=self.comment_post_intermediate
             )
-            post.update(comment_count=F('comment_count') - 1)
+            post.update(comment_count=F('comment_count') - (self.all_children_count + 1))
 
             super().delete(*args, **kwargs)
