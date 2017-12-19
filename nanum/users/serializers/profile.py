@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from topics.models import Topic
 from users.models import Profile, UserFollowRelation, EmploymentCredential, EducationCredential
 from users.utils import ParameterisedHyperlinkedIdentityField
+from users.utils.fields import DefaultStaticImageSerializerField
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -16,6 +17,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='user.name', max_length=30)
     follow_relation_pk = serializers.SerializerMethodField()
     image = serializers.ImageField(write_only=True)
+    thumbnail_image_200 = DefaultStaticImageSerializerField(read_only=True)
 
     class Meta:
         model = Profile
@@ -26,9 +28,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             'main_credential',
             'description',
             'follow_relation_pk',
-        )
-        read_only_fields = (
-            'thumbnail_image_200',
         )
 
     def get_follow_relation_pk(self, obj):
@@ -46,6 +45,9 @@ class ProfileSerializer(serializers.ModelSerializer):
                 return user_follow_relation.pk
         else:
             return None
+    #
+    # def get_thumbnail_image_200(self, obj):
+    #     return obj.thumbnail_image_200.url
 
     def update(self, instance, validated_data):
         """
