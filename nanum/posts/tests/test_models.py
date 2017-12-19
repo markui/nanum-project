@@ -9,40 +9,46 @@ User = get_user_model()
 class CommentModelTest(AnswerBaseTest):
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData()
-        u1 = User.objects.get(pk=1)
-        u2 = User.objects.get(pk=2)
-        q1 = Question.objects.get(pk=1)
-        a1 = Answer.objects.get(pk=1)
+        user = cls.create_user(name="abc@abc.com", email="abc@abc.com")
+        topic = cls.create_topic(user=user, name="토픽")
+        question = cls.create_question(user=user, topic=topic)
+        answer = cls.create_answer(user=user, question=question)
 
         qc1 = Comment.objects.create(
-            user=u2,
-            content="질문1 코멘트 내용",
-            comment_post_intermediate=CommentPostIntermediate.objects.get(question=q1),
+            user=user,
+            content="질문 코멘트",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(question=question),
         )
-        qc1_nested_1 = Comment.objects.create(
-            user=u1,
-            content="질문1 코멘트 nested 코멘트",
-            comment_post_intermediate=CommentPostIntermediate.objects.get(question=q1),
+        Comment.objects.create(
+            user=user,
+            content="질문 코멘트 nested 코멘트",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(question=question),
             parent=qc1,
         )
         ac1 = Comment.objects.create(
-            user=u1,
-            content="질문1 답변1 코멘트 내용",
-            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=a1),
+            user=user,
+            content="답변 코멘트",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=answer),
         )
         ac1_nested_1 = Comment.objects.create(
-            user=u2,
-            content="질문1 답변1 nested 코멘트",
-            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=a1),
+            user=user,
+            content="답변 nested 코멘트 1",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=answer),
             parent=ac1,
         )
-        ac1_nested_1 = Comment.objects.create(
-            user=u2,
-            content="질문1 답변1 nested 코멘트",
-            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=a1),
-            parent=ac1,
+        Comment.objects.create(
+            user=user,
+            content="답변 nested 코멘트 1 nested 코멘트",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=answer),
+            parent=ac1_nested_1,
         )
+        Comment.objects.create(
+            user=user,
+            content="답변 nested 코멘트 2 nested 코멘트",
+            comment_post_intermediate=CommentPostIntermediate.objects.get(answer=answer),
+            parent=ac1_nested_1,
+        )
+
 
     def test_comment_string_method(self):
         """
@@ -50,7 +56,7 @@ class CommentModelTest(AnswerBaseTest):
         :return:
         """
         ac1_nested_1 = Comment.objects.get(pk=4)
-        self.assertEqual(str(ac1_nested_1), "abc2@abc.com - 질문1 답변1 nested 코멘트")
+        self.assertEqual(str(ac1_nested_1), "abc@abc.com - 답변 nested 코멘트 1")
 
     def test_comment_related_post_property(self):
         """

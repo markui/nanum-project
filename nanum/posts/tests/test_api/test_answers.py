@@ -8,7 +8,7 @@ from .custom_base import AnswerBaseTest
 User = get_user_model()
 
 
-class AnswerListCreateAPIsTest(AnswerBaseTest):
+class AnswerListCreateAPITest(AnswerBaseTest):
     # Url Reverse 테스트
     def test_answer_list_url_reverse(self):
         url = reverse(self.URL_API_ANSWER_LIST_CREATE_NAME)
@@ -29,7 +29,8 @@ class AnswerListCreateAPIsTest(AnswerBaseTest):
         data = {
             'user': u1.pk,
             'question': question,
-            'content': self.ANSWER_CONTENT,
+            'content': self.ANSWER_DELTA,
+            'content_html': self.ANSWER_HTML,
         }
         response = self.client.post(self.URL_API_ANSWER_LIST_CREATE, data=data, format='json')
         # Status 확인

@@ -1,11 +1,6 @@
-import base64
-import os
-
 from django.contrib.auth import get_user_model
-from django.test import Client
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 
-from config.settings import BASE_DIR
 from posts.models import Question, Answer
 from topics.models import Topic
 
@@ -13,15 +8,19 @@ User = get_user_model()
 
 
 class AnswerBaseTest(APITestCase):
-    URL_API_ANSWER_LIST_CREATE_NAME = 'post:answer:list_create'
-    URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'post:answer:list_main_feed'
+    # URL
+    URL_API_ANSWER_LIST_CREATE_NAME = 'post:answer:answer-list'
+    URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'post:answer:answer-main'
+    URL_API_ANSWER_DETAIL_NAME = 'post:answer:answer-detail'
     URL_API_ANSWER_LIST_CREATE = '/post/answer/'
     URL_API_ANSWER_MAIN_FEED_LIST = '/post/answer/main_feed/'
+    URL_API_ANSWER_DETAIL = '/post/answer/(?P<pk>\d+)/'
     URL_FILTER_USER = 'user={pk}'
     URL_FILTER_TOPIC = 'topic={pk}'
     URL_FILTER_BOOKMARKED = 'bookmarked={pk}'
     URL_FILTER_ORDERING = 'ordering={field}'
 
+    # DATA
     USER_EMAIL_LIST = [
         'abc1@abc.com',
         'abc2@abc.com',
@@ -35,56 +34,52 @@ class AnswerBaseTest(APITestCase):
         '우주과학'
     ]
     QUESTION_CONTENT = '{topic} - {user}의 질문'
-
-    img_path = os.path.join(os.path.join(os.path.join(os.path.join(BASE_DIR, 'posts'), 'tests'), 'test_api'),
-                                   'image.jpg')
-    with open(img_path, 'rb') as image:
-        data = image.read()
-    data = base64.b64encode(data)
-    data_decode = base64.b64decode(data)
-    IMAGE_BASE64 = base64.b64decode(data_decode)
-
-
-    content = "{question} - {user}의 답변"
-    ANSWER_CONTENT = {
-        "ops": [
-            {
-                "insert": content
-            },
-            {
-                "insert": {
-                    "image": f"{IMAGE_BASE64}"
-                }
-            }
-        ]
-    }
+    ANSWER_DELTA = {"ops": [{"insert": "Test Text\n"}]}
+    ANSWER_HTML = '<div class="ql-editor" data-gramm="false" contenteditable="true" data-placeholder="Compose an epic...">' \
+                  '<p>Test Text</p>' \
+                  '</div>' \
+                  '<div class="ql-clipboard" contenteditable="true" tabindex="-1"></div>' \
+                  '<div class="ql-tooltip ql-hidden">' \
+                  '<a class="ql-preview" target="_blank" href="about:blank"></a>' \
+                  '<input type="text" data-formula="e=mc^2" data-link="https://quilljs.com" data-video="Embed URL">' \
+                  '<a class="ql-action"></a>' \
+                  '<a class="ql-remove"></a>' \
+                  '</div>'
 
     @classmethod
     def create_user(cls, name, email):
         return User.objects.create_user(name=name, email=email, password='password')
 
     @classmethod
-    def create_topic(cls, user=None, name=None):
+    def create_topic(cls, user, name):
         return Topic.objects.create(creator=user, name=name)
 
     @classmethod
-    def create_question(cls, user=None, topic=None):
+    def create_question(cls, user, topic):
         content = cls.QUESTION_CONTENT.format(topic=topic, user=user)
         q = Question.objects.create(user=user, content=content)
         q.topics.add(topic)
         return q
 
     @classmethod
-    def create_answer(cls, user=None, question=None):
-        content = cls.content.format(question=question, user=user)
-        client = Client()
-        cls.ANSWER_CONTENT['ops'][0]["insert"] = content
-        data = {
-            'user': user,
-            'question': question,
-            'content': cls.ANSWER_CONTENT,
+    def create_answer(cls, user: User, question: Question):
+        # Answer의 경우 QuillJS Data의 포맷을 받아 생성해야 하기 때문에 REST API를 통해서 생성
+        client = APIClient()
+        login_data = {
+            'email': user.email,
+            'password': 'password',
         }
-        return client.post(cls.URL_API_ANSWER_LIST_CREATE, data=data)
+        response = client.post('/user/login/', data=login_data)
+        token = response.data['token']
+        client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+        data = {
+            'user': user.pk,
+            'question': question.pk,
+            'content': cls.ANSWER_DELTA,
+            'content_html': cls.ANSWER_HTML,
+        }
+        a = client.post(cls.URL_API_ANSWER_LIST_CREATE, data=data, format='json')
+        return Answer.objects.get(pk=a.data['pk'])
 
     @classmethod
     def setUpTestData(cls):
@@ -124,4 +119,3 @@ class AnswerBaseTest(APITestCase):
                     question = Question.objects.get(user=question_user, topics=topic)
                     answer = cls.create_answer(user=user, question=question)
                     answers.append(answer)
-
