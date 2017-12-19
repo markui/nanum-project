@@ -6,12 +6,14 @@ from rest_framework.response import Response
 from posts.models import Question
 from posts.utils.filters import QuestionFilter
 from posts.utils.pagination import CustomPagination
-from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateDestroySerializer
+from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateDestroySerializer, \
+    QuestionFilterGetSerializer
 
 __all__ = (
     'QuestionListCreateView',
     'QuestionMainFeedListView',
     'QuestionRetrieveUpdateDestroyView',
+    'QuestionFilterListView',
 )
 
 User = get_user_model()
@@ -75,6 +77,22 @@ class QuestionListCreateView(generics.ListCreateAPIView):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+# 해당 유저가 전문분야 설정에서 선택한 토픽들
+class QuestionFilterListView(generics.ListAPIView):
+    queryset = Question.objects.all()
+    serializer_class = QuestionFilterGetSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+    )
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.topic_expertise.all()
+        # queryset = Question.objects.filter(topics__in=expertise_topics)
+        # queryset = Topic.objects.filter(pk__in=expertise_topics)
+        return queryset
 
 
 # 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed)

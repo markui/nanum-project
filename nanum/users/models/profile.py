@@ -4,6 +4,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from utils import rescale
+from ..utils import fields
 from ..utils import (
     user_img_path,
     user_thumb_img_25_path,
@@ -60,9 +61,12 @@ class Profile(models.Model):
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
     image = models.ImageField(upload_to=user_img_path, blank=True, null=True)
     # A * A 픽셀별 썸네일 이미지
-    thumbnail_image_200 = models.ImageField(upload_to=user_thumb_img_200_path, blank=True, null=True)
-    thumbnail_image_50 = models.ImageField(upload_to=user_thumb_img_50_path, blank=True, null=True)
-    thumbnail_image_25 = models.ImageField(upload_to=user_thumb_img_25_path, blank=True, null=True)
+    thumbnail_image_200 = fields.DefaultStaticImageField(upload_to=user_thumb_img_200_path, blank=True, null=True,
+                                                         default_image_path='default_profile_image/thumbnail_image_200.png')
+    thumbnail_image_50 = fields.DefaultStaticImageField(upload_to=user_thumb_img_50_path, blank=True, null=True,
+                                                        default_image_path='default_profile_image/thumbnail_image_50.png')
+    thumbnail_image_25 = fields.DefaultStaticImageField(upload_to=user_thumb_img_25_path, blank=True, null=True,
+                                                        default_image_path='default_profile_image/thumbnail_image_25.png')
 
     # 여러 credential 중에서 다른 유저들에게 메인으로 표시될 필드
     main_credential = models.CharField(max_length=100, blank=True)
