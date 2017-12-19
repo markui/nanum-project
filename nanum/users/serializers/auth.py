@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from users.utils.fields import DefaultStaticImageSerializerField
+
 User = get_user_model()
 
 
@@ -9,8 +11,8 @@ class EmailUserSerializer(serializers.ModelSerializer):
     """
     이메일 유저 정보를 보여주기 위한 Serializer
     """
-    thumbnail_image_25 = serializers.ImageField(source='profile.thumbnail_image_25')
-    thumbnail_image_50 = serializers.ImageField(source='profile.thumbnail_image_50')
+    thumbnail_image_25 = DefaultStaticImageSerializerField(source='profile.thumbnail_image_25', read_only=True)
+    thumbnail_image_50 = DefaultStaticImageSerializerField(source='profile.thumbnail_image_50', read_only=True)
 
     class Meta:
         model = User
@@ -118,7 +120,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     """
     code = serializers.CharField(write_only=True)
     uid = serializers.CharField(write_only=True)
-
 
 
 class PasswordResetSerializer(serializers.Serializer):
