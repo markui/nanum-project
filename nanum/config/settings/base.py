@@ -155,6 +155,7 @@ TEMPLATES = [
 ]
 
 # Sentry
+
 RAVEN_CONFIG = {
     'dsn': config_secret_common['sentry']['raven_dsn'],
     # If you are using git, you can also automatically configure the
@@ -164,6 +165,7 @@ RAVEN_CONFIG = {
 # Getstream
 STREAM_API_KEY = config_secret_common['getstream']['api_key']
 STREAM_API_SECRET = config_secret_common['getstream']['api_secret']
+
 
 # Celery
 # CELERY_BROKER_URL = 'amqp://localhost'

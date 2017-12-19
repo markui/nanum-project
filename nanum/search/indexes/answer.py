@@ -111,7 +111,7 @@ def create(sender: Answer, instance: Answer, created: bool = True, **kwargs):
         )
         obj.save()
         return obj.to_dict(include_meta=True)
-    except elasticsearch.exceptions.ConnectionError:
+    except:
         return
 
 
