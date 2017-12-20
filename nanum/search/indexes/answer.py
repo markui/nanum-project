@@ -1,4 +1,3 @@
-import elasticsearch
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from elasticsearch5 import Elasticsearch
@@ -128,3 +127,5 @@ def delete(sender: Answer, instance: Answer, **kwargs):
         doc.delete()
     except:
         pass
+
+
