@@ -153,24 +153,43 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         query_params로의 필터링이 잘 작동하는지 확인
         :return:
         """
+        temp_user = self.create_user()
+        # print(f'temp_user : {temp_user.pk}')
+        self.create_question(user=temp_user)
+        temp_topic = self.create_topic(creator=temp_user)
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
+        response = self.client.get(url)
+        # num_of_questions = response.data.get('count')
+        # max_page = (num_of_questions / 5) + 1
+
 
         # 하나의 query parameter에 대해 검사
         for query_param in self.query_params:
-            url += f'?{query_param}=1'
+            if query_param == 'topic':
+                url += f'?{query_param}={temp_topic.pk}'
+            elif query_param == 'page':
+                url += f'?{query_param}=1'
+            else:
+                url += f'?{query_param}={temp_user.pk}'
             response = self.client.get(url)
             # status code가 200인지 확인
+            # print(f'url of query_param : {url}')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            # print(f'url : {url}')
+            # print(f'response : {response}')
             url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
 
         # 연속적인 query parameters에 대해서 검사
         num_of_query_params = randint(1, len(self.query_params))
         # query_params 중 임의의 값을 1부터 len(query_params) 사이의 임의의 값 만큼 순회하여 확인
         for i in range(num_of_query_params):
-            random_of_query_params = random.choice(self.query_params)
-            print(random_of_query_params)
-            url += f'?{random_of_query_params}=1'
+            random_query_of_query_params = random.choice(self.query_params)
+            print(random_query_of_query_params)
+            if random_query_of_query_params == 'topic':
+                url += f'?{random_query_of_query_params}={temp_topic.pk}'
+            elif random_query_of_query_params == 'page':
+                url += f'?{random_query_of_query_params}=1'
+            else:
+                url += f'?{random_query_of_query_params}={temp_user.pk}'
             print(f'url : {url}')
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
