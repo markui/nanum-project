@@ -3,7 +3,7 @@ import json
 import random
 import re
 import string
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from io import BytesIO
 
 from PIL import Image as pil
@@ -307,7 +307,6 @@ class DjangoQuill:
                         content.decompose()
         return str(soup)
 
-
     def update_delta_operation_list(self, queryset: QuerySet,
                                     content: dict, parent_instance):
         """
@@ -321,30 +320,33 @@ class DjangoQuill:
 
         # Queryset 에서 {Quill operation : instance, ...} 형식의 dict 생성
         # Quill operation 은 json dumps를 통한 string 형태
-        operation_instance_dict = {
-            json.dumps(qdo_instance.delta_operation): qdo_instance
-            for qdo_instance
-            in queryset
-        }
+        operation_instance_dict = defaultdict(list)
+        for qdo_instance in queryset:
+            operation_instance_dict[json.dumps(qdo_instance.delta_operation)].append(qdo_instance)
 
         # Request.data.content 에서 {Quill operation : line_number, ...} 형식의 dict 생성
         # Quill operation 은 json dumps를 통한 string 형태
-        operation_lineno_dict = {
-            json.dumps(qdo): line_no
-            for line_no, qdo
-            in enumerate(self.get_delta_operation_list(content, iterator=True), start=1)
-        }
+        operation_lineno_dict = defaultdict(list)
+        for line_no, qdo in enumerate(self.get_delta_operation_list(content, iterator=True), start=1):
+            operation_lineno_dict[json.dumps(qdo)].append(line_no)
 
         # 델타 줄의 string들에 대해서 set operation을 실행,
         # to_update: 같은 내용의 경우, line number를 update 해야 되는 내용
         # to_create: 새로운 내용일 경우, 새 instance를 create 해야 되는 내용
         # to_delete: 지워야 하는 내용일 경우, 지워진 내용
-        instance_delta_set = set(operation_instance_dict.keys())
-        request_delta_set = set(operation_lineno_dict.keys())
-        to_update = instance_delta_set & request_delta_set
-        to_create = request_delta_set - instance_delta_set
-        to_delete = instance_delta_set - request_delta_set
-
+        instance_delta_list = list()
+        for item in operation_instance_dict.items():
+            for i in range(len(item[1])):
+                instance_delta_list.append(item[0])
+        request_delta_list = list()
+        for item in operation_lineno_dict.items():
+            for i in range(len(item[1])):
+                request_delta_list.append(item[0])
+        set_i = set(instance_delta_list)
+        set_r = set(request_delta_list)
+        to_update = [item for item in instance_delta_list if item in set_i and item in set_r]
+        to_create = [item for item in request_delta_list if item not in set_i]
+        to_delete = [item for item in instance_delta_list if item not in set_r]
         to_update_list = self._get_instantces_to_update(
             to_update=to_update,
             operation_lineno_dict=operation_lineno_dict,
@@ -361,7 +363,7 @@ class DjangoQuill:
         )
         return to_update_list, to_create_list, to_delete_list
 
-    def _get_instantces_to_update(self, to_update, operation_lineno_dict, operation_instance_dict):
+    def _get_instantces_to_update(self, to_update: list, operation_lineno_dict: list, operation_instance_dict: list):
         """
         이미 존재하는 operation에 대해 line number을 업데이트
 
@@ -370,14 +372,15 @@ class DjangoQuill:
         :param operation_instance_dict:
         :return:
         """
+        result = list()
         # update
         # replace instance line_no with request line_no
         for delta_operation in to_update:
-            new_line_no = operation_lineno_dict[delta_operation]
-            dt_instance = operation_instance_dict[delta_operation]
-
-            dt_instance.line_no = new_line_no
-            yield dt_instance
+            new_line_nos = operation_lineno_dict[delta_operation]
+            dt_instances = operation_instance_dict[delta_operation]
+            for instance, line_no in zip(dt_instances, new_line_nos):
+                instance.line_no = line_no
+                yield instance
 
     def _get_instantces_to_create(self, to_create, operation_lineno_dict, parent_instance):
         """
@@ -389,11 +392,12 @@ class DjangoQuill:
         """
         # create
         # create instance with request line_no
+
         for delta_operation_str in to_create:
             # Get line_no
             # Get delta_operation
             # instantiate model for bulk create
-            line_no = operation_lineno_dict[delta_operation_str]
+            line_no = operation_lineno_dict[delta_operation_str].pop()
             quill_delta_operation = json.loads(json.loads((json.dumps(delta_operation_str))))
             instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
@@ -412,5 +416,5 @@ class DjangoQuill:
         # delete
         # delete instance with delta op value
         for delta_operation in to_delete:
-            instance = operation_instance_dict[delta_operation]
+            instance = operation_instance_dict[delta_operation].pop()
             yield instance
