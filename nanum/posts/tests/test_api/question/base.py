@@ -27,7 +27,7 @@ class QuestionBaseTest(APITestCase):
     # 선택된 유저가 생성할 질문의 수
     num_of_questions = randint(11, 20)
     # 생성될 랜덤한 토픽의 수
-    num_of_topics = randrange(5, 10)
+    num_of_topics = randrange(1, 10)
 
     # query parameters
     query_params = [
@@ -66,11 +66,13 @@ class QuestionBaseTest(APITestCase):
     def create_random_users(self, is_none=False):
         """
         랜덤한 수의 유저를 생성한다.
+        특정 유저를 지정하거나, 랜덤한 유저를 지정할 수 있다.
         params :
             self.num_of_users
+        :return: User.objects.all()
         """
         # 랜덤한 수의 유저 생성(is_none : True 일 경우 None객체 생성)
-        # But, user단에서 none객체 생성을 막아놓아서 테스트 불가
+        # user단에서 none객체 생성을 막아놓아서 테스트 불가
         for i in range(self.num_of_users):
             if is_none:
                 self.create_user(is_none=True)
@@ -79,26 +81,40 @@ class QuestionBaseTest(APITestCase):
         print(f'User.objects.count() : {User.objects.count()}')
         print(f'num_of_users : {self.num_of_users}')
         self.assertEqual(User.objects.count(), self.num_of_users)
+        return User.objects.all()
 
     # 랜덤한 다수의 토픽 생성 테스트
-    def create_random_topics(self):
+    def create_random_topics(self, user):
         """
-        유저의 pk의 값으로 랜덤한 수의 토픽을 생성한다.
+        1. 유저의 pk의 값으로 랜덤한 수의 토픽을 생성한다.
+        2. 생성된 토픽들의 pk를 리스트에 저장해 Topic Objects를 리턴한다.
         params :
             self.num_of_users
             self.num_of_topics
+        :return: Topic.objects.all()
         """
+        # 리턴될 토픽 리스트
+        topic_list = list()
         for i in range(self.num_of_topics):
-            # 랜덤한 유저(creator)로 토픽 생성
-            random_user_pk = randrange(self.num_of_users) + 1
-            random_user = User.objects.get(pk=random_user_pk)
+            # 특정 유저(creator)로 다수의 토픽 생성
+            if user:
+                user = User.objects.get(pk=user.pk)
+            # 랜덤한 유저(creator)로 다수의 토픽 생성
+            else:
+                random_user_pk = randrange(self.num_of_users) + 1
+                user = User.objects.get(pk=random_user_pk)
 
-            self.create_topic(creator=random_user, name=f'토픽 {i+1}')
+            topic = self.create_topic(creator=user, name=f'토픽 {i+1}')
+            # 토픽이 생성될 때 마다 토픽 리스트에 추가
+            topic_list.append(topic.pk)
 
         # print(f'Topic.objects.count() : {Topic.objects.count()}')
         # print(f'num_of_topics : {self.num_of_topics}')
         print(f'====Topic.objects.all()====\n  {Topic.objects.all()}')
         self.assertEqual(Topic.objects.count(), self.num_of_topics)
+
+        # 만들어진 토픽들 리턴(all을 해도 되나 좀 더 명시적으로 작성)
+        return Topic.objects.filter(pk__in=topic_list)
 
     # 랜덤한 다수의 질문 생성 테스트
     def create_random_questions(self):
@@ -108,6 +124,7 @@ class QuestionBaseTest(APITestCase):
         params :
             self.random_user_pk
             self.num_of_topics
+        :return: Question.objects.all()
         """
         self.create_random_topics()
         # 질문의 add될 토픽 개수
@@ -128,4 +145,6 @@ class QuestionBaseTest(APITestCase):
                 random_topic = Topic.objects.get(pk=topic_pk)
                 # 생성된 질문에 선택된 토픽 추가
                 question.topics.add(random_topic)
+
         self.assertEqual(Question.objects.count(), self.num_of_questions)
+        return Question.objects.all()

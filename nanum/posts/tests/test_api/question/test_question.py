@@ -1,4 +1,4 @@
-from random import randrange, randint
+from random import randint
 import random
 
 from django.contrib.auth import get_user_model
@@ -17,7 +17,40 @@ from posts.tests.test_api.question.base import QuestionBaseTest
 User = get_user_model()
 
 
-class QuestionListCreateViewTest(QuestionBaseTest):
+class QuestionCreateViewTest(QuestionBaseTest):
+    """
+    Question Objects 생성 테스트입니다.
+    Question의 파라미터로 Topic 객체가 들어가므로 여러 Topic을 생성 후
+    Question 객체의 생성을 테스트 합니다.
+    url :       /post/question/
+    method :    post
+    """
+
+    def test_create_question(self):
+        # 토픽 리스트를 저장 할 리스트
+        topic_list = list()
+        # /post/question/
+        url = self.URL_API_QUESTION_LIST_CREATE
+        # print(url)
+        user = self.create_user()
+        self.client.force_authenticate(user=user)
+        topics = self.create_random_topics(user=user)
+        # 토픽의 pk를 하나씩 리스트에 저장
+        for topic in topics:
+            topic_list.append(topic.pk)
+        # print(f'topics : {topic_list}')
+        data = {
+            'content': 'create question test content',
+            'topics': topic_list,
+        }
+        print(f'data : {data}')
+
+        response = self.client.post(url, data=data, format='json')
+        print(response)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class QuestionListViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionListCreateView
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
@@ -40,7 +73,6 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         """
         posts.apis.question.QuestionListCreateView 뷰에 대해
         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
-        :return:
         """
         resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
         print(f'view class test : {resolve_match.func.view_class}')
