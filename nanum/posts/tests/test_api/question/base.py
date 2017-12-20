@@ -70,7 +70,7 @@ class QuestionBaseTest(APITestCase):
             self.num_of_users
         """
         # 랜덤한 수의 유저 생성(is_none : True 일 경우 None객체 생성)
-        # user단에서 none객체 생성을 막아놓아서 테스트 불가
+        # But, user단에서 none객체 생성을 막아놓아서 테스트 불가
         for i in range(self.num_of_users):
             if is_none:
                 self.create_user(is_none=True)

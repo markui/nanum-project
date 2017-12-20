@@ -66,26 +66,22 @@ class QuestionGetSerializer(serializers.ModelSerializer):
 
 
 class QuestionFilterGetSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        lookup_field='pk',
-        read_only=True,
-        view_name='topic:topic-detail',
-    )
+    # topics = serializers.HyperlinkedIdentityField(
+    #     lookup_field='pk',
+    #     read_only=True,
+    #     view_name='topic:topic-detail',
+    # )
 
     class Meta:
         model = Topic
         fields = (
             'pk',
-            'url',
             'name',
         )
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        data = {
-            'topics': ret,
-        }
-        return data
+        return ret
 
 
 class QuestionPostSerializer(serializers.ModelSerializer):

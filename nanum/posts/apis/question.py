@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from posts.models import Question
 from posts.utils.filters import QuestionFilter
 from posts.utils.pagination import CustomPagination
+from topics.models import Topic
 from ..serializers.question import QuestionGetSerializer, QuestionPostSerializer, QuestionUpdateDestroySerializer, \
     QuestionFilterGetSerializer
 
@@ -93,14 +94,10 @@ class QuestionFilterListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        queryset = Question.objects.exclude(user=user)
-
         # 사용자가 선택한 전문분야 토픽
-        topic_expertise = user.topic_expertise.values_list('id', flat=True)
-        topics_queryset = queryset & Question.objects.filter(topics__in=topic_expertise)
-        # queryset = Question.objects.filter(topics__in=expertise_topics)
-        # queryset = Topic.objects.filter(pk__in=expertise_topics)
-        return topics_queryset
+        topic_expertise = user.topic_expertise.all()
+        queryset = Topic.objects.filter(pk__in=topic_expertise)
+        return queryset
 
 
 # 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed)
