@@ -162,6 +162,10 @@ RAVEN_CONFIG = {
     'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
 }
 
+# Getstream
+STREAM_API_KEY = config_secret_common['getstream']['api_key']
+STREAM_API_SECRET = config_secret_common['getstream']['api_secret']
+
 # Celery
 # CELERY_BROKER_URL = 'amqp://localhost'
 
