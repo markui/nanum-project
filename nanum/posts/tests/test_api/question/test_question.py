@@ -110,12 +110,15 @@ class QuestionListCreateViewTest(QuestionBaseTest):
             result_index += 1
 
     # user가 None이면 제외되는지 확인
+    # # user단에서 none객체 생성을 막아놓아서 테스트 불가
     def test_get_question_list_exclude_user_is_none(self):
         """
         user가 None인 Question이 QuestionList get 요청에서 제외되는지 테스트
         :return:
         """
         user = self.create_user()
+        # user = self.create_user(is_none=True)
+
         num_user_none_questions = randint(1, 10)
         num_questions = randint(11, 20)
         # default user는 None

@@ -40,14 +40,21 @@ class QuestionBaseTest(APITestCase):
         'page',
     ]
 
+    # 유저 생성
     @staticmethod
-    def create_user(email='siwon@siwon.com', password='dltldnjs'):
+    def create_user(email='siwon@siwon.com', password='dltldnjs', is_none=False):
+        if is_none:
+            # user단에서 none객체 생성을 막아놓아서 테스트 불가(기본값과 같은 값이 들어가도록 설정)
+            # return User.objects.create_user()
+            return User.objects.create_user(email=email, password=password)
         return User.objects.create_user(email=email, password=password)
 
+    # 토픽 생성
     @staticmethod
     def create_topic(creator=None, name='temp_topic'):
         return Topic.objects.create(creator=creator, name=name)
 
+    # 질문 생성
     @staticmethod
     def create_question(user=None, content='default : 임시 컨텐츠 입니다.'):
         return Question.objects.create(
@@ -55,21 +62,29 @@ class QuestionBaseTest(APITestCase):
             content=content,
         )
 
-    # 랜덤한 유저 생성 테스트
-    def create_random_users(self):
+    # 랜덤한 다수의 유저 생성 테스트
+    def create_random_users(self, is_none=False):
         """
         랜덤한 수의 유저를 생성한다.
         param :
             self.num_of_users
         """
-        # 랜덤한 수의 유저 생성
-        for i in range(self.num_of_users):
-            self.create_user(email=f'user_{i+1}@user.com')
-        print(f'User.objects.count() : {User.objects.count()}')
-        print(f'num_of_users : {self.num_of_users}')
-        self.assertEqual(User.objects.count(), self.num_of_users)
+        # 랜덤한 수의 유저 생성(is_none : True 일 경우 None객체 생성)
+        if is_none:
+            # user단에서 none객체 생성을 막아놓아서 테스트 불가
+            for i in range(self.num_of_users):
+                self.create_user(is_none=True)
+            print(f'User.objects.count() : {User.objects.count()}')
+            print(f'num_of_users : {self.num_of_users}')
+            self.assertEqual(User.objects.count(), self.num_of_users)
+        else:
+            for i in range(self.num_of_users):
+                self.create_user(email=f'user_{i+1}@user.com')
+            print(f'User.objects.count() : {User.objects.count()}')
+            print(f'num_of_users : {self.num_of_users}')
+            self.assertEqual(User.objects.count(), self.num_of_users)
 
-    # 랜덤한 토픽 생성 테스트
+    # 랜덤한 다수의 토픽 생성 테스트
     def create_random_topics(self):
         """
         유저의 pk의 값으로 랜덤한 수의 토픽을 생성한다.
@@ -89,7 +104,7 @@ class QuestionBaseTest(APITestCase):
         print(f'====Topic.objects.all()====\n  {Topic.objects.all()}')
         self.assertEqual(Topic.objects.count(), self.num_of_topics)
 
-    # 랜덤한 질문 생성 테스트
+    # 랜덤한 다수의 질문 생성 테스트
     def create_random_questions(self):
         """
         1. 질문에 추가 할 토픽들을 만든다.
