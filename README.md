@@ -12,7 +12,7 @@ API Link: https://siwon.me <br>
 Website Link: To Be Posted
 
 Nanum은 미국의 지식 공유 SNS Quora에서 영감을 받아 시작하게된 프로젝트입니다.
-해당 Repository는 Django를 이용한 API 서버의 소스코드입니다. 
+해당 Repository는 API 서버의 소스코드입니다. 
 
 ## Backend Framework
 #### Django
