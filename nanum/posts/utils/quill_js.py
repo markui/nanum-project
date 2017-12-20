@@ -24,8 +24,8 @@ class DjangoQuill:
     """
 
     def __init__(self, model=None, parent_model=None):
-        self.model: QuerySet = model
-        self.parent_model: QuerySet = parent_model
+        self.model = model
+        self.parent_model = parent_model
         self.parent_instance = None
 
     #     self._validate()
@@ -133,6 +133,8 @@ class DjangoQuill:
                 line_no=line_no,
                 parent_instance=parent_instance
             )
+            if type(model_instance) == Exception:
+                raise model_instance
             yield model_instance
 
     # def _get_delta_operation_instance(self, tup: tuple):
@@ -164,7 +166,6 @@ class DjangoQuill:
             "line_no": line_no,
             field_name: parent_instance
         }
-
         return self._instantiate(**kwargs)
 
     def _instantiate(self, insert_value, **kwargs):
@@ -181,20 +182,18 @@ class DjangoQuill:
         """
         # Attribute, line_no, Foreignkey field 를 기반으로 model object를 일단 instantiate
         instance = self.model(**kwargs)
-
         # insert 안에 image가 있을 경우
         # image 가 base64인 경우 instance에 이미지 추가
-        try:
-            image_value = insert_value.get('image')
+        image_value = insert_value.get('image') if type(insert_value) == dict else None
+        if image_value:
             try:
                 decoded_data = self._parse_base64(image_base64=image_value)
                 filename = self._generate_filename(**kwargs)
                 image = self._image_process(data=decoded_data, max_size=600)
-
                 instance.image.save(
                     filename,
                     image,
-                    save=False
+                    save=False,
                 )
                 url = url_query_cleaner(instance.image.url)
                 instance.image_insert_value = {"image": f"{url}"}
@@ -206,10 +205,9 @@ class DjangoQuill:
                 if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
                 else:
-                    raise ValueError("올바른 형태의 이미지가 아닙니다.")
-
+                    raise ValueError("올바른 형태의 이미지 Base64가 아닙니다. data:image/png;base64로 시작하는지 확인해주세요 ")
         # insert 안에 Text만 있을 경우
-        except:
+        else:
             instance.insert_value = insert_value
         return instance
 
@@ -220,14 +218,11 @@ class DjangoQuill:
         :return:
         """
         data = re.match(r'\w+:image\/\w+;\w+,(.+)', image_base64)
-
         # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
         byte_data_string = data.group(1)
-
         # image_data_string 파싱에 실패 했을 경우
         if not byte_data_string:
             raise AttributeError
-
         byte_data_base64 = bytes(byte_data_string, 'utf-8')
         decoded_data = base64.b64decode(byte_data_base64)
         return decoded_data

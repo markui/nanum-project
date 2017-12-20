@@ -1,5 +1,9 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
+from django.db.transaction import atomic
+
+from posts.models import Answer
 
 __all__ = (
     'QuestionBookmarkRelation',
@@ -52,17 +56,17 @@ class AnswerBookmarkRelation(models.Model):
         unique_together = ('user', 'answer')
 
     def save(self, *args, **kwargs):
-        super().save(self, *args, **kwargs)
-        if self.answer.bookmark_count < 0:
-            self.answer.bookmark_count = 1
-        else:
-            self.answer.bookmark_count += 1
-        self.answer.save()
+        with atomic():
+            Answer.objects.select_for_update().\
+                filter(pk=self.answer.pk).\
+                update(bookmark_count=F('bookmark_count')+1)
+            super().save(*args, **kwargs)
+
 
     def delete(self, *args, **kwargs):
-        super().delete(self, *args, **kwargs)
-        if self.answer.bookmark_count > 0:
-            self.answer.bookmark_count -= 1
-        else:
-            self.answer.bookmark_count = 0
-        self.answer.save()
+        with atomic():
+            Answer.objects.select_for_update().\
+                filter(pk=self.answer.pk).\
+                update(bookmark_count=F('bookmark_count')-1)
+            super().delete(*args, **kwargs)
+

@@ -7,7 +7,7 @@ from topics.models import Topic
 User = get_user_model()
 
 
-class AnswerBaseTest(APITestCase):
+class CustomBaseTest(APITestCase):
     # URL
     URL_API_ANSWER_LIST_CREATE_NAME = 'post:answer:answer-list'
     URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'post:answer:answer-main'
@@ -62,24 +62,22 @@ class AnswerBaseTest(APITestCase):
         return q
 
     @classmethod
-    def create_answer(cls, user: User, question: Question):
+    def create_answer(cls, user: User, question: Question, content=ANSWER_DELTA,
+                      content_html=ANSWER_HTML, return_response=False):
         # Answer의 경우 QuillJS Data의 포맷을 받아 생성해야 하기 때문에 REST API를 통해서 생성
         client = APIClient()
-        login_data = {
-            'email': user.email,
-            'password': 'password',
-        }
-        response = client.post('/user/login/', data=login_data)
-        token = response.data['token']
-        client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+        client.credentials(HTTP_AUTHORIZATION=f'Token {user.token}')
         data = {
             'user': user.pk,
             'question': question.pk,
-            'content': cls.ANSWER_DELTA,
-            'content_html': cls.ANSWER_HTML,
+            'content': content,
+            'content_html': content_html,
+            'published': True,
         }
-        a = client.post(cls.URL_API_ANSWER_LIST_CREATE, data=data, format='json')
-        return Answer.objects.get(pk=a.data['pk'])
+        response = client.post(cls.URL_API_ANSWER_LIST_CREATE, data=data, format='json')
+        if return_response:
+            return response
+        return Answer.objects.get(pk=response.data['pk'])
 
     @classmethod
     def setUpTestData(cls):

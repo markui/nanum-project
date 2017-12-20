@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 
-from posts.tests.test_api.custom_base import AnswerBaseTest
+from posts.models import *
 from topics.models import Topic
-from ..models import *
+from ..custom_base import CustomBaseTest
 
 User = get_user_model()
 
 
-class CommentPostIntermediateModelTest(AnswerBaseTest):
+class CommentPostIntermediateModelTest(CustomBaseTest):
     @classmethod
     def setUpTestData(cls):
         user = cls.create_user(name="abc@abc.com", email="abc@abc.com")
@@ -112,7 +112,7 @@ class CommentPostIntermediateModelTest(AnswerBaseTest):
                          )
 
 
-class CommentModelTest(AnswerBaseTest):
+class CommentModelTest(CustomBaseTest):
     @classmethod
     def setUpTestData(cls):
         user = cls.create_user(name="abc@abc.com", email="abc@abc.com")

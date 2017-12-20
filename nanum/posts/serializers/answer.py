@@ -102,7 +102,7 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
     def get_user_bookmark_relation(self, obj):
         try:
             relation_pk = AnswerBookmarkRelation.objects.get(user=self.request_user, answer=obj).pk
-            view_name = 'user:answer-bookmark-relation-detaion'
+            view_name = 'user:answer-bookmark-relation-detaiㅣ'
             kwargs = {'pk': relation_pk}
             return reverse(view_name, kwargs=kwargs, request=self.request)
         except AnswerBookmarkRelation.DoesNotExist:
@@ -154,7 +154,6 @@ class AnswerPostSerializer(BaseAnswerSerializer):
                 content=content,
                 answer_instance=answer_instance
             )
-
             self._save_content_html(
                 content_html=content_html,
                 answer_instance=answer_instance
@@ -173,7 +172,10 @@ class AnswerPostSerializer(BaseAnswerSerializer):
         )
         if not instances:
             raise ParseError({"error": "content가 잘못된 포맷입니다. "})
-        QuillDeltaOperation.objects.bulk_create(instances)
+        try:
+            QuillDeltaOperation.objects.bulk_create(instances)
+        except:
+            raise ParseError({"error": "Delta Operation을 저장하는데 문제가 있었습니다."})
 
     def _save_content_html(self, content_html, answer_instance):
         """
