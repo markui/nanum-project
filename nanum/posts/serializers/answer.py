@@ -210,11 +210,9 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
         queryset = self.instance.quill_delta_operation_set.all()
         content = self.validated_data.pop('content', None)
         content_html = self.validated_data.pop('content_html', None)
-        if not content or not content_html:
-            return
         with atomic():
             self._update_quill_delta_operation(queryset=queryset, content=content)
-            self._save_content_html(content_html=content_html)
+            self._save_content_html(content_html=content_html, answer_instance=self.instance)
 
     def _update_quill_delta_operation(self, queryset: QuerySet, content: dict):
         """
@@ -232,9 +230,3 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
             inst.save()
         for inst in to_delete_list:
             inst.delete()
-
-            # class AnswerFeedFilterSerializer(serializers.Serializer):
-            #     main_feed = serializers.Hyperlink(
-            #         view_name=''
-            #     )
-            #     pass

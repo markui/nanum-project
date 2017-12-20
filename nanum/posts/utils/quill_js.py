@@ -363,7 +363,7 @@ class DjangoQuill:
         )
         return to_update_list, to_create_list, to_delete_list
 
-    def _get_instantces_to_update(self, to_update: list, operation_lineno_dict: list, operation_instance_dict: list):
+    def _get_instantces_to_update(self, to_update: list, operation_lineno_dict: dict, operation_instance_dict: dict):
         """
         이미 존재하는 operation에 대해 line number을 업데이트
 
@@ -382,7 +382,7 @@ class DjangoQuill:
                 instance.line_no = line_no
                 yield instance
 
-    def _get_instantces_to_create(self, to_create, operation_lineno_dict, parent_instance):
+    def _get_instantces_to_create(self, to_create: list, operation_lineno_dict: dict, parent_instance):
         """
 
         :param to_create:
@@ -406,7 +406,7 @@ class DjangoQuill:
             )
             yield instance
 
-    def _get_instantces_to_delete(self, to_delete, operation_instance_dict):
+    def _get_instantces_to_delete(self, to_delete: list, operation_instance_dict: dict):
         """
 
         :param to_delete:
