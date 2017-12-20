@@ -66,29 +66,25 @@ class QuestionBaseTest(APITestCase):
     def create_random_users(self, is_none=False):
         """
         랜덤한 수의 유저를 생성한다.
-        param :
+        params :
             self.num_of_users
         """
         # 랜덤한 수의 유저 생성(is_none : True 일 경우 None객체 생성)
-        if is_none:
-            # user단에서 none객체 생성을 막아놓아서 테스트 불가
-            for i in range(self.num_of_users):
+        # user단에서 none객체 생성을 막아놓아서 테스트 불가
+        for i in range(self.num_of_users):
+            if is_none:
                 self.create_user(is_none=True)
-            print(f'User.objects.count() : {User.objects.count()}')
-            print(f'num_of_users : {self.num_of_users}')
-            self.assertEqual(User.objects.count(), self.num_of_users)
-        else:
-            for i in range(self.num_of_users):
+            else:
                 self.create_user(email=f'user_{i+1}@user.com')
-            print(f'User.objects.count() : {User.objects.count()}')
-            print(f'num_of_users : {self.num_of_users}')
-            self.assertEqual(User.objects.count(), self.num_of_users)
+        print(f'User.objects.count() : {User.objects.count()}')
+        print(f'num_of_users : {self.num_of_users}')
+        self.assertEqual(User.objects.count(), self.num_of_users)
 
     # 랜덤한 다수의 토픽 생성 테스트
     def create_random_topics(self):
         """
         유저의 pk의 값으로 랜덤한 수의 토픽을 생성한다.
-        param :
+        params :
             self.num_of_users
             self.num_of_topics
         """
@@ -109,7 +105,7 @@ class QuestionBaseTest(APITestCase):
         """
         1. 질문에 추가 할 토픽들을 만든다.
         2. 만들어진 질문에 토픽의 개수만큼 topic을 추가한다.
-        param :
+        params :
             self.random_user_pk
             self.num_of_topics
         """
@@ -120,15 +116,16 @@ class QuestionBaseTest(APITestCase):
         # 선택된 랜덤한 user로 랜덤한 개수의 questions 생성
         for i in range(self.num_of_questions):
             temp_user = User.objects.get(pk=self.random_user_pk)
+            # 질문 생성
             question = self.create_question(
                 user=temp_user,
                 content=f'{i+1} 컨텐츠 입니다.',
             )
-            # 하나에 질문에 토픽 개수만큼 랜덤한 토픽을 추가
+            # 생성된 질문에 토픽 개수만큼 랜덤한 토픽을 추가
             for j in range(num_of_topics_of_question):
                 # 랜덤한 토픽 선택
                 topic_pk = randrange(self.num_of_topics) + 1
                 random_topic = Topic.objects.get(pk=topic_pk)
-
+                # 생성된 질문에 선택된 토픽 추가
                 question.topics.add(random_topic)
         self.assertEqual(Question.objects.count(), self.num_of_questions)

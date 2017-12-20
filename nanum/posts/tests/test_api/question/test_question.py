@@ -222,7 +222,6 @@ class QuestionMainFeedListViewTest(QuestionBaseTest):
 class QuestionRetrieveUpdateDestroyViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionRetrieveUpdateDestroyView
 
-    #
     def test_question_create_and_retrieve_object(self):
         temp_user = self.create_user()
         temp_question = self.create_question(user=temp_user)
