@@ -22,6 +22,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
     def test_question_create_url_name_reverse(self):
+
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         print(f'reverse test : {url}')
         self.assertEqual(url, self.URL_API_QUESTION_LIST_CREATE)
@@ -53,24 +54,12 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
         :return:
         """
-        # user = User.objects.create_user(
-        #     email='siwon@siwon.com',
-        #     password='dltldnjs'
-        # )
-        user = self.create_user()
-        topic1 = self.create_topic(creator=user, name='토픽1')
-        topic2 = self.create_topic(creator=user, name='토픽2')
-        topic3 = self.create_topic(creator=user, name='토픽3')
-        num = randrange(10, 30)
-        for index, i in enumerate(range(num)):
-            question = self.create_question(
-                user=user,
-                content=f'{index+1}번째 컨텐츠 입니다.',
-            )
-            question.topics.add(topic1)
-            question.topics.add(topic2)
-            question.topics.add(topic3)
-            print(f'question.content : {question.content}')
+        # 유저 생성
+        self.create_random_users()
+        print(f'User.objects.all() : {User.objects.all()}')
+        # 질문 생성
+        self.create_random_questions()
+        print(f'Queestion.objects.all() : {Question.objects.all()}')
 
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         # page
@@ -80,13 +69,6 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         response = self.client.get(url)
         # status code가 200인지 확인
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # objects.count 결과가 num과 같은지 확인
-        self.assertEqual(Question.objects.count(), num)
-        # 객체의 수가 num과 같은지 확인
-        # json리스트의 길이로 비교하게 되면 count, previous, next, results 무조건 4 출력
-        counted_objects = response.data.get('count')
-        print(f'response.data.get(\'count\') : {counted_objects}')
-        self.assertEqual(counted_objects, num)
 
         # response로 돌아온 객체들이 각각 count, next, previous, results키를 가지고 있는지 확인
         cur_data = response.data
@@ -97,7 +79,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
         # page별로 request url을 다르게 주어 response.data 각각 확인
         result_index = 0
-        for index, i in enumerate(range(num)):
+        for index, i in enumerate(range(self.num_of_questions)):
             if result_index == 5:
                 url = response.data.get('next')
                 response = self.client.get(url)
