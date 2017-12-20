@@ -151,6 +151,10 @@ class QuestionListCreateViewTest(QuestionBaseTest):
     def test_get_question_list_filter_is_working(self):
         """
         query_params로의 필터링이 잘 작동하는지 확인
+
+        ?page=1 : count 0~4
+        ?page=2 : count 5~9
+        ?page=3 : count 10~14
         :return:
         """
         temp_user = self.create_user()
@@ -159,23 +163,22 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         temp_topic = self.create_topic(creator=temp_user)
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         response = self.client.get(url)
-        # num_of_questions = response.data.get('count')
-        # max_page = (num_of_questions / 5) + 1
-
+        num_of_questions = response.data.get('count')
+        max_page = int((num_of_questions / 5)) + 1
 
         # 하나의 query parameter에 대해 검사
         for query_param in self.query_params:
             if query_param == 'topic':
                 url += f'?{query_param}={temp_topic.pk}'
             elif query_param == 'page':
-                url += f'?{query_param}=1'
+                url += f'?{query_param}={max_page}'
             else:
                 url += f'?{query_param}={temp_user.pk}'
             response = self.client.get(url)
             # status code가 200인지 확인
-            # print(f'url of query_param : {url}')
+            print(f'url of query_param : {url}')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            # print(f'response : {response}')
+            print(f'response : {response}')
             url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
 
         # 연속적인 query parameters에 대해서 검사
@@ -187,7 +190,7 @@ class QuestionListCreateViewTest(QuestionBaseTest):
             if random_query_of_query_params == 'topic':
                 url += f'?{random_query_of_query_params}={temp_topic.pk}'
             elif random_query_of_query_params == 'page':
-                url += f'?{random_query_of_query_params}=1'
+                url += f'?{random_query_of_query_params}={max_page}'
             else:
                 url += f'?{random_query_of_query_params}={temp_user.pk}'
             print(f'url : {url}')

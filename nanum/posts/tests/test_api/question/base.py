@@ -17,9 +17,6 @@ class QuestionBaseTest(APITestCase):
     # QuestionFilterListView
     URL_API_QUESTION_FILTER_LIST_NAME = 'post:question:topics-filter'
     URL_API_QUESTION_FILTER_LIST = '/post/question/filter/'
-    # # QuestionRetrieveUpdateDestroyView
-    # URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY_NAME = 'post:question:detail'
-    # URL_API_QUESTION_RETRIEVE_UPDATE_DESTROY = '/post/question/1'
 
     # query parameters
     query_params = [
@@ -46,5 +43,8 @@ class QuestionBaseTest(APITestCase):
             user=user,
             content=content,
         )
+
+    def create_random_questions(self):
+        pass
 
 
