@@ -81,7 +81,10 @@ class QuestionListCreateView(generics.ListCreateAPIView):
 
 # 해당 유저가 전문분야 설정에서 선택한 토픽들
 class QuestionFilterListView(generics.ListAPIView):
-    queryset = Question.objects.all()
+    """
+    queryset을 해당 유저가 전문분야 설정에서 선택한 토픽들을 리턴하는 queryset으로 재정의합니다.
+    """
+
     serializer_class = QuestionFilterGetSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
@@ -89,14 +92,22 @@ class QuestionFilterListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = user.topic_expertise.all()
+
+        queryset = Question.objects.exclude(user=user)
+
+        # 사용자가 선택한 전문분야 토픽
+        topic_expertise = user.topic_expertise.values_list('id', flat=True)
+        topics_queryset = queryset & Question.objects.filter(topics__in=topic_expertise)
         # queryset = Question.objects.filter(topics__in=expertise_topics)
         # queryset = Topic.objects.filter(pk__in=expertise_topics)
-        return queryset
+        return topics_queryset
 
 
 # 내 질문을 제외한 전문분야, 관심분야 질문 리스트(main-feed)
 class QuestionMainFeedListView(generics.ListAPIView):
+    """
+    queryset을 내 질문을 제외한 전문분야, 관심분야 질문 리스트를 리턴하는 queryset으로 재정의합니다.
+    """
     serializer_class = QuestionGetSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
@@ -118,12 +129,16 @@ class QuestionMainFeedListView(generics.ListAPIView):
         topics_queryset = queryset & Question.objects.filter(topics__in=topics)
         following_users_queryset = queryset & Question.objects.filter(user__in=following_users)
         # queryset
-        queryset = (topics_queryset | following_users_queryset).distinct()
-        # queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
+        # queryset = (topics_queryset | following_users_queryset).distinct()
+        queryset = (topics_queryset | following_users_queryset).order_by('-modified_at').distinct()
         return queryset
 
 
 class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    질문에 대한 pk값으로 Question 객체 하나를 가져오거나 업데이트하거나 삭제하는 기능을 합니다.
+    업데이트는 전체 input값을 모두 업데이트하는 PUT과 부분만 업데이트하는 PATCH를 지원합니다.
+    """
     queryset = Question.objects.all()
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,

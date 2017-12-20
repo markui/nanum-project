@@ -24,8 +24,9 @@ class DjangoQuill:
     """
 
     def __init__(self, model=None, parent_model=None):
-        self.model: QuerySet = model
-        self.parent_model: QuerySet = parent_model
+        self.model = model
+        self.parent_model = parent_model
+        self.parent_instance = None
 
     #     self._validate()
     #
@@ -120,24 +121,30 @@ class DjangoQuill:
         :return: 반환값은 없으며 bulk_create와 이미지 삭제 함수를 실행
         """
         # Instance가 parent_model의 instance인지 확인
-        assert type(parent_instance) == self.parent_model, "Instance is not an instance of parent model."
-
+        self.parent_instance = parent_instance
         # Bulk Create할 instance를 모아둘 list instantiation
         # get_delta_operation_list() 를 통해 content에서 delta operation이 담긴 list 반환
         # 반환받은 list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
-
         delta_list = self.get_delta_operation_list(content, iterator=True)
+
         for line_no, quill_delta_operation in enumerate(delta_list, start=1):
             model_instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
                 line_no=line_no,
                 parent_instance=parent_instance
             )
-
-            # 이미지에 문제가 있어 self.model의 instance가 생성되지 않았을 경우
-            if type(model_instance) != self.model:
-                return None
+            if type(model_instance) == Exception:
+                raise model_instance
             yield model_instance
+
+    # def _get_delta_operation_instance(self, tup: tuple):
+    #     line_no = tup[0]
+    #     quill_delta_operation = tup[1]
+    #     return self._instantiate_model(
+    #         quill_delta_operation=quill_delta_operation,
+    #         line_no=line_no,
+    #         parent_instance=self.parent_instance,
+    #     )
 
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
@@ -159,7 +166,6 @@ class DjangoQuill:
             "line_no": line_no,
             field_name: parent_instance
         }
-
         return self._instantiate(**kwargs)
 
     def _instantiate(self, insert_value, **kwargs):
@@ -176,20 +182,18 @@ class DjangoQuill:
         """
         # Attribute, line_no, Foreignkey field 를 기반으로 model object를 일단 instantiate
         instance = self.model(**kwargs)
-
         # insert 안에 image가 있을 경우
         # image 가 base64인 경우 instance에 이미지 추가
-        try:
-            image_value = insert_value.get('image')
+        image_value = insert_value.get('image') if type(insert_value) == dict else None
+        if image_value:
             try:
                 decoded_data = self._parse_base64(image_base64=image_value)
                 filename = self._generate_filename(**kwargs)
                 image = self._image_process(data=decoded_data, max_size=600)
-
                 instance.image.save(
                     filename,
                     image,
-                    save=False
+                    save=False,
                 )
                 url = url_query_cleaner(instance.image.url)
                 instance.image_insert_value = {"image": f"{url}"}
@@ -201,10 +205,9 @@ class DjangoQuill:
                 if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
                 else:
-                    raise ValueError("올바른 형태의 이미지가 아닙니다.")
-
+                    raise ValueError("올바른 형태의 이미지 Base64가 아닙니다. data:image/png;base64로 시작하는지 확인해주세요 ")
         # insert 안에 Text만 있을 경우
-        except:
+        else:
             instance.insert_value = insert_value
         return instance
 
@@ -215,14 +218,11 @@ class DjangoQuill:
         :return:
         """
         data = re.match(r'\w+:image\/\w+;\w+,(.+)', image_base64)
-
         # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
         byte_data_string = data.group(1)
-
         # image_data_string 파싱에 실패 했을 경우
         if not byte_data_string:
             raise AttributeError
-
         byte_data_base64 = bytes(byte_data_string, 'utf-8')
         decoded_data = base64.b64decode(byte_data_base64)
         return decoded_data
@@ -284,6 +284,7 @@ class DjangoQuill:
         soup = BeautifulSoup(html, 'html.parser')
         img_tags = soup.find_all("img")
         for obj, img_tag in zip(objs, img_tags):
+            # Get rid of Amazon Token
             url = url_query_cleaner(obj.image.url)
             new_img_tag = soup.new_tag('img', src=url)
             img_tag.replace_with(new_img_tag)
@@ -305,6 +306,7 @@ class DjangoQuill:
                     if i > 0:
                         content.decompose()
         return str(soup)
+
 
     def update_delta_operation_list(self, queryset: QuerySet,
                                     content: dict, parent_instance):

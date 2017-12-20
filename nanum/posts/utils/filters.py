@@ -1,6 +1,7 @@
 import django_filters
 from django_filters import rest_framework as filters, OrderingFilter
 from django_filters.fields import Lookup
+from rest_framework.exceptions import ParseError
 
 from ..models import Answer, Question, Comment
 
@@ -32,13 +33,21 @@ class ListFilter(django_filters.Filter):
         return super().filter(qs, Lookup(multiple_vals, 'in'))
 
 
+class IntegerListFilter(ListFilter):
+    def customize(self, value):
+        try:
+            return int(value)
+        except:
+            raise ParseError({"error": "이 query_parameter에 해당하지 않는 type의 value입니다"})
+
+
 class AnswerFilter(filters.FilterSet):
     """
     답변 query_params를 통한 각종 필드 filter를 만들어주는 class
     """
-    user = ListFilter(name='user', )
-    topic = ListFilter(name='question__topics')
-    bookmarked_by = ListFilter(name='answerbookmarkrelation__user', )
+    user = IntegerListFilter(name='user', )
+    topic = IntegerListFilter(name='question__topics')
+    bookmarked_by = IntegerListFilter(name='answerbookmarkrelation__user', )
     ordering = OrderingFilter(
         fields=(
             ('modified_at', 'modified_at'),
