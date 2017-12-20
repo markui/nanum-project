@@ -139,11 +139,3 @@ class AnswerMainFeedListView(generics.ListCreateAPIView):
             queryset = Answer.objects.filter(published=True)
 
         return queryset
-
-# class AnswerFeedFilterView(APIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def get(self, request, format=None):
-#         user = request.user
-#
-#
