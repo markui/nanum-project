@@ -14,6 +14,7 @@ Website Link: To Be Posted
 Nanum은 미국의 지식 공유 SNS Quora에서 영감을 받아 시작하게된 프로젝트입니다.
 해당 Repository는 API 서버의 소스코드입니다. 
 
+# Service Stack
 ## Backend Framework
 #### Django
 Client 와 주고받을 수 있는 API에 Django Rest Framework를 사용했습니다. 
