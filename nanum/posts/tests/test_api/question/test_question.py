@@ -56,10 +56,10 @@ class QuestionListCreateViewTest(QuestionBaseTest):
         """
         # 유저 생성
         self.create_random_users()
-        print(f'User.objects.all() : {User.objects.all()}')
+        print(f'====User.objects.all()====\n : {User.objects.all()}')
         # 질문 생성
         self.create_random_questions()
-        print(f'Queestion.objects.all() : {Question.objects.all()}')
+        print(f'====Queestion.objects.all()====\n : {Question.objects.all()}')
 
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         # page
