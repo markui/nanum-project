@@ -13,6 +13,7 @@ from posts.apis import (
 )
 from posts.models import Question
 from posts.tests.test_api.question.base import QuestionBaseTest
+from topics.models import Topic
 
 User = get_user_model()
 
@@ -20,7 +21,7 @@ User = get_user_model()
 class QuestionCreateViewTest(QuestionBaseTest):
     """
     Question Objects 생성 테스트입니다.
-    Question의 파라미터로 Topic 객체가 들어가므로 여러 Topic을 생성 후
+    Question의 파라미터로 Topic 객체가 들어가므로 임의의 여러 Topic을 생성 후
     Question 객체의 생성을 테스트 합니다.
     url :       /post/question/
     method :    post
@@ -32,9 +33,12 @@ class QuestionCreateViewTest(QuestionBaseTest):
         # /post/question/
         url = self.URL_API_QUESTION_LIST_CREATE
         # print(url)
-        user = self.create_user()
-        self.client.force_authenticate(user=user)
-        topics = self.create_random_topics(user=user)
+        print(f'==만들어진 유저들==')
+        users_queryset = self.create_random_users()
+        print(users_queryset)
+        print(f'==만들어진 토픽들==')
+        topics = self.create_random_topics(users_queryset)
+        print(topics)
         # 토픽의 pk를 하나씩 리스트에 저장
         for topic in topics:
             topic_list.append(topic.pk)
@@ -46,16 +50,15 @@ class QuestionCreateViewTest(QuestionBaseTest):
         print(f'data : {data}')
 
         response = self.client.post(url, data=data, format='json')
-        print(response)
+        print(f'RESPONSE : {response}')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
-class QuestionListViewTest(QuestionBaseTest):
+class QuestionListCreateCommonViewTest(QuestionBaseTest):
     VIEW_CLASS = QuestionListCreateView
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
     def test_question_create_url_name_reverse(self):
-
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
         print(f'reverse test : {url}')
         self.assertEqual(url, self.URL_API_QUESTION_LIST_CREATE)
@@ -70,76 +73,10 @@ class QuestionListViewTest(QuestionBaseTest):
     # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
     # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
     def test_question_create_url_resolve_view_class(self):
-        """
-        posts.apis.question.QuestionListCreateView 뷰에 대해
-        URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
-        """
         resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
         print(f'view class test : {resolve_match.func.view_class}')
         self.assertEqual(resolve_match.func.view_class,
                          self.VIEW_CLASS.as_view().view_class)
-
-    # 임의의 유저로 question objects 생성 및 확인
-    def test_get_question_list(self):
-        """
-        QuestionList의 Get요청 (Post목록)에 대한 테스트
-        임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
-        :return:
-        """
-        # 유저 생성
-        self.create_random_users()
-        print(f'====User.objects.all()====\n : {User.objects.all()}')
-        # 질문 생성
-        self.create_random_questions()
-        print(f'====Queestion.objects.all()====\n : {Question.objects.all()}')
-
-        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
-        # page
-        page = 1
-        url += f'?page={page}'
-        print(f'url : {url}')
-        response = self.client.get(url)
-        # status code가 200인지 확인
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # response로 돌아온 객체들이 각각 count, next, previous, results키를 가지고 있는지 확인
-        cur_data = response.data
-        self.assertIn('count', cur_data)
-        self.assertIn('next', cur_data)
-        self.assertIn('previous', cur_data)
-        self.assertIn('results', cur_data)
-
-        # page별로 request url을 다르게 주어 response.data 각각 확인
-        result_index = 0
-        for index, i in enumerate(range(self.num_of_questions)):
-            if result_index == 5:
-                url = response.data.get('next')
-                response = self.client.get(url)
-                print(url)
-                cur_data = response.data
-                result_index = 0
-            print(f'index : {index}')
-
-            # results가 question, topics키를 가지고 있는지 확인
-            cur_results_data = cur_data.get('results')[result_index]
-            self.assertIn('question', cur_results_data)
-            self.assertIn('topics', cur_results_data)
-            # question이 아래의 키들을 가지고 있는지 확인
-            cur_question_data = cur_results_data.get('question')
-            # pk = cur_question_data.get('pk')
-            # print(f'pk : {pk}')
-            self.assertIn('pk', cur_question_data)
-            self.assertIn('url', cur_question_data)
-            self.assertIn('user', cur_question_data)
-            self.assertIn('content', cur_question_data)
-            self.assertIn('bookmark_count', cur_question_data)
-            self.assertIn('follow_count', cur_question_data)
-            self.assertIn('comment_count', cur_question_data)
-            self.assertIn('created_at', cur_question_data)
-            self.assertIn('modified_at', cur_question_data)
-
-            print(f'result_index : {result_index}')
-            result_index += 1
 
     # user가 None이면 제외되는지 확인
     # # user단에서 none객체 생성을 막아놓아서 테스트 불가
@@ -213,6 +150,80 @@ class QuestionListViewTest(QuestionBaseTest):
             print(f'url : {url}')
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class QuestionListViewTest(QuestionBaseTest):
+    """
+    1. URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 테스트
+    2. URL이 실제 URL name을 참조하고 있는지 테스트
+    3. 같은 view의 class인지 테스트
+       - posts.apis.question.QuestionListCreateView 뷰에 대해
+         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
+    """
+
+    def test_get_question_list(self):
+        """
+        QuestionList의 Get요청 (Post목록)에 대한 테스트
+        임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
+        :return:
+        """
+        # 유저 생성(queryset 리턴)
+        users_queryset = self.create_random_users()
+        for user in users_queryset:
+            print(f'user.pk : {user.pk}')
+        # print(f'====User.objects.all()====\n : {User.objects.all()}')
+        # 질문 생성
+        topics_queryset = self.create_random_topics(users_queryset)
+        self.create_random_questions(users_queryset, topics_queryset)
+        print(f'====Queestion.objects.all()====\n : {Question.objects.all()}')
+
+        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
+        # page
+        page = 1
+        url += f'?page={page}'
+        print(f'url : {url}')
+        response = self.client.get(url)
+        # status code가 200인지 확인
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # response로 돌아온 객체들이 각각 count, next, previous, results키를 가지고 있는지 확인
+        cur_data = response.data
+        self.assertIn('count', cur_data)
+        self.assertIn('next', cur_data)
+        self.assertIn('previous', cur_data)
+        self.assertIn('results', cur_data)
+
+        # page별로 request url을 다르게 주어 response.data 각각 확인
+        result_index = 0
+        for index, i in enumerate(range(self.num_of_questions)):
+            if result_index == 5:
+                url = response.data.get('next')
+                response = self.client.get(url)
+                print(url)
+                cur_data = response.data
+                result_index = 0
+            print(f'index : {index}')
+
+            # results가 question, topics키를 가지고 있는지 확인
+            cur_results_data = cur_data.get('results')[result_index]
+            self.assertIn('question', cur_results_data)
+            self.assertIn('topics', cur_results_data)
+            # question이 아래의 키들을 가지고 있는지 확인
+            cur_question_data = cur_results_data.get('question')
+            # pk = cur_question_data.get('pk')
+            # print(f'pk : {pk}')
+            self.assertIn('pk', cur_question_data)
+            self.assertIn('url', cur_question_data)
+            self.assertIn('user', cur_question_data)
+            self.assertIn('content', cur_question_data)
+            self.assertIn('bookmark_count', cur_question_data)
+            self.assertIn('follow_count', cur_question_data)
+            self.assertIn('comment_count', cur_question_data)
+            self.assertIn('created_at', cur_question_data)
+            self.assertIn('modified_at', cur_question_data)
+
+            print(f'result_index : {result_index}')
+            result_index += 1
 
 
 class QuestionMainFeedListViewTest(QuestionBaseTest):
