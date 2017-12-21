@@ -1,4 +1,4 @@
-from random import randrange, randint
+from random import randint
 import random
 
 from django.contrib.auth import get_user_model
@@ -13,52 +13,70 @@ from posts.apis import (
 )
 from posts.models import Question
 from posts.tests.test_api.question.base import QuestionBaseTest
+from topics.models import Topic
 
 User = get_user_model()
 
 
-class QuestionListCreateViewTest(QuestionBaseTest):
-    VIEW_CLASS = QuestionListCreateView
+class QuestionCreateViewTest(QuestionBaseTest):
+    """
+    Question Objects 생성 테스트입니다.
+    Question의 파라미터로 Topic 객체가 들어가므로 임의의 여러 Topic을 생성 후
+    Question 객체의 생성을 테스트 합니다.
+    url :       /post/question/
+    method :    post
+    """
 
-    # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
-    def test_question_create_url_name_reverse(self):
+    def test_create_question(self):
+        # 토픽 리스트를 저장 할 리스트
+        topic_list = list()
+        # /post/question/
+        url = self.URL_API_QUESTION_LIST_CREATE
+        # print(url)
+        print(f'==만들어진 유저들==')
+        users_queryset = self.create_random_users()
+        print(users_queryset)
+        print(f'==만들어진 토픽들==')
+        topics = self.create_random_topics(users_queryset)
+        print(topics)
+        # 토픽의 pk를 하나씩 리스트에 저장
+        for topic in topics:
+            topic_list.append(topic.pk)
+        # print(f'topics : {topic_list}')
+        data = {
+            'content': 'create question test content',
+            'topics': topic_list,
+        }
+        print(f'data : {data}')
 
-        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
-        print(f'reverse test : {url}')
-        self.assertEqual(url, self.URL_API_QUESTION_LIST_CREATE)
+        response = self.client.post(url, data=data, format='json')
+        print(f'RESPONSE : {response}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    # URL이 실제 URL name을 참조하고 있는지 검사
-    def test_question_create_url_name_resolve(self):
-        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
-        print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
-        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name, self.URL_API_QUESTION_LIST_CREATE_NAME)
 
-    # 같은 view의 class인지 검사
-    # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
-    # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
-    def test_question_create_url_resolve_view_class(self):
-        """
-        posts.apis.question.QuestionListCreateView 뷰에 대해
-        URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
-        :return:
-        """
-        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
-        print(f'view class test : {resolve_match.func.view_class}')
-        self.assertEqual(resolve_match.func.view_class,
-                         self.VIEW_CLASS.as_view().view_class)
+class QuestionListViewTest(QuestionBaseTest):
+    """
+    1. URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 테스트
+    2. URL이 실제 URL name을 참조하고 있는지 테스트
+    3. 같은 view의 class인지 테스트
+       - posts.apis.question.QuestionListCreateView 뷰에 대해
+         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
+    """
 
-    # 임의의 유저로 question objects 생성 및 확인
     def test_get_question_list(self):
         """
         QuestionList의 Get요청 (Post목록)에 대한 테스트
         임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
         :return:
         """
-        # 유저 생성
-        self.create_random_users()
-        print(f'====User.objects.all()====\n : {User.objects.all()}')
+        # 유저 생성(queryset 리턴)
+        users_queryset = self.create_random_users()
+        for user in users_queryset:
+            print(f'user.pk : {user.pk}')
+        # print(f'====User.objects.all()====\n : {User.objects.all()}')
         # 질문 생성
-        self.create_random_questions()
+        topics_queryset = self.create_random_topics(users_queryset)
+        self.create_random_questions(users_queryset, topics_queryset)
         print(f'====Queestion.objects.all()====\n : {Question.objects.all()}')
 
         url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
@@ -108,6 +126,31 @@ class QuestionListCreateViewTest(QuestionBaseTest):
 
             print(f'result_index : {result_index}')
             result_index += 1
+
+
+class QuestionListCreateCommonViewTest(QuestionBaseTest):
+    VIEW_CLASS = QuestionListCreateView
+
+    # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
+    def test_question_create_url_name_reverse(self):
+        url = reverse(self.URL_API_QUESTION_LIST_CREATE_NAME)
+        print(f'reverse test : {url}')
+        self.assertEqual(url, self.URL_API_QUESTION_LIST_CREATE)
+
+    # URL이 실제 URL name을 참조하고 있는지 검사
+    def test_question_create_url_name_resolve(self):
+        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
+        print(f'resolve test(url name) : {resolve_match.namespace + ":" + resolve_match.url_name}')
+        self.assertEqual(resolve_match.namespace + ":" + resolve_match.url_name, self.URL_API_QUESTION_LIST_CREATE_NAME)
+
+    # 같은 view의 class인지 검사
+    # .func 는 임시함수, .as_view() 또한 함수이다. 참조하는 주소 값이 다르므로 .func.view_class 로 비교
+    # self.VIEW_CLASS == self.VIEW_CLASS.as_view().view_class : True
+    def test_question_create_url_resolve_view_class(self):
+        resolve_match = resolve(self.URL_API_QUESTION_LIST_CREATE)
+        print(f'view class test : {resolve_match.func.view_class}')
+        self.assertEqual(resolve_match.func.view_class,
+                         self.VIEW_CLASS.as_view().view_class)
 
     # user가 None이면 제외되는지 확인
     # # user단에서 none객체 생성을 막아놓아서 테스트 불가
