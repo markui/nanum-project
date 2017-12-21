@@ -28,6 +28,7 @@ class DefaultStaticImageSerializerField(SerializerImageField):
         return value.name
 
 
+
 class DefaultStaticImageFieldFile(ImageFieldFile):
     """
     이미지 파일을 유저가 등록하지 않은 경우,
