@@ -17,7 +17,7 @@ class QuestionGetSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         lookup_field='pk',
         read_only=True,
-        view_name='post:question:detail',
+        view_name='post:question:question-detail',
     )
     # 해당 유저의 프로필 페이지
     user = serializers.HyperlinkedIdentityField(
