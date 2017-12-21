@@ -102,7 +102,7 @@ class BaseAnswerSerializer(serializers.ModelSerializer):
     def get_user_bookmark_relation(self, obj):
         try:
             relation_pk = AnswerBookmarkRelation.objects.get(user=self.request_user, answer=obj).pk
-            view_name = 'user:answer-bookmark-relation-detaion'
+            view_name = 'user:answer-bookmark-relation-detaiㅣ'
             kwargs = {'pk': relation_pk}
             return reverse(view_name, kwargs=kwargs, request=self.request)
         except AnswerBookmarkRelation.DoesNotExist:
@@ -145,14 +145,18 @@ class AnswerPostSerializer(BaseAnswerSerializer):
         # request_user를 **kwargs에 추가하여 super().save() 호출
         with atomic():
             answer_instance = super().save(user=self.request_user, **kwargs)
+            # answer_instance = task_obj.result()
+
             if not content or not content_html:
                 return answer_instance
+
             self._save_quill_delta_operation(
                 content=content,
                 answer_instance=answer_instance
             )
             self._save_content_html(
-                content_html=content_html
+                content_html=content_html,
+                answer_instance=answer_instance
             )
 
     def _save_quill_delta_operation(self, content, answer_instance):
@@ -168,9 +172,12 @@ class AnswerPostSerializer(BaseAnswerSerializer):
         )
         if not instances:
             raise ParseError({"error": "content가 잘못된 포맷입니다. "})
-        QuillDeltaOperation.objects.bulk_create(instances)
+        try:
+            QuillDeltaOperation.objects.bulk_create(instances)
+        except:
+            raise ParseError({"error": "Delta Operation을 저장하는데 문제가 있었습니다."})
 
-    def _save_content_html(self, content_html):
+    def _save_content_html(self, content_html, answer_instance):
         """
         html 업데이트
         :param content_html:
@@ -182,8 +189,12 @@ class AnswerPostSerializer(BaseAnswerSerializer):
             html=content_html
         )
         preview_html = django_quill.html_preview_parse(html=html, preview_len=200)
-        self.instance.content_html, self.instance.content_preview_html = html, preview_html
-        self.instance.save(update_fields=['content_html', 'content_preview_html'])
+        # Django Bug - Updating an instance during save method will not result in a properly serialized object
+        Answer.objects.select_for_update(). \
+            filter(pk=answer_instance.pk). \
+            update(content_html=html, content_preview_html=preview_html)
+        answer_instance.content_html = html
+        answer_instance.content_preview_html = preview_html
 
 
 class AnswerUpdateSerializer(AnswerPostSerializer):
@@ -199,13 +210,11 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
         queryset = self.instance.quill_delta_operation_set.all()
         content = self.validated_data.pop('content', None)
         content_html = self.validated_data.pop('content_html', None)
-        if not content or not content_html:
-            return
         with atomic():
             self._update_quill_delta_operation(queryset=queryset, content=content)
-            self._save_content_html(content_html=content_html)
+            self._save_content_html(content_html=content_html, answer_instance=self.instance)
 
-    def _update_quill_delta_operation(self, queryset: QuerySet, content: str):
+    def _update_quill_delta_operation(self, queryset: QuerySet, content: dict):
         """
 
         :param queryset: self.instance와 연결되어있는 QuillDeltaOperation Queryset
@@ -221,9 +230,3 @@ class AnswerUpdateSerializer(AnswerPostSerializer):
             inst.save()
         for inst in to_delete_list:
             inst.delete()
-
-            # class AnswerFeedFilterSerializer(serializers.Serializer):
-            #     main_feed = serializers.Hyperlink(
-            #         view_name=''
-            #     )
-            #     pass

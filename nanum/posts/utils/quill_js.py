@@ -3,7 +3,7 @@ import json
 import random
 import re
 import string
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from io import BytesIO
 
 from PIL import Image as pil
@@ -24,8 +24,9 @@ class DjangoQuill:
     """
 
     def __init__(self, model=None, parent_model=None):
-        self.model: QuerySet = model
-        self.parent_model: QuerySet = parent_model
+        self.model = model
+        self.parent_model = parent_model
+        self.parent_instance = None
 
     #     self._validate()
     #
@@ -120,24 +121,30 @@ class DjangoQuill:
         :return: 반환값은 없으며 bulk_create와 이미지 삭제 함수를 실행
         """
         # Instance가 parent_model의 instance인지 확인
-        assert type(parent_instance) == self.parent_model, "Instance is not an instance of parent model."
-
+        self.parent_instance = parent_instance
         # Bulk Create할 instance를 모아둘 list instantiation
         # get_delta_operation_list() 를 통해 content에서 delta operation이 담긴 list 반환
         # 반환받은 list 내에 있는 quill_delta_operation에 대해 self.model을 instantiate
-
         delta_list = self.get_delta_operation_list(content, iterator=True)
+
         for line_no, quill_delta_operation in enumerate(delta_list, start=1):
             model_instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
                 line_no=line_no,
                 parent_instance=parent_instance
             )
-
-            # 이미지에 문제가 있어 self.model의 instance가 생성되지 않았을 경우
-            if type(model_instance) != self.model:
-                return None
+            if type(model_instance) == Exception:
+                raise model_instance
             yield model_instance
+
+    # def _get_delta_operation_instance(self, tup: tuple):
+    #     line_no = tup[0]
+    #     quill_delta_operation = tup[1]
+    #     return self._instantiate_model(
+    #         quill_delta_operation=quill_delta_operation,
+    #         line_no=line_no,
+    #         parent_instance=self.parent_instance,
+    #     )
 
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
@@ -159,7 +166,6 @@ class DjangoQuill:
             "line_no": line_no,
             field_name: parent_instance
         }
-
         return self._instantiate(**kwargs)
 
     def _instantiate(self, insert_value, **kwargs):
@@ -176,20 +182,18 @@ class DjangoQuill:
         """
         # Attribute, line_no, Foreignkey field 를 기반으로 model object를 일단 instantiate
         instance = self.model(**kwargs)
-
         # insert 안에 image가 있을 경우
         # image 가 base64인 경우 instance에 이미지 추가
-        try:
-            image_value = insert_value.get('image')
+        image_value = insert_value.get('image') if type(insert_value) == dict else None
+        if image_value:
             try:
                 decoded_data = self._parse_base64(image_base64=image_value)
                 filename = self._generate_filename(**kwargs)
                 image = self._image_process(data=decoded_data, max_size=600)
-
                 instance.image.save(
                     filename,
                     image,
-                    save=False
+                    save=False,
                 )
                 url = url_query_cleaner(instance.image.url)
                 instance.image_insert_value = {"image": f"{url}"}
@@ -201,10 +205,9 @@ class DjangoQuill:
                 if image_value[:4] == "http" or image_value[:6] == settings.MEDIA_URL:
                     instance.image_insert_value = {"image": f"{image_value}"}
                 else:
-                    raise ValueError("올바른 형태의 이미지가 아닙니다.")
-
+                    raise ValueError("올바른 형태의 이미지 Base64가 아닙니다. data:image/png;base64로 시작하는지 확인해주세요 ")
         # insert 안에 Text만 있을 경우
-        except:
+        else:
             instance.insert_value = insert_value
         return instance
 
@@ -215,14 +218,11 @@ class DjangoQuill:
         :return:
         """
         data = re.match(r'\w+:image\/\w+;\w+,(.+)', image_base64)
-
         # 정규표현식으로 매치된 이미지 저장 포맷과 이미지 데이터를 나눔
         byte_data_string = data.group(1)
-
         # image_data_string 파싱에 실패 했을 경우
         if not byte_data_string:
             raise AttributeError
-
         byte_data_base64 = bytes(byte_data_string, 'utf-8')
         decoded_data = base64.b64decode(byte_data_base64)
         return decoded_data
@@ -284,6 +284,7 @@ class DjangoQuill:
         soup = BeautifulSoup(html, 'html.parser')
         img_tags = soup.find_all("img")
         for obj, img_tag in zip(objs, img_tags):
+            # Get rid of Amazon Token
             url = url_query_cleaner(obj.image.url)
             new_img_tag = soup.new_tag('img', src=url)
             img_tag.replace_with(new_img_tag)
@@ -319,30 +320,33 @@ class DjangoQuill:
 
         # Queryset 에서 {Quill operation : instance, ...} 형식의 dict 생성
         # Quill operation 은 json dumps를 통한 string 형태
-        operation_instance_dict = {
-            json.dumps(qdo_instance.delta_operation): qdo_instance
-            for qdo_instance
-            in queryset
-        }
+        operation_instance_dict = defaultdict(list)
+        for qdo_instance in queryset:
+            operation_instance_dict[json.dumps(qdo_instance.delta_operation)].append(qdo_instance)
 
         # Request.data.content 에서 {Quill operation : line_number, ...} 형식의 dict 생성
         # Quill operation 은 json dumps를 통한 string 형태
-        operation_lineno_dict = {
-            json.dumps(qdo): line_no
-            for line_no, qdo
-            in enumerate(self.get_delta_operation_list(content, iterator=True), start=1)
-        }
+        operation_lineno_dict = defaultdict(list)
+        for line_no, qdo in enumerate(self.get_delta_operation_list(content, iterator=True), start=1):
+            operation_lineno_dict[json.dumps(qdo)].append(line_no)
 
         # 델타 줄의 string들에 대해서 set operation을 실행,
         # to_update: 같은 내용의 경우, line number를 update 해야 되는 내용
         # to_create: 새로운 내용일 경우, 새 instance를 create 해야 되는 내용
         # to_delete: 지워야 하는 내용일 경우, 지워진 내용
-        instance_delta_set = set(operation_instance_dict.keys())
-        request_delta_set = set(operation_lineno_dict.keys())
-        to_update = instance_delta_set & request_delta_set
-        to_create = request_delta_set - instance_delta_set
-        to_delete = instance_delta_set - request_delta_set
-
+        instance_delta_list = list()
+        for item in operation_instance_dict.items():
+            for i in range(len(item[1])):
+                instance_delta_list.append(item[0])
+        request_delta_list = list()
+        for item in operation_lineno_dict.items():
+            for i in range(len(item[1])):
+                request_delta_list.append(item[0])
+        set_i = set(instance_delta_list)
+        set_r = set(request_delta_list)
+        to_update = [item for item in instance_delta_list if item in set_i and item in set_r]
+        to_create = [item for item in request_delta_list if item not in set_i]
+        to_delete = [item for item in instance_delta_list if item not in set_r]
         to_update_list = self._get_instantces_to_update(
             to_update=to_update,
             operation_lineno_dict=operation_lineno_dict,
@@ -359,7 +363,7 @@ class DjangoQuill:
         )
         return to_update_list, to_create_list, to_delete_list
 
-    def _get_instantces_to_update(self, to_update, operation_lineno_dict, operation_instance_dict):
+    def _get_instantces_to_update(self, to_update: list, operation_lineno_dict: dict, operation_instance_dict: dict):
         """
         이미 존재하는 operation에 대해 line number을 업데이트
 
@@ -368,16 +372,17 @@ class DjangoQuill:
         :param operation_instance_dict:
         :return:
         """
+        result = list()
         # update
         # replace instance line_no with request line_no
         for delta_operation in to_update:
-            new_line_no = operation_lineno_dict[delta_operation]
-            dt_instance = operation_instance_dict[delta_operation]
+            new_line_nos = operation_lineno_dict[delta_operation]
+            dt_instances = operation_instance_dict[delta_operation]
+            for instance, line_no in zip(dt_instances, new_line_nos):
+                instance.line_no = line_no
+                yield instance
 
-            dt_instance.line_no = new_line_no
-            yield dt_instance
-
-    def _get_instantces_to_create(self, to_create, operation_lineno_dict, parent_instance):
+    def _get_instantces_to_create(self, to_create: list, operation_lineno_dict: dict, parent_instance):
         """
 
         :param to_create:
@@ -387,11 +392,12 @@ class DjangoQuill:
         """
         # create
         # create instance with request line_no
+
         for delta_operation_str in to_create:
             # Get line_no
             # Get delta_operation
             # instantiate model for bulk create
-            line_no = operation_lineno_dict[delta_operation_str]
+            line_no = operation_lineno_dict[delta_operation_str].pop()
             quill_delta_operation = json.loads(json.loads((json.dumps(delta_operation_str))))
             instance = self._instantiate_model(
                 quill_delta_operation=quill_delta_operation,
@@ -400,7 +406,7 @@ class DjangoQuill:
             )
             yield instance
 
-    def _get_instantces_to_delete(self, to_delete, operation_instance_dict):
+    def _get_instantces_to_delete(self, to_delete: list, operation_instance_dict: dict):
         """
 
         :param to_delete:
@@ -410,5 +416,5 @@ class DjangoQuill:
         # delete
         # delete instance with delta op value
         for delta_operation in to_delete:
-            instance = operation_instance_dict[delta_operation]
+            instance = operation_instance_dict[delta_operation].pop()
             yield instance

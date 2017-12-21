@@ -225,6 +225,7 @@ venv.bak/
 .idea/
 .static_root/
 secrets.tar
+.coverage
 # End of https://www.gitignore.io/api/macos,linux,python,django,pycharm
 
 # Elastic Beanstalk Files

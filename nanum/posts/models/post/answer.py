@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -32,20 +33,8 @@ class Answer(models.Model):
         return f'user: {self.user}, content: {self.text_content[:30]}'
 
     @property
-    def user_profile(self):
-        return self.user.profile.pk
-
-    @property
     def topics(self):
         return self.question.topics
-
-    @property
-    def content_first_line(self):
-        """
-        Answer과 연결된 QuillDeltaOperation set 중 첫번째 줄을 반환
-        :return:
-        """
-        return self.quill_delta_operation_set.order_by('line_no').first()
 
     @property
     def content(self):
@@ -69,18 +58,13 @@ class Answer(models.Model):
         Answer과 연결된 QuillDeltaOperation set 중 insert_value만 parse해서 반환
         :return:
         """
-        insert_value_qs = self.quill_delta_operation_set. \
-            filter(insert_value__isnull=False). \
-            values_list('insert_value', flat=True)
-
-        # qs를 string으로 join
-        insert_value_string = "".join(insert_value_qs)
-        text_content = insert_value_string.replace('\n', " ").replace('\xa0', ' ')
-        return text_content
+        soup = BeautifulSoup(self.content_html, 'html.parser')
+        return soup.get_text()
 
     def save(self, *args, **kwargs):
         # Topic 과 Question의 answer_count increment
         topics_pk = self.topics.values_list('pk', flat=True)
+
         with atomic():
             topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
             topics.update(answer_count=F('answer_count') + 1)
@@ -89,13 +73,14 @@ class Answer(models.Model):
             question.update(answer_count=F('answer_count') + 1)
 
             super().save(*args, **kwargs)
-            CommentPostIntermediate.objects.get_or_create(answer=self)
+            if not CommentPostIntermediate.objects.filter(answer=self).exists():
+                CommentPostIntermediate.objects.create(answer=self)
 
     def delete(self, *args, **kwargs):
         topics_pk = self.topics.values_list('pk', flat=True)
         with atomic():
             topics = Topic.objects.select_for_update().filter(pk__in=topics_pk)
-            topics.update(answer_count=F('answer_count') + 1)
+            topics.update(answer_count=F('answer_count') - 1)
 
             question = Question.objects.select_for_update().filter(pk=self.question.pk)
             question.update(answer_count=F('answer_count') - 1)
