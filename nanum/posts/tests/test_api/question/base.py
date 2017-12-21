@@ -70,21 +70,25 @@ class QuestionBaseTest(APITestCase):
         특정 유저를 지정하거나, 랜덤한 유저를 지정할 수 있다.
         params :
             self.num_of_users
-        :return: User.objects.all()
+        :return: User.objects.filter(pk__in=user_list)
         """
         user_list = list()
         # 랜덤한 수의 유저 생성(is_none : True 일 경우 None객체 생성)
-        # user단에서 none객체 생성을 막아놓아서 테스트 불가
         for i in range(self.num_of_users):
             if is_none:
+                # user단에서 none객체 생성을 막아놓아서 테스트(생성) 불가
                 self.create_user(is_none=True)
             else:
                 created_user = self.create_user(email=f'user_{i+1}@user.com')
                 user_list.append(created_user.pk)
 
-        # print(f'User.objects.count() : {User.objects.count()}')
-        # print(f'num_of_users : {self.num_of_users}')
-        self.assertEqual(User.objects.count(), self.num_of_users)
+        print(f'====생성된 유저의 pk 리스트====\n {user_list} \n')
+
+        # 생성하기로 한 유저의 수와 만들어진 유저의 수 비교
+        self.assertEqual(
+            len(User.objects.filter(pk__in=user_list)),
+            self.num_of_users)
+
         return User.objects.filter(pk__in=user_list)
 
     # 랜덤한 다수의 토픽 생성 테스트
@@ -93,37 +97,34 @@ class QuestionBaseTest(APITestCase):
         1. 유저의 pk의 값으로 랜덤한 수의 토픽을 생성한다.
         2. 생성된 토픽들의 pk를 리스트에 저장해 Topic Objects를 리턴한다.
         params :
-            self.num_of_users
             self.num_of_topics
-        :return: Topic.objects.all()
+        :return: Topic.objects.filter(pk__in=topic_list)
         """
 
         # 리턴될 토픽 리스트
         topic_list = list()
-        user_list = list()
-
-        for user in users_queryset:
-            user_list.append(user.pk)
-
+        print('====위 유저 중 임의의 user(creator)로 생성된 토픽 출력====')
         for i in range(self.num_of_topics):
-            random_user_pk = random.choice(user_list)
-            print(f'random_user_pk : {random_user_pk}')
+            random_user = random.choice(users_queryset)
             # 랜덤한 유저(creator)로 다수의 토픽 생성
-            user = User.objects.get(pk=random_user_pk)
-            print(f'user object : {user}')
+            user = User.objects.get(pk=random_user.pk)
             self.client.force_authenticate(user=user)
 
             topic = self.create_topic(creator=user, name=f'토픽 {i+1}')
             # 토픽이 생성될 때 마다 토픽 리스트에 추가
             topic_list.append(topic.pk)
-            print(f'{topic.pk}번 토픽 추가완료')
 
-        print(f'====Topic.objects.all()====\n  {Topic.objects.all()}')
-        self.assertEqual(Topic.objects.count(), self.num_of_topics)
+            print(f'creator : {user.pk} -> '
+                  f'topic : {topic.pk}')
+        print('\n')
 
-        # 만들어진 토픽들 리턴(all을 해도 되나 좀 더 명시적으로 작성)
+        # 만들어진 토픽의 개수와 생성하기로 한 토픽의 개수 비교
+        self.assertEqual(
+            len(Topic.objects.filter(pk__in=topic_list)),
+            self.num_of_topics
+        )
+
         return Topic.objects.filter(pk__in=topic_list)
-        # return Topic.objects.all()
 
     # 랜덤한 다수의 질문 생성 테스트
     def create_random_questions(self, users_queryset, topics_queryset):
@@ -131,17 +132,18 @@ class QuestionBaseTest(APITestCase):
         1. 질문에 추가 할 토픽들을 만든다.
         2. 만들어진 질문에 토픽의 개수만큼 topic을 추가한다.
         params :
-            self.random_user_pk
             self.num_of_topics
         :return: Question.objects.all()
         """
+        question_list = list()
 
         # 질문의 add될 토픽 개수
         num_of_topics = topics_queryset.count()
-        question_list = list()
         # 선택된 랜덤한 user로 랜덤한 개수의 questions 생성
         for i in range(self.num_of_questions):
             random_user = random.choice(users_queryset)
+            print(f'====user.pk={random_user.pk}로 생성된 질문에 추가된 토픽들===')
+
             # 질문 생성
             question = self.create_question(
                 user=random_user,
@@ -154,6 +156,9 @@ class QuestionBaseTest(APITestCase):
                 topic = random.choice(topics_queryset)
                 # 생성된 질문에 선택된 토픽 추가
                 question.topics.add(topic)
+
+                print(f'question : {question.pk} -> topic : {topic.pk}')
+            print('\n')
 
         self.assertEqual(
             len(Question.objects.filter(pk__in=question_list)),
