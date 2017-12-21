@@ -5,11 +5,12 @@ from ..base import QuestionBaseTest
 
 class QuestionListCreateViewTest(QuestionBaseTest):
     """
-    Question Objects 생성 테스트입니다.
-    Question의 파라미터로 Topic 객체가 들어가므로 임의의 여러 Topic을 생성 후
-    Question 객체의 생성을 테스트 합니다.
     url :       /post/question/
-    method :    post
+    method :    POST
+
+    1. Question Objects 생성 테스트(test_create_question)
+       - Question의 파라미터로 Topic 객체가 들어가므로 임의의 여러 Topic을 생성 후
+         Question 객체의 생성을 테스트 합니다.
     """
 
     def test_create_question(self):
