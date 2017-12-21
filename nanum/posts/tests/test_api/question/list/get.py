@@ -6,20 +6,25 @@ from ..base import QuestionBaseTest
 
 class QuestionListViewTest(QuestionBaseTest):
     """
-    1. URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 테스트
-    2. URL이 실제 URL name을 참조하고 있는지 테스트
-    3. 같은 view의 class인지 테스트
-       - posts.apis.question.QuestionListCreateView 뷰에 대해
-         URL reverse, resolve, 사용하고 있는 view함수가 같은지 확인
+    url :       /post/question/
+    method :    GET
+
+    1. QuestionList의 Get요청에 대한 테스트(test_get_question_list)
+       - Get 요청으로 질문들에 대한 리스트를 임의의 값으로 테스트 하기 위해
+         유저, 토픽, 질문 생성에 대한 테스트를 내부적으로 진행하였다.
+
+    2. QuestionList의 Pagination에 대한 테스트(test_question_pagination_list)
+       - 임의의 page를 테스트하기 위해서 위 테스트와 마찬가지로
+         유저, 토픽, 질문 생성에 대한 테스트를 내부적으로 진행하였다.
     """
 
     def test_get_question_list(self):
         """
-        QuestionList의 Get요청 (Post목록)에 대한 테스트
+        QuestionList의 Get요청에 대한 테스트
         임의의 개수만큼 Question을 생성하고 해당 개수만큼 Response가 돌아오는지 확인
-        :return:
         """
-        print("\n\n**********QuestionList의 Get요청 (Post목록)에 대한 테스트입니다.*********\n")
+
+        print("\n\n**********QuestionList의 Get요청에 대한 테스트입니다.*********\n")
 
         # 유저 생성(queryset 리턴)
         users_queryset = self.create_random_users()
@@ -36,7 +41,9 @@ class QuestionListViewTest(QuestionBaseTest):
         pagination 테스트를 하려면 Question이 생성되어 있어야 하므로
         Question 객체들을 생성 후 리스트를 가져오는 테스트를 선행한다.
         """
+
         print("\n\n**********QuestionList의 Pagination에 대한 테스트입니다.*********\n")
+
         # Question list를 가져오는 테스트 선행
         self.test_get_question_list()
 

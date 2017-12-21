@@ -13,6 +13,14 @@ User = get_user_model()
 
 
 class QuestionListCreateCommonViewTest(QuestionBaseTest):
+    """
+    1. URL name으로 원하는 URL과 실제로 만들어지는 URL이 같은지 테스트(test_question_create_url_name_reverse)
+    2. URL이 실제 URL name을 참조하고 있는지 테스트(test_question_create_url_name_resolve)
+    3. 사용이 예상되는 view class와 실제로 사용되는 view class가 같은지 테스트(test_question_create_url_resolve_view_class)
+    4. user가 None이면 쿼리에서 제외되는지 테스트(test_get_question_list_exclude_user_is_none)
+    5. query parameters로 filter가 잘 작동하는지 테스트(test_get_question_list_filter_is_working)
+    """
+
     VIEW_CLASS = QuestionListCreateView
 
     # URL name으로 원하는 URL과 실제로 만들어지는 URL 같은지 검사
