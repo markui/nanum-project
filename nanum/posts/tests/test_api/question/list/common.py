@@ -68,7 +68,7 @@ class QuestionListCreateCommonViewTest(QuestionBaseTest):
         self.assertEqual(counted_question, num_questions)
 
     # query parameters 필터링 확인
-    def test_get_question_list_filter_is_working(self):
+    def test_get_question_topics_for_filters(self):
         """
         query_params로의 필터링이 잘 작동하는지 확인
 
