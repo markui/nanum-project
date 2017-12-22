@@ -138,7 +138,7 @@ class QuestionBaseTest(APITestCase):
         question_list = list()
 
         # 질문의 add될 토픽 개수
-        num_of_topics = topics_queryset.count()
+        # num_of_topics = topics_queryset.count()
         # 선택된 랜덤한 user로 랜덤한 개수의 questions 생성
         for i in range(self.num_of_questions):
             random_user = random.choice(users_queryset)
@@ -151,7 +151,8 @@ class QuestionBaseTest(APITestCase):
             )
             question_list.append(question.pk)
             # 생성된 질문에 토픽 개수만큼 랜덤한 토픽을 추가
-            for j in range(num_of_topics):
+            # for j in range(num_of_topics):
+            for j in range(3):
                 # 랜덤한 토픽 선택
                 topic = random.choice(topics_queryset)
                 # 생성된 질문에 선택된 토픽 추가
@@ -163,4 +164,5 @@ class QuestionBaseTest(APITestCase):
         self.assertEqual(
             len(Question.objects.filter(pk__in=question_list)),
             self.num_of_questions)
-        return Question.objects.filter(pk__in=question_list)
+        # return Question.objects.filter(pk__in=question_list)
+        return Question.objects.all()
