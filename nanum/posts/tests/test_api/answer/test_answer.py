@@ -1,5 +1,3 @@
-import json
-
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -279,17 +277,18 @@ class AnswerUpdateTest(CustomBaseTest):
         user = User.objects.first()
         answer = Answer.objects.first()
         self.client.force_authenticate(user=user)
-        content = {"ops":[{"attributes":{"bold":True},"insert":"bold"},{"insert":"\n"},
-                  {"attributes":{"italic":True},"insert":"italic"},{"insert":"\n"},
-                  {"attributes":{"italic":True,"bold":True},"insert":"bolditalic"},
-                  {"insert":"\n"},{"attributes":{"link":"https://www.youtube.com/watch?v=5rBg_NjFQmc"},
-                  "insert":"https://www.youtube.com/watch?v=5rBg_NjFQmc"},{"insert":"\nquote"},
-                  {"attributes":{"blockquote":True},"insert":"\n"},{"insert":"print(\'Hello, World!\')"},
-                  {"attributes":{"code-block":True},"insert":"\n"},{"insert":"number"},
-                  {"attributes":{"list":"ordered"},"insert":"\n"},{"insert":"list"},
-                  {"attributes":{"list":"ordered"},"insert":"\n"},{"insert":"bullet"},
-                  {"attributes":{"list":"bullet"},"insert":"\n"},{"insert":"list"},
-                  {"attributes":{"list":"bullet"},"insert":"\n"},{"insert":"\n"}]}
+        content = {"ops": [{"attributes": {"bold": True}, "insert": "bold"}, {"insert": "\n"},
+                           {"attributes": {"italic": True}, "insert": "italic"}, {"insert": "\n"},
+                           {"attributes": {"italic": True, "bold": True}, "insert": "bolditalic"},
+                           {"insert": "\n"}, {"attributes": {"link": "https://www.youtube.com/watch?v=5rBg_NjFQmc"},
+                                              "insert": "https://www.youtube.com/watch?v=5rBg_NjFQmc"},
+                           {"insert": "\nquote"},
+                           {"attributes": {"blockquote": True}, "insert": "\n"}, {"insert": "print(\'Hello, World!\')"},
+                           {"attributes": {"code-block": True}, "insert": "\n"}, {"insert": "number"},
+                           {"attributes": {"list": "ordered"}, "insert": "\n"}, {"insert": "list"},
+                           {"attributes": {"list": "ordered"}, "insert": "\n"}, {"insert": "bullet"},
+                           {"attributes": {"list": "bullet"}, "insert": "\n"}, {"insert": "list"},
+                           {"attributes": {"list": "bullet"}, "insert": "\n"}, {"insert": "\n"}]}
         html = '<div class="ql-editor" data-gramm="false" contenteditable="true" data-placeholder="Compose an epic...">' \
                '<p><strong>bold</strong></p><p><em>italic</em></p><p><strong><em>bolditalic</em></strong></p>' \
                '<p><a href="https://www.youtube.com/watch?v=5rBg_NjFQmc" target="_blank">https://www.youtube.com/watch?v=5rBg_NjFQmc</a></p>' \
@@ -304,7 +303,7 @@ class AnswerUpdateTest(CustomBaseTest):
             'content': content,
             'content_html': html,
         }
-        response = self.client.patch(f'/post/answer/{answer.pk}/', data=data, format='json')
+        response = self.client.patch(self.URL_API_ANSWER_DETAIL.format(pk=answer.pk), data=data, format='json')
         answer = Answer.objects.get(pk=answer.pk)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -325,7 +324,7 @@ class AnswerUpdateTest(CustomBaseTest):
             'content': None,
             'published': True,
         }
-        response = self.client.patch(f'/post/answer/{answer.pk}/', data=data, format='json')
+        response = self.client.patch(self.URL_API_ANSWER_DETAIL.format(pk=answer.pk), data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_answer_without_content_or_content_html(self):
@@ -341,11 +340,11 @@ class AnswerUpdateTest(CustomBaseTest):
         data = {
             'content': self.ANSWER_DELTA,
         }
-        response = self.client.patch(f'/post/answer/{answer.pk}/', data=data, format='json')
+        response = self.client.patch(self.URL_API_ANSWER_DETAIL.format(pk=answer.pk), data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         data = {
             'content_html': self.ANSWER_HTML
         }
-        response = self.client.patch(f'/post/answer/{answer.pk}/', data=data, format='json')
+        response = self.client.patch(self.URL_API_ANSWER_DETAIL.format(pk=answer.pk), data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

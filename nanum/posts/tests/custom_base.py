@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 
-from posts.models import Question, Answer
+from posts.models import Question, Answer, Comment, CommentPostIntermediate
 from topics.models import Topic
 
 User = get_user_model()
@@ -12,9 +12,13 @@ class CustomBaseTest(APITestCase):
     URL_API_ANSWER_LIST_CREATE_NAME = 'post:answer:answer-list'
     URL_API_ANSWER_MAIN_FEED_LIST_NAME = 'post:answer:answer-main'
     URL_API_ANSWER_DETAIL_NAME = 'post:answer:answer-detail'
+    URL_API_COMMENT_LIST_CREATE_NAME = 'post:comment:comment-list'
+    URL_API_COMMENT_DETAIL_NAME = 'post:comment:comment-detail'
     URL_API_ANSWER_LIST_CREATE = '/post/answer/'
     URL_API_ANSWER_MAIN_FEED_LIST = '/post/answer/main_feed/'
-    URL_API_ANSWER_DETAIL = '/post/answer/(?P<pk>\d+)/'
+    URL_API_ANSWER_DETAIL = '/post/answer/{pk}/'
+    URL_API_COMMENT_LIST_CREATE = '/post/comment/'
+    URL_API_COMMENT_DETAIL = '/post/comment/{pk}/'
     URL_FILTER_USER = 'user={pk}'
     URL_FILTER_TOPIC = 'topic={pk}'
     URL_FILTER_BOOKMARKED = 'bookmarked={pk}'
@@ -80,6 +84,15 @@ class CustomBaseTest(APITestCase):
         return Answer.objects.get(pk=response.data['pk'])
 
     @classmethod
+    def create_comment(cls, user, content="질문입니다", question=None, answer=None, parent=None):
+        if question:
+            cpi = CommentPostIntermediate.objects.get(question=question)
+        else:
+            cpi = CommentPostIntermediate.objects.get(answer=answer)
+
+        return Comment.objects.create(user=user, content=content, comment_post_intermediate=cpi, parent=parent)
+
+    @classmethod
     def setUpTestData(cls):
 
         # 유저 생성
@@ -117,3 +130,6 @@ class CustomBaseTest(APITestCase):
                     question = Question.objects.get(user=question_user, topics=topic)
                     answer = cls.create_answer(user=user, question=question)
                     answers.append(answer)
+
+        for question in questions:
+            comment = cls.create_comment(user=users[0], question=question)

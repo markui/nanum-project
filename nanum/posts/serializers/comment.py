@@ -153,7 +153,7 @@ class CommentCreateSerializer(BaseCommentserializer):
         :return:
         """
         if not data.get('answer', None) and not data.get('question', None):
-            raise ParseError(detail="Question, Answer 중 한개의 값은 있어야 합니다.")
+            raise ParseError({"error":"Question, Answer 중 한개의 값은 있어야 합니다."})
         return data
 
     def save(self, **kwargs):
