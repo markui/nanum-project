@@ -17,7 +17,7 @@ class QuestionGetSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         lookup_field='pk',
         read_only=True,
-        view_name='post:question:detail',
+        view_name='post:question:question-detail',
     )
     # 해당 유저의 프로필 페이지
     user = serializers.HyperlinkedIdentityField(
@@ -66,26 +66,22 @@ class QuestionGetSerializer(serializers.ModelSerializer):
 
 
 class QuestionFilterGetSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        lookup_field='pk',
-        read_only=True,
-        view_name='topic:topic-detail',
-    )
+    # topics = serializers.HyperlinkedIdentityField(
+    #     lookup_field='pk',
+    #     read_only=True,
+    #     view_name='topic:topic-detail',
+    # )
 
     class Meta:
         model = Topic
         fields = (
             'pk',
-            'url',
             'name',
         )
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        data = {
-            'topics': ret,
-        }
-        return data
+        return ret
 
 
 class QuestionPostSerializer(serializers.ModelSerializer):
