@@ -4,6 +4,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.fields import ImageField
 
 import utils
+from topics.utils.fields import DefaultStaticImageSerializerField
 from .models import Topic
 
 
@@ -59,6 +60,7 @@ class TopicSerializer(BaseTopicSerializer):
     METHODS: GET, POST, PUT, PATCH
     """
     name = serializers.CharField(max_length=100, required=False)
+    image = DefaultStaticImageSerializerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
