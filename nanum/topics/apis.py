@@ -16,8 +16,6 @@ class TopicListCreateView(generics.ListCreateAPIView):
     """
     Topic ListAPIView 와
     Topic CreateAPIView
-
-
     """
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer

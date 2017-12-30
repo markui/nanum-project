@@ -1,6 +1,8 @@
+from io import BytesIO
+
 from django.conf import settings
 from django.db import models
-
+from .utils import fields
 
 # Create your models here.
 
@@ -14,7 +16,8 @@ class Topic(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     name = models.TextField(max_length=100, unique=True, blank=False, null=False)
     description = models.TextField(max_length=300, blank=True)
-    image = models.ImageField(upload_to='topic', blank=True)
+    image = fields.DefaultStaticImageField(upload_to='topic', blank=True, null=True,
+                                           default_image_path='default_topic_image/topic_image_300.png')
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     answer_count = models.IntegerField(null=False, default=0)
