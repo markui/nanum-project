@@ -22,6 +22,6 @@ class CustomPagination(PageNumberPagination):
 
 class ListPagination(CustomPagination):
     """
-
+    Topic List Pagination
     """
-    pass
+    page_size = 4
