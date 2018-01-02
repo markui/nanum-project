@@ -85,27 +85,27 @@ class BaseCommentserializer(serializers.HyperlinkedModelSerializer):
         Check if AnonymousUser
         :return:
         """
-        if self.request and hasattr(self.request, "user"):
-            user = self.request.user
-        return user
+        return self.request.user
 
     def get_user_upvote_relation(self, obj):
-        try:
-            relation_pk = CommentUpVoteRelation.objects.get(user=self.request_user, comment=obj).pk
-            view_name = 'user:comment-upvote-relation-detail'
-            kwargs = {'pk': relation_pk}
-            return reverse(view_name, kwargs=kwargs, request=self.request)
-        except CommentUpVoteRelation.DoesNotExist:
-            return
+        if self.request_user.is_authenticated():
+            try:
+                relation_pk = CommentUpVoteRelation.objects.get(user=self.request_user, comment=obj).pk
+                view_name = 'user:comment-upvote-relation-detail'
+                kwargs = {'pk': relation_pk}
+                return reverse(view_name, kwargs=kwargs, request=self.request)
+            except CommentUpVoteRelation.DoesNotExist:
+                return
 
     def get_user_downvote_relation(self, obj):
-        try:
-            relation_pk = CommentDownVoteRelation.objects.get(user=self.request_user, comment=obj).pk
-            view_name = 'user:comment-downvote-relation-detail'
-            kwargs = {'pk': relation_pk}
-            return reverse(view_name, kwargs=kwargs, request=self.request)
-        except CommentDownVoteRelation.DoesNotExist:
-            return
+        if self.request_user.is_authenticated():
+            try:
+                relation_pk = CommentDownVoteRelation.objects.get(user=self.request_user, comment=obj).pk
+                view_name = 'user:comment-downvote-relation-detail'
+                kwargs = {'pk': relation_pk}
+                return reverse(view_name, kwargs=kwargs, request=self.request)
+            except CommentDownVoteRelation.DoesNotExist:
+                return
 
 
 class CommentGetSerializer(BaseCommentserializer):
@@ -153,7 +153,7 @@ class CommentCreateSerializer(BaseCommentserializer):
         :return:
         """
         if not data.get('answer', None) and not data.get('question', None):
-            raise ParseError({"error":"Question, Answer 중 한개의 값은 있어야 합니다."})
+            raise ParseError({"error": "Question, Answer 중 한개의 값은 있어야 합니다."})
         return data
 
     def save(self, **kwargs):

@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
 
 from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Comment
@@ -38,17 +38,14 @@ class CommentListCreateView(generics.ListCreateAPIView):
         values = self.request.query_params.values()
         filter_fields = self.filter_class.get_fields().keys() | \
                         {'ordering', 'page', 'user', 'question', 'answer'}
-        error = None
 
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
-            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
+            raise ParseError({"error": "query parameter가 존재하나 value가 존재하지 않습니다."})
         if query_params and not query_params <= filter_fields:
-            error = {"error": "존재하지 않는 query_parameter입니다. "
+            raise ParseError({"error": "존재하지 않는 query_parameter입니다. "
                               "필터가 가능한 query_parameter는 다음과 같습니다:"
-                              f"{filter_fields}"}
-        if error:
-            raise NotFound(detail=error)
+                              f"{filter_fields}"})
 
         return super().filter_queryset(queryset)
 

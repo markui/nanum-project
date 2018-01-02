@@ -137,15 +137,6 @@ class DjangoQuill:
                 raise model_instance
             yield model_instance
 
-    # def _get_delta_operation_instance(self, tup: tuple):
-    #     line_no = tup[0]
-    #     quill_delta_operation = tup[1]
-    #     return self._instantiate_model(
-    #         quill_delta_operation=quill_delta_operation,
-    #         line_no=line_no,
-    #         parent_instance=self.parent_instance,
-    #     )
-
     def _instantiate_model(self, quill_delta_operation, line_no, parent_instance):
         """
         model 을 instantiate 할 때 필요한 정보를 kwargs로 만들어 전달

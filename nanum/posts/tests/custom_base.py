@@ -131,5 +131,7 @@ class CustomBaseTest(APITestCase):
                     answer = cls.create_answer(user=user, question=question)
                     answers.append(answer)
 
+        # Comment 생성
+        # 모든 Question에 대하여 Comment 생성
         for question in questions:
             comment = cls.create_comment(user=users[0], question=question)

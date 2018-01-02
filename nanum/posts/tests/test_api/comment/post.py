@@ -1,51 +1,23 @@
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 from rest_framework import status
 
 from posts.models import Question, Answer, Comment
-from posts.serializers import CommentCreateSerializer, CommentSerializer
 from ...custom_base import CustomBaseTest
 
 User = get_user_model()
 
-class CommentListTest(CustomBaseTest):
-    def test_comment_list_url_reverse(self):
-        """
-
-        :return:
-        """
-        url = reverse(self.URL_API_COMMENT_LIST_CREATE_NAME)
-        self.assertEqual(url, self.URL_API_COMMENT_LIST_CREATE)
-
-    def test_get_answer_list_when_not_authenticated(self):
-        """
-        유저가 로그인 되지 않았을 시 401에러를 올리는지 확인
-        :return:
-        """
-        response = self.client.get(self.URL_API_COMMENT_LIST_CREATE)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_serializer_change_on_request_type(self):
-        """
-        Request 종류에 따라 serializer가 바뀌는지 확인
-        :return:
-        """
-        user = User.objects.first()
-        self.client.force_authenticate(user=user)
-        get_response = self.client.get(self.URL_API_COMMENT_LIST_CREATE)
-        get_serializer = get_response.renderer_context['view'].get_serializer()
-
-        post_response = self.client.post(self.URL_API_COMMENT_LIST_CREATE)
-        post_serializer = post_response.renderer_context['view'].get_serializer()
-
-        self.assertIsInstance(get_serializer, CommentSerializer)
-        self.assertIsInstance(post_serializer, CommentCreateSerializer)
-
 
 class CommentPostTest(CustomBaseTest):
+    """
+    url :       /post/comment/
+    method :    POST
+
+    Comment Post에 대한 테스트
+    """
+
     def test_comment_on_question_post(self):
         """
-
+        Question 대하여 comment를 post 할 때 테스트
         :return:
         """
         user = User.objects.first()
@@ -63,7 +35,7 @@ class CommentPostTest(CustomBaseTest):
 
     def test_comment_on_answer_post(self):
         """
-
+        Answer 에 대하여 comment를 post 할 때 테스트
         :return:
         """
         user = User.objects.first()
@@ -81,7 +53,7 @@ class CommentPostTest(CustomBaseTest):
 
     def test_comment_on_comment_post(self):
         """
-
+        Comment 에 대하여 comment를 post 할 때 테스트
         :return:
         """
         parent = Comment.objects.first()
@@ -90,7 +62,7 @@ class CommentPostTest(CustomBaseTest):
         content = "질문입니다."
         data = {
             'user': user.pk,
-            'answer':answer.pk,
+            'answer': answer.pk,
             'parent': parent.pk,
             'content': content,
         }
@@ -117,7 +89,7 @@ class CommentPostTest(CustomBaseTest):
 
     def test_comment_with_invalid_question(self):
         """
-
+        존재하지 않는 Question에 대해 Comment를 생성하려 할 때 에러가 나는지 확인
         :return:
         """
         user = User.objects.first()
@@ -134,7 +106,7 @@ class CommentPostTest(CustomBaseTest):
 
     def test_comment_with_invalid_ansewr(self):
         """
-
+        존재하지 않는 Answer에 대해 Comment를 생성하려 할 때 에러가 나는지 확인
         :return:
         """
         user = User.objects.first()
