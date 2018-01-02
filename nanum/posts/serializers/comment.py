@@ -60,7 +60,6 @@ class BaseCommentserializer(serializers.HyperlinkedModelSerializer):
             'user_downvote_relation',
             'upvote_count',
             'downvote_count',
-            'all_children_count',
         ]
         read_only_fields = [
             'user',
@@ -72,7 +71,6 @@ class BaseCommentserializer(serializers.HyperlinkedModelSerializer):
             'user_downvote_relation',
             'upvote_count',
             'downvote_count',
-            'all_children_count',
         ]
 
     @property
@@ -199,10 +197,12 @@ class CommentSerializer(BaseCommentserializer):
         """
         model = Comment
         fields = BaseCommentserializer.Meta.fields.copy()
-        fields.extend(['immediate_children', 'all_children'])
+        fields.extend(
+            ['immediate_children', 'all_children', 'immediate_children_count', 'all_children_count'])
 
         read_only_fields = BaseCommentserializer.Meta.read_only_fields.copy()
-        read_only_fields.extend(['immediate_children', 'all_children'])
+        read_only_fields.extend(
+            ['immediate_children', 'all_children', 'immediate_children_count', 'all_children_count'])
 
     @property
     def view(self):

@@ -84,7 +84,7 @@ class CustomBaseTest(APITestCase):
         return Answer.objects.get(pk=response.data['pk'])
 
     @classmethod
-    def create_comment(cls, user, content="질문입니다", question=None, answer=None, parent=None):
+    def create_comment(cls, user, content="코멘트입니다.", question=None, answer=None, parent=None):
         if question:
             cpi = CommentPostIntermediate.objects.get(question=question)
         else:
@@ -135,3 +135,4 @@ class CustomBaseTest(APITestCase):
         # 모든 Question에 대하여 Comment 생성
         for question in questions:
             comment = cls.create_comment(user=users[0], question=question)
+
