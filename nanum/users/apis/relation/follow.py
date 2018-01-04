@@ -105,7 +105,7 @@ class FollowingInterestListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs.get('pk'))
-        return user.topic_isnterests.all()
+        return user.topic_interests.all()
 
     def get_serializer_context(self):
         """
