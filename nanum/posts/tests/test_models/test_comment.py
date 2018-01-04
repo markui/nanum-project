@@ -8,6 +8,10 @@ User = get_user_model()
 
 
 class CommentPostIntermediateModelTest(CustomBaseTest):
+    """
+    Model : CommentPostIntermediate
+
+    """
     @classmethod
     def setUpTestData(cls):
         user = cls.create_user(name="abc@abc.com", email="abc@abc.com")
@@ -113,6 +117,10 @@ class CommentPostIntermediateModelTest(CustomBaseTest):
 
 
 class CommentModelTest(CustomBaseTest):
+    """
+    Model : Comment
+
+    """
     @classmethod
     def setUpTestData(cls):
         user = cls.create_user(name="abc@abc.com", email="abc@abc.com")
@@ -160,15 +168,16 @@ class CommentModelTest(CustomBaseTest):
         Comment 모델 __str__ 함수 테스트
         :return:
         """
-        ac1_immediate = Comment.objects.get(pk=4)
-        self.assertEqual(str(ac1_immediate), "abc@abc.com - 답변 nested 코멘트 1")
+
+        ac1_immediate = Comment.objects.first()
+        self.assertEqual(str(ac1_immediate), "abc@abc.com - 질문 코멘트")
 
     def test_comment_related_post_property(self):
         """
         Comment 모델 related_post property 테스트
         :return:
         """
-        qc1 = Comment.objects.get(pk=1)
+        qc1 = Comment.objects.first()
         q = qc1.comment_post_intermediate.question
         # qc1.related_post 가 Question Instance인지 확인하고,
         # 해당 값이 comment_post_intermediate.question으로 들어간 값과 일치하는지 확인
@@ -180,11 +189,11 @@ class CommentModelTest(CustomBaseTest):
         Comment 모델 immediate_children property 테스트
         :return:
         """
-        qc1 = Comment.objects.get(pk=1)
-        qc1_immediate_child = Comment.objects.get(pk=2)
-        ac1 = Comment.objects.get(pk=3)
-        ac1_immediate_child = Comment.objects.get(pk=4)
-        ac1_immediate_child_child = Comment.objects.get(pk=5)
+        qc1 = Comment.objects.get(content="질문 코멘트")
+        qc1_immediate_child = Comment.objects.get(content="질문 코멘트 nested 코멘트")
+        ac1 = Comment.objects.get(content="답변 코멘트")
+        ac1_immediate_child = Comment.objects.get(content="답변 nested 코멘트 1")
+        ac1_immediate_child_child = Comment.objects.get(content="답변 nested 코멘트 1 nested 코멘트")
         # qc1.immediate_children에 qc1_immediate이 있는지 확인
         self.assertIn(qc1_immediate_child, qc1.immediate_children)
 
@@ -198,8 +207,8 @@ class CommentModelTest(CustomBaseTest):
         Comment 모델 immediate_children_count property 테스트
         :return:
         """
-        qc1 = Comment.objects.get(pk=1)
-        ac1 = Comment.objects.get(pk=3)
+        qc1 = Comment.objects.get(content="질문 코멘트")
+        ac1 = Comment.objects.get(content="답변 코멘트")
         self.assertEqual(qc1.immediate_children_count, qc1.immediate_children.count())
         self.assertEqual(ac1.immediate_children_count, ac1.immediate_children.count())
 
@@ -208,10 +217,10 @@ class CommentModelTest(CustomBaseTest):
         Comment 모델 all_children property 테스트
         :return:
         """
-        ac1 = Comment.objects.get(pk=3)
-        ac1_immediate_child = Comment.objects.get(pk=4)
-        ac1_immediate_child_child = Comment.objects.get(pk=5)
-        ac1_immediate_child_child2 = Comment.objects.get(pk=6)
+        ac1 = Comment.objects.get(content="답변 코멘트")
+        ac1_immediate_child = Comment.objects.get(content="답변 nested 코멘트 1")
+        ac1_immediate_child_child = Comment.objects.get(content="답변 nested 코멘트 1 nested 코멘트")
+        ac1_immediate_child_child2 = Comment.objects.get(content="답변 nested 코멘트 2 nested 코멘트")
 
         # Depth 2에 있는 ac1_immediate_child_child 와 ac1_immediate_child_child2 가
         # ac1.all_children에 포함되어 있는지 확인
@@ -223,11 +232,7 @@ class CommentModelTest(CustomBaseTest):
         Comment 모델 all_children_count property 테스트
         :return:
         """
-        ac1 = Comment.objects.get(pk=3)
-        ac1_immediate_child = Comment.objects.get(pk=4)
-        ac1_immediate_child_child = Comment.objects.get(pk=5)
-        ac1_immediate_child_child2 = Comment.objects.get(pk=6)
-
+        ac1 = Comment.objects.get(content="답변 코멘트")
         self.assertEqual(ac1.all_children_count, ac1.all_children.count())
 
     def test_related_post_comment_count_increment(self):

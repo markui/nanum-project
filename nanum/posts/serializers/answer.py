@@ -21,7 +21,7 @@ django_quill = DjangoQuill(model=QuillDeltaOperation, parent_model=Answer)
 
 class QuestionHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
     queryset = Question.objects.all()
-    view_name = 'post:question:detail'
+    view_name = 'post:question:question-detail'
 
     def to_internal_value(self, data):
         try:
