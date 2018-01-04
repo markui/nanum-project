@@ -105,8 +105,10 @@ class FollowingInterestListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs.get('pk'))
-        return user.topic_interests.all()
-
+        # 가장 최신에 follow한 순으로 topic list하기
+        interest_follow_relations = user.interestfollowrelation_set.order_by('-created_at')
+        topics = [relation.topic for relation in interest_follow_relations]
+        return topics
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -127,7 +129,10 @@ class FollowingExpertiseListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = get_object_or_404(User, pk=self.kwargs.get('pk'))
-        return user.topic_expertise.all()
+        # 가장 최신에 follow한 순으로 topic list하기
+        expertise_follow_relations = user.expertisefollowrelation_set.order_by('-created_at')
+        topics = [relation.topic for relation in expertise_follow_relations]
+        return topics
 
     def get_serializer_context(self):
         """
