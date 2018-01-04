@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from rest_framework import generics, permissions
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
 
 from utils.permissions import IsAuthorOrAuthenticatedReadOnly
 from ..models import Comment
@@ -38,17 +38,14 @@ class CommentListCreateView(generics.ListCreateAPIView):
         values = self.request.query_params.values()
         filter_fields = self.filter_class.get_fields().keys() | \
                         {'ordering', 'page', 'user', 'question', 'answer'}
-        error = None
 
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
-            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
+            raise ParseError({"error": "query parameter가 존재하나 value가 존재하지 않습니다."})
         if query_params and not query_params <= filter_fields:
-            error = {"error": "존재하지 않는 query_parameter입니다. "
+            raise ParseError({"error": "존재하지 않는 query_parameter입니다. "
                               "필터가 가능한 query_parameter는 다음과 같습니다:"
-                              f"{filter_fields}"}
-        if error:
-            raise NotFound(detail=error)
+                              f"{filter_fields}"})
 
         return super().filter_queryset(queryset)
 
@@ -87,48 +84,13 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         values = self.request.query_params.values()
         filter_fields = self.filter_class.get_fields().keys() | \
                         {'ordering', 'page', 'immediate_children', 'all_children'}
-        error = None
 
         # 만약 query parameter가 왔는데 value가 오지 않았을 경우
         if "" in list(values):
-            error = {"error": "query parameter가 존재하나 value가 존재하지 않습니다."}
+            raise ParseError({"error": "query parameter가 존재하나 value가 존재하지 않습니다."})
         if query_params and not query_params <= filter_fields:
-            error = {"error": "존재하지 않는 query_parameter입니다. "
+            raise ParseError({"error": "존재하지 않는 query_parameter입니다. "
                               "필터가 가능한 query_parameter는 다음과 같습니다:"
-                              f"{filter_fields}"}
-        if error:
-            raise NotFound(detail=error)
+                              f"{filter_fields}"})
 
         return super().filter_queryset(queryset)
-
-        # def retrieve(self, request, *args, **kwargs):
-        #     """
-        #     Query parameter에 따라 nested된 filter/pagnating queryset을 추가
-        #     :param request:
-        #     :param args:
-        #     :param kwargs:
-        #     :return:
-        #     """
-        #     query_params = self.request.query_params
-        #
-        #     immediate_children, all_children = query_params.get('immediate_children'), \
-        #                                        query_params.get('all_children')
-        #     instance = self.get_object()
-        #     parent_serializer = self.get_serializer(instance)
-        #
-        #     if immediate_children:
-        #         queryset = self.filter_queryset(instance.immediate_children)
-        #         page = self.paginate_queryset(queryset)
-        #     elif all_children:
-        #         queryset = self.filter_queryset(instance.all_children)
-        #         page = self.paginate_queryset(queryset)
-        #     else:
-        #         page = None
-        #
-        #     if page is not None:
-        #         children_serializer = self.get_serializer(page, many=True)
-        #         paginated_response = self.get_paginated_response(children_serializer.data)
-        #         data = OrderedDict(chain(parent_serializer.data.items(), paginated_response.data.items()))
-        #         return Response(data)
-        #
-        #     return Response(parent_serializer.data)
