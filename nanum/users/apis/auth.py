@@ -148,6 +148,7 @@ class PasswordResetConfirmView(APIView):
                 'token': token,
                 'type': 'success'
             }
+            return Response(msg, status=status.HTTP_200_OK)
 
         return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
