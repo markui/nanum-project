@@ -89,7 +89,7 @@ class PasswordResetSendMailView(APIView):
             {
                 'email': email,
                 'username': user.name,
-                'url': 'localhost:4200/login/settings/reset_password',
+                'url': 'localhost:4200/login/settings',
                 'code': encode_value,
                 'uid': uid
 
