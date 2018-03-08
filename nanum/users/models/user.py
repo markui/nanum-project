@@ -39,7 +39,7 @@ class UserManager(BaseUserManager):
 
         # 유저가 생성된 후, 토큰 생성하기
         Token.objects.create(user=user)
-        # 유저가 생성된 후, 프로필 생성하기
+        # 유저가 생성된 후, 프로필 생성하기'
         Profile.objects.create(user=user)
         return user
 

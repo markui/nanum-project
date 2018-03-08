@@ -89,7 +89,7 @@ class FacebookLoginView(APIView):
         if debug_token_info['data']['user_id'] != facebook_user_id:
             raise APIException('페이스북 토큰의 사용자와 전달받은 facebook_user_id가 일치하지 않음')
 
-        # access token을 바탕으로, Grapth API에 유저정보 요청해서 가져오기
+        # access token을 바탕으로, Graph API에 유저정보 요청해서 가져오기
         user_info_fields = [
             'id',
             'name',

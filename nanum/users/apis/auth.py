@@ -13,6 +13,7 @@ from users.serializers import PasswordResetSerializer, PasswordResetConfirmSeria
     EmailUserSerializer
 from ..serializers import SignupSerializer, LoginSerializer
 from ..tasks import send_password_reset_email
+from ipware import get_client_ip
 
 User = get_user_model()
 
@@ -30,6 +31,16 @@ class LoginView(APIView):
     """
 
     def post(self, request):
+        # ip 가져오기 실험 시작
+        client_ip, is_routable = get_client_ip(request)
+        if client_ip is None:
+        # Unable to get the client's IP address
+            msg = {
+                'error': "유저 IP를 가져오는 데 실패하였습니다"
+            }
+            return Response(msg, status=status.HTTP_204_NO_CONTENT)
+        # The client's IP address is private
+        # ip 가져오기 실험 끝
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # Model Backend Authentication
@@ -45,7 +56,8 @@ class LoginView(APIView):
             # print(token)
             ret = {
                 'user': EmailUserSerializer(user).data,
-                'token': token
+                'token': token,
+                'ip_address': client_ip
             }
             return Response(ret, status=status.HTTP_200_OK)
 
